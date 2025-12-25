@@ -1,26 +1,20 @@
-// Supabase Configuration Template
-// 
-// Instructions:
-// 1. Copy this file and rename it to "config.js"
-// 2. Replace the placeholder values below with your actual Supabase credentials
-// 3. Never commit config.js to git (it's in .gitignore)
-//
-// To get your credentials:
-// - Go to your Supabase Dashboard: https://supabase.com/dashboard
-// - Select your project
-// - Navigate to Settings → API
-// - Copy the "Project URL" and "anon public" key
+// Supabase Configuration
+// Replace YOUR_SUPABASE_ANON_KEY_HERE with your actual Supabase anon key
+// Get it from: Supabase Dashboard → Settings → API → anon public
 
 const SUPABASE_CONFIG = {
-    // Your Supabase project URL
     url: 'https://hzdybwclwqkcobpwxzoo.supabase.co',
-    
-    // Your Supabase anon (public) key
-    // This is safe to use in frontend code as it's protected by RLS policies
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6ZHlid2Nsd3FrY29icHd4em9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzU4ODQsImV4cCI6MjA4MTc1MTg4NH0.e0mSI7Qp9sRaclOwP61guBNtwTVHYXc-TtVaUON67QU'
+    anonKey: 'YOUR_SUPABASE_ANON_KEY_HERE'
 };
 
-// Export for use in other files
+// Make config available to HTML files
+// DO NOT declare 'supabase' here - that happens in the HTML file
 if (typeof window !== 'undefined') {
     window.SUPABASE_CONFIG = SUPABASE_CONFIG;
 }
+
+// DEBUG: Log to confirm config is loaded
+console.log('✓ Config loaded successfully');
+console.log('✓ Supabase URL:', SUPABASE_CONFIG.url);
+console.log('✓ Anon key configured:', SUPABASE_CONFIG.anonKey !== 'YOUR_SUPABASE_ANON_KEY_HERE' ? 'Yes' : 'No - Please update!');
+
