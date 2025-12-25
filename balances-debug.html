@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balances Debug Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Balances Page Debug Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Supabase Connection</h2>
+        <div id="supabase-status">Testing...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Session Check</h2>
+        <div id="session-status">Testing...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. Payment Accounts Query</h2>
+        <div id="accounts-status">Testing...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Console Logs</h2>
+        <pre id="console-logs"></pre>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+        
+        const SUPABASE_URL = 'https://hzdybwclwqkcobpwxzoo.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6ZHlid2Nsd3FrY29icHd4em9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzU4ODQsImV4cCI6MjA4MTc1MTg4NH0.e0mSI7Qp9sRaclOwP61guBNtwTVHYXc-TtVaUON67QU';
+        
+        let logs = [];
+        function log(msg, type = 'info') {
+            const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
+            logs.push(`[${timestamp}] ${msg}`);
+            document.getElementById('console-logs').textContent = logs.join('\n');
+            console.log(msg);
+        }
+        
+        async function runTests() {
+            // Test 1: Supabase Connection
+            try {
+                log('Creating Supabase client...');
+                const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                document.getElementById('supabase-status').innerHTML = '<span class="success">Ã¢Å“â€¦ Supabase client created</span>';
+                log('Supabase client created successfully');
+                
+                // Test 2: Session Check
+                log('Checking session...');
+                const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+                
+                if (sessionError) {
+                    document.getElementById('session-status').innerHTML = `<span class="error">Ã¢ÂÅ’ Session error: ${sessionError.message}</span>`;
+                    log(`Session error: ${sessionError.message}`);
+                    return;
+                }
+                
+                if (!session) {
+                    document.getElementById('session-status').innerHTML = '<span class="error">Ã¢ÂÅ’ No session found - you need to log in first</span>';
+                    log('No session found');
+                    return;
+                }
+                
+                document.getElementById('session-status').innerHTML = `<span class="success">Ã¢Å“â€¦ Session found: ${session.user.email}</span>`;
+                log(`Session found for user: ${session.user.email}`);
+                
+                // Test 3: Payment Accounts Query
+                log('Querying payment_accounts...');
+                const { data: accounts, error: accountsError } = await supabase
+                    .from('payment_accounts')
+                    .select('account_id, account_name, payment_provider, is_active')
+                    .eq('is_active', true)
+                    .order('payment_provider, account_name');
+                
+                if (accountsError) {
+                    document.getElementById('accounts-status').innerHTML = `<span class="error">Ã¢ÂÅ’ Query error: ${accountsError.message}</span>`;
+                    log(`Accounts query error: ${accountsError.message}`);
+                    
+                    if (accountsError.code === '42501' || accountsError.message.includes('policy')) {
+                        document.getElementById('accounts-status').innerHTML += '<br><br><strong>Missing RLS Policy!</strong><br>Run this SQL in Supabase:<br><pre>CREATE POLICY "Allow authenticated read" ON payment_accounts FOR SELECT TO authenticated USING (true);</pre>';
+                    }
+                    return;
+                }
+                
+                if (!accounts || accounts.length === 0) {
+                    document.getElementById('accounts-status').innerHTML = '<span class="error">Ã¢ÂÅ’ No accounts found in database</span>';
+                    log('No accounts found');
+                    return;
+                }
+                
+                document.getElementById('accounts-status').innerHTML = `<span class="success">Ã¢Å“â€¦ Found ${accounts.length} accounts</span><br><pre>${JSON.stringify(accounts, null, 2)}</pre>`;
+                log(`Found ${accounts.length} accounts`);
+                accounts.forEach(acc => {
+                    log(`  - ${acc.account_name || acc.account_id} (${acc.payment_provider})`);
+                });
+                
+            } catch (err) {
+                document.getElementById('supabase-status').innerHTML = `<span class="error">Ã¢ÂÅ’ Error: ${err.message}</span>`;
+                log(`Fatal error: ${err.message}`);
+                console.error(err);
+            }
+        }
+        
+        window.addEventListener('DOMContentLoaded', runTests);
+    </script>
+</body>
+</html>

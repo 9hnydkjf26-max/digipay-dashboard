@@ -1,0 +1,2047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warmup Compliance - Data Portal</title>
+    <!-- FILE VERSION: 2024-12-24-v3 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            /* Light Mode (Default) */
+            --color-text: #0a2540;
+            --color-text-secondary: #425466;
+            --color-text-tertiary: #697386;
+            --color-border: #e3e8ee;
+            --color-bg: #f6f9fc;
+            --color-white: #ffffff;
+            --color-card: #ffffff;
+            --color-primary: #635bff;
+            --color-primary-hover: #5851ec;
+            --color-success: #00d924;
+            --color-error: #cd4246;
+            --color-warning: #f59e0b;
+            --shadow-sm: 0 1px 3px rgba(50, 50, 93, 0.04);
+            --radius: 8px;
+            --sidebar-width: 240px;
+        }
+        
+        /* Dark Mode */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-text: #e3e8ee;
+                --color-text-secondary: #9ca9b3;
+                --color-text-tertiary: #697386;
+                --color-border: #2d3748;
+                --color-bg: #0f1419;
+                --color-white: #1a202c;
+                --color-card: #1e2936;
+                --color-primary: #7c3aed;
+                --color-primary-hover: #6d28d9;
+                --color-success: #10b981;
+                --color-error: #ef4444;
+                --color-warning: #f59e0b;
+                --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+            }
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Authenticated Content */
+        #authenticatedContent {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--color-white);
+            border-right: 1px solid var(--color-border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 100;
+            will-change: auto;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+        
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .sidebar-logo {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--color-text);
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        
+        .sidebar-nav {
+            flex: 1;
+            padding: 16px 12px;
+            overflow-y: auto;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            margin-bottom: 4px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            transition: all 0.15s;
+            cursor: pointer;
+        }
+        
+        .nav-item:hover {
+            background: var(--color-bg);
+            color: var(--color-text);
+        }
+        
+        .nav-item.active {
+            background: rgba(99, 91, 255, 0.1);
+            color: var(--color-primary);
+        }
+        
+        .nav-item-icon {
+            font-size: 18px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .sidebar-footer {
+            padding: 16px 12px;
+            border-top: 1px solid var(--color-border);
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            background: var(--color-bg);
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .user-info-sidebar {
+            flex: 1;
+            min-width: 0;
+            min-height: 36px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .user-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .user-role {
+            font-size: 11px;
+            color: var(--color-text-tertiary);
+        }
+        
+        /* Main Content */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            max-width: calc(100vw - var(--sidebar-width));
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 40px 24px;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        .page-header {
+            margin-bottom: 32px;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 8px;
+        }
+        
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--color-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 24px;
+        }
+        
+        .card-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+        
+        .card-body {
+            padding: 24px;
+        }
+        
+        /* Form Elements */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 16px;
+            align-items: start;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text);
+            margin-bottom: 6px;
+            min-height: 18px;
+        }
+        
+        .form-select,
+        .form-input {
+            padding: 10px 12px;
+            background: var(--color-white);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            color: var(--color-text);
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.15s;
+            height: 42px;
+        }
+        
+        /* Enhanced Select Dropdown Styling */
+        .form-select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            padding-right: 40px;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23635bff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 18px;
+            font-weight: 500;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .form-select:hover {
+            border-color: var(--color-primary);
+            background-color: var(--color-bg);
+            box-shadow: 0 2px 4px rgba(99, 91, 255, 0.1);
+        }
+        
+        .form-select:focus {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
+            background-color: var(--color-white);
+        }
+        
+        .form-select option {
+            padding: 12px 16px;
+            background: var(--color-white);
+            color: var(--color-text);
+            font-weight: 500;
+            border-radius: 4px;
+        }
+        
+        .form-select option:hover {
+            background: var(--color-bg);
+        }
+        
+        .form-select option:checked {
+            background: linear-gradient(90deg, rgba(99, 91, 255, 0.1) 0%, rgba(99, 91, 255, 0.05) 100%);
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+        
+        /* Dark mode select styling */
+        @media (prefers-color-scheme: dark) {
+            .form-select {
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%237c3aed' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            }
+            
+            .form-select:hover {
+                box-shadow: 0 2px 4px rgba(124, 58, 237, 0.2);
+            }
+            
+            .form-select option:checked {
+                background: linear-gradient(90deg, rgba(124, 58, 237, 0.2) 0%, rgba(124, 58, 237, 0.1) 100%);
+            }
+        }
+        
+        .form-select option:first-child {
+            color: var(--color-text-tertiary);
+            font-weight: 400;
+        }
+        
+        /* Custom Dropdown Component */
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+        }
+        
+        .custom-dropdown-trigger {
+            width: 100%;
+            padding: 10px 12px;
+            padding-right: 40px;
+            background: var(--color-white);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            color: var(--color-text);
+            font-size: 14px;
+            font-family: inherit;
+            font-weight: 500;
+            height: 42px;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23635bff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 18px;
+        }
+        
+        .custom-dropdown-trigger:hover {
+            border-color: var(--color-primary);
+            background-color: var(--color-bg);
+            box-shadow: 0 2px 4px rgba(99, 91, 255, 0.1);
+        }
+        
+        .custom-dropdown-trigger.active {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
+        }
+        
+        .custom-dropdown-trigger.placeholder {
+            color: var(--color-text-tertiary);
+            font-weight: 400;
+        }
+        
+        .custom-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: var(--color-white);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            animation: dropdownFadeIn 0.2s ease-out;
+        }
+        
+        .custom-dropdown-menu.active {
+            display: block;
+        }
+        
+        @keyframes dropdownFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .custom-dropdown-option {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-size: 14px;
+            color: var(--color-text);
+            font-weight: 500;
+            border-bottom: 1px solid transparent;
+        }
+        
+        .custom-dropdown-option:hover {
+            background: var(--color-bg);
+            border-bottom-color: var(--color-border);
+        }
+        
+        .custom-dropdown-option.selected {
+            background: linear-gradient(90deg, rgba(99, 91, 255, 0.1) 0%, rgba(99, 91, 255, 0.05) 100%);
+            color: var(--color-primary);
+            font-weight: 600;
+            position: relative;
+        }
+        
+        .custom-dropdown-option.selected::after {
+            content: 'ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“';
+            position: absolute;
+            right: 16px;
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+        
+        .custom-dropdown-option:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .custom-dropdown-option:last-child {
+            border-radius: 0 0 8px 8px;
+            border-bottom: none;
+        }
+        
+        /* Custom scrollbar for dropdown */
+        .custom-dropdown-menu::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .custom-dropdown-menu::-webkit-scrollbar-track {
+            background: var(--color-bg);
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .custom-dropdown-menu::-webkit-scrollbar-thumb {
+            background: var(--color-border);
+            border-radius: 4px;
+        }
+        
+        .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+            background: var(--color-text-tertiary);
+        }
+        
+        /* Dark mode custom dropdown */
+        @media (prefers-color-scheme: dark) {
+            .custom-dropdown-trigger {
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%237c3aed' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            }
+            
+            .custom-dropdown-trigger:hover {
+                box-shadow: 0 2px 4px rgba(124, 58, 237, 0.2);
+            }
+            
+            .custom-dropdown-menu {
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            }
+            
+            .custom-dropdown-option.selected {
+                background: linear-gradient(90deg, rgba(124, 58, 237, 0.2) 0%, rgba(124, 58, 237, 0.1) 100%);
+            }
+        }
+        
+        .form-input:disabled {
+            background: var(--color-bg);
+            cursor: default;
+            opacity: 0.8;
+        }
+        
+        .form-select:focus,
+        .form-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
+        }
+        
+        .form-input:disabled:focus {
+            border-color: var(--color-border);
+            box-shadow: none;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+            height: 42px;
+        }
+        
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--color-border);
+            color: var(--color-text-secondary);
+        }
+        
+        /* Modern Date Picker Styling */
+        .form-input[type="date"] {
+            position: relative;
+            cursor: pointer;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .form-input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: 0.6;
+            padding: 6px;
+            margin-left: 8px;
+            border-radius: 4px;
+            transition: all 0.15s;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23635bff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+        }
+        
+        .form-input[type="date"]:hover::-webkit-calendar-picker-indicator {
+            opacity: 1;
+            background-color: rgba(99, 91, 255, 0.1);
+        }
+        
+        /* Enhanced calendar popup - modern styling */
+        .form-input[type="date"]::-webkit-datetime-edit {
+            padding: 0;
+        }
+        
+        .form-input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+            padding: 0;
+        }
+        
+        .form-input[type="date"]::-webkit-datetime-edit-text {
+            color: var(--color-text-secondary);
+            padding: 0 4px;
+        }
+        
+        .form-input[type="date"]::-webkit-datetime-edit-month-field,
+        .form-input[type="date"]::-webkit-datetime-edit-day-field,
+        .form-input[type="date"]::-webkit-datetime-edit-year-field {
+            color: var(--color-text);
+            padding: 4px 6px;
+            border-radius: 4px;
+            transition: all 0.15s;
+        }
+        
+        .form-input[type="date"]::-webkit-datetime-edit-month-field:hover,
+        .form-input[type="date"]::-webkit-datetime-edit-day-field:hover,
+        .form-input[type="date"]::-webkit-datetime-edit-year-field:hover {
+            background: var(--color-bg);
+        }
+        
+        .form-input[type="date"]::-webkit-datetime-edit-month-field:focus,
+        .form-input[type="date"]::-webkit-datetime-edit-day-field:focus,
+        .form-input[type="date"]::-webkit-datetime-edit-year-field:focus {
+            background: rgba(99, 91, 255, 0.1);
+            color: var(--color-primary);
+            outline: none;
+        }
+        
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .form-input[type="date"]::-webkit-calendar-picker-indicator {
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%237c3aed' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+                opacity: 0.8;
+            }
+            
+            .form-input[type="date"]:hover::-webkit-calendar-picker-indicator {
+                opacity: 1;
+                background-color: rgba(124, 58, 237, 0.2);
+            }
+        }
+        
+        /* Style the calendar popup container (Webkit browsers) */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Add smooth transitions */
+        .form-input[type="date"] {
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        
+        .form-input[type="date"]:hover {
+            border-color: var(--color-primary);
+        }
+        
+        /* Custom Modern Date Picker */
+        .custom-date-picker {
+            position: relative;
+        }
+        
+        .date-picker-popup {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            background: var(--color-white);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            padding: 16px;
+            z-index: 1000;
+            min-width: 300px;
+            display: none;
+            animation: datePickerFadeIn 0.2s ease-out;
+        }
+        
+        .date-picker-popup.active {
+            display: block;
+        }
+        
+        @keyframes datePickerFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .date-picker-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding: 0 4px;
+        }
+        
+        .date-picker-month-year {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+        
+        .date-picker-nav {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .date-picker-nav-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            color: var(--color-text-secondary);
+        }
+        
+        .date-picker-nav-btn:hover {
+            background: var(--color-bg);
+            color: var(--color-text);
+        }
+        
+        .date-picker-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+        
+        .date-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        
+        .date-picker-weekday {
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--color-text-tertiary);
+            padding: 8px 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .date-picker-day {
+            aspect-ratio: 1;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--color-text);
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+        }
+        
+        .date-picker-day:hover {
+            background: var(--color-bg);
+        }
+        
+        .date-picker-day.today {
+            color: var(--color-primary);
+            font-weight: 600;
+        }
+        
+        .date-picker-day.selected {
+            background: var(--color-primary);
+            color: white;
+        }
+        
+        .date-picker-day.selected:hover {
+            background: var(--color-primary-hover);
+        }
+        
+        .date-picker-day.other-month {
+            color: var(--color-text-tertiary);
+            opacity: 0.4;
+        }
+        
+        .date-picker-day:disabled {
+            cursor: not-allowed;
+            opacity: 0.3;
+        }
+        
+        /* Date input container */
+        .date-input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .date-input-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .date-status {
+            font-size: 12px;
+            color: var(--color-text-tertiary);
+            min-height: 16px;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        .stat-card {
+            background: var(--color-white);
+            padding: 20px;
+            border-radius: var(--radius);
+            border: 1px solid var(--color-border);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+        
+        .stat-value.success {
+            color: var(--color-success);
+        }
+        
+        .stat-value.danger {
+            color: var(--color-error);
+        }
+        
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            text-align: left;
+            padding: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--color-border);
+            background: var(--color-bg);
+        }
+        
+        td {
+            padding: 16px 12px;
+            font-size: 14px;
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        tr:hover {
+            background: rgba(99, 91, 255, 0.02);
+        }
+        
+        /* Status Badge */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        .badge-success {
+            background: rgba(0, 217, 36, 0.1);
+            color: var(--color-success);
+        }
+        
+        .badge-error {
+            background: rgba(205, 66, 70, 0.1);
+            color: var(--color-error);
+        }
+        
+        /* Violations */
+        .violations-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .violations-list li {
+            color: var(--color-error);
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+        
+        .violations-list li:before {
+            content: "ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â  ";
+        }
+        
+        /* Progress Bar */
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--color-border);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+        
+        .progress-fill.low {
+            background: var(--color-success);
+        }
+        
+        .progress-fill.medium {
+            background: var(--color-warning);
+        }
+        
+        .progress-fill.high {
+            background: var(--color-error);
+        }
+        
+        /* Messages */
+        .alert {
+            padding: 16px;
+            border-radius: var(--radius);
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        
+        .alert-error {
+            background: rgba(205, 66, 70, 0.1);
+            border: 1px solid var(--color-error);
+            color: var(--color-error);
+        }
+        
+        .loading-message {
+            text-align: center;
+            padding: 40px;
+            color: var(--color-text-secondary);
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-wrapper {
+                margin-left: 0;
+                max-width: 100vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Authenticated Content -->
+    <div id="authenticatedContent">
+    
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="stripe-refund-interface-secure.html" class="nav-item" aria-label="Navigate to Refunds page">
+                <span class="nav-item-icon">&#x1F4B8;</span>
+                Refunds
+            </a>
+            <a href="reports.html" class="nav-item" aria-label="Navigate to Reports page">
+                <span class="nav-item-icon">&#x1F4CA;</span>
+                Reports
+            </a>
+            <a href="warmup-compliance.html" class="nav-item active" aria-label="Navigate to Warmup Compliance page" aria-current="page">
+                <span class="nav-item-icon">&#x1F525;</span>
+                Warmup Compliance
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="user-avatar" id="sidebarUserAvatar"></div>
+                <div class="user-info-sidebar">
+                    <div class="user-name" id="sidebarUserName"></div>
+                    <div class="user-role">Admin</div>
+                </div>
+            </div>
+            <button class="btn btn-secondary" style="width: 100%;" onclick="handleLogout()">
+                Sign out
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+        <div class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">Warmup Compliance Report</h1>
+                <p class="page-subtitle">Monitor your Stripe account warmup schedule compliance</p>
+            </div>
+
+            <!-- Filters Card -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="accountSelect">Stripe Account</label>
+                            <div class="custom-dropdown" id="accountDropdown">
+                                <div class="custom-dropdown-trigger placeholder" id="accountTrigger">
+                                    Select an account...
+                                </div>
+                                <div class="custom-dropdown-menu" id="accountMenu">
+                                    <!-- Options will be populated here -->
+                                </div>
+                            </div>
+                            <input type="hidden" id="accountSelect">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="startDate">Warmup Start Date (Week 1 begins)</label>
+                            <div class="date-input-wrapper">
+                                <div class="custom-date-picker" style="flex: 1;">
+                                    <input class="form-input" type="text" id="startDate" readonly placeholder="No date set" style="cursor: default; width: 100%;" disabled>
+                                    <input type="hidden" id="startDateValue">
+                                    <div class="date-picker-popup" id="datePickerPopup">
+                                        <div class="date-picker-header">
+                                            <div class="date-picker-month-year" id="datePickerMonthYear"></div>
+                                            <div class="date-picker-nav">
+                                                <button class="date-picker-nav-btn" id="prevMonth" type="button">ÃƒÂ¢Ã¢â‚¬â€Ã¢â€šÂ¬</button>
+                                                <button class="date-picker-nav-btn" id="nextMonth" type="button">ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â¶</button>
+                                            </div>
+                                        </div>
+                                        <div class="date-picker-weekdays">
+                                            <div class="date-picker-weekday">Su</div>
+                                            <div class="date-picker-weekday">Mo</div>
+                                            <div class="date-picker-weekday">Tu</div>
+                                            <div class="date-picker-weekday">We</div>
+                                            <div class="date-picker-weekday">Th</div>
+                                            <div class="date-picker-weekday">Fr</div>
+                                            <div class="date-picker-weekday">Sa</div>
+                                        </div>
+                                        <div class="date-picker-grid" id="datePickerDays"></div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-secondary" id="editDateBtn" onclick="enableDateEdit()" style="display: none; margin-top: 0; height: 42px;">Edit</button>
+                                <button class="btn btn-secondary" id="saveDateBtn" onclick="saveWarmupDate()" style="display: none; margin-top: 0; height: 42px;">Save</button>
+                                <button class="btn btn-secondary" id="cancelDateBtn" onclick="cancelDateEdit()" style="display: none; margin-top: 0; height: 42px;">Cancel</button>
+                            </div>
+                            <div id="dateStatus" class="date-status"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="visibility: hidden;">Actions</label>
+                            <button class="btn btn-primary" id="generateBtn" onclick="generateReport()">Generate Report</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="alert alert-error hidden"></div>
+            
+            <!-- Loading Message -->
+            <div id="loadingMessage" class="loading-message hidden">Generating report...</div>
+
+            <!-- Report Container -->
+            <div id="reportContainer" class="hidden">
+                <!-- Summary Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Summary</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="stats-grid" id="summaryGrid"></div>
+                    </div>
+                </div>
+
+                <!-- Daily Report Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Daily Compliance Report</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Week</th>
+                                        <th>Daily Volume</th>
+                                        <th>Max Transaction</th>
+                                        <th>Transaction Count</th>
+                                        <th>Status</th>
+                                        <th>Violations</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div> <!-- End authenticatedContent -->
+
+    <script type="module">
+        import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+        
+        console.log('ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚Â');
+        console.log('FILE VERSION: 2024-12-24-v3');
+        console.log('ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢Ãƒâ€šÃ‚Â');
+        console.log('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¡ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ Script loaded');
+        
+        const SUPABASE_URL = 'https://hzdybwclwqkcobpwxzoo.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6ZHlid2Nsd3FrY29icHd4em9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzU4ODQsImV4cCI6MjA4MTc1MTg4NH0.e0mSI7Qp9sRaclOwP61guBNtwTVHYXc-TtVaUON67QU';
+        
+        console.log('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Supabase URL:', SUPABASE_URL);
+        console.log('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ Creating Supabase client...');
+        
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Supabase client created');
+
+        // Custom Dropdown Component
+        function initCustomDropdown() {
+            const trigger = document.getElementById('accountTrigger');
+            const menu = document.getElementById('accountMenu');
+            
+            if (!trigger || !menu) return;
+            
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menu.classList.toggle('active');
+                trigger.classList.toggle('active');
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!menu.contains(e.target) && e.target !== trigger) {
+                    menu.classList.remove('active');
+                    trigger.classList.remove('active');
+                }
+            });
+        }
+        
+        function populateCustomDropdown(accounts) {
+            const menu = document.getElementById('accountMenu');
+            const trigger = document.getElementById('accountTrigger');
+            
+            if (!menu || !trigger) return;
+            
+            menu.innerHTML = '';
+            
+            accounts.forEach(account => {
+                const option = document.createElement('div');
+                option.className = 'custom-dropdown-option';
+                // Show account name with payment provider badge
+                const displayName = account.account_name || account.account_id;
+                const provider = account.payment_provider || 'stripe';
+                const providerBadge = provider === 'airwallex' ? ' [Airwallex]' : ' [Stripe]';
+                option.textContent = displayName + providerBadge;
+                option.dataset.value = account.account_id;
+                
+                option.addEventListener('click', () => {
+                    trigger.textContent = displayName + providerBadge;
+                    trigger.classList.remove('placeholder');
+                    document.getElementById('accountSelect').value = account.account_id;
+                    
+                    menu.querySelectorAll('.custom-dropdown-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    option.classList.add('selected');
+                    
+                    menu.classList.remove('active');
+                    trigger.classList.remove('active');
+                    
+                    handleAccountChange();
+                });
+                
+                menu.appendChild(option);
+            });
+        }
+        
+        setTimeout(() => { initCustomDropdown(); }, 100);
+
+        // Custom Date Picker
+        let currentDate = new Date();
+        let selectedDate = null;
+        
+        function initDatePicker() {
+            const dateInput = document.getElementById('startDate');
+            const popup = document.getElementById('datePickerPopup');
+            const prevBtn = document.getElementById('prevMonth');
+            const nextBtn = document.getElementById('nextMonth');
+            
+            if (!dateInput || !popup) return;
+            
+            // Toggle popup - only if input is not disabled
+            dateInput.addEventListener('click', (e) => {
+                if (dateInput.disabled) {
+                    return; // Don't open calendar if disabled
+                }
+                e.stopPropagation();
+                popup.classList.toggle('active');
+                if (popup.classList.contains('active')) {
+                    renderCalendar();
+                }
+            });
+            
+            // Close popup when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!popup.contains(e.target) && e.target !== dateInput) {
+                    popup.classList.remove('active');
+                }
+            });
+            
+            // Navigation
+            prevBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                renderCalendar();
+            });
+            
+            nextBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                renderCalendar();
+            });
+        }
+        
+        function renderCalendar() {
+            const monthYear = document.getElementById('datePickerMonthYear');
+            const daysContainer = document.getElementById('datePickerDays');
+            
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            // Set month/year header
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+            monthYear.textContent = `${monthNames[month]} ${year}`;
+            
+            // Get first day of month and number of days
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+            
+            // Clear existing days
+            daysContainer.innerHTML = '';
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // Add previous month's trailing days
+            for (let i = firstDay - 1; i >= 0; i--) {
+                const day = daysInPrevMonth - i;
+                const btn = createDayButton(day, true, year, month - 1);
+                daysContainer.appendChild(btn);
+            }
+            
+            // Add current month's days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const btn = createDayButton(day, false, year, month);
+                const btnDate = new Date(year, month, day);
+                btnDate.setHours(0, 0, 0, 0);
+                
+                if (btnDate.getTime() === today.getTime()) {
+                    btn.classList.add('today');
+                }
+                
+                if (selectedDate && btnDate.getTime() === selectedDate.getTime()) {
+                    btn.classList.add('selected');
+                }
+                
+                daysContainer.appendChild(btn);
+            }
+            
+            // Add next month's leading days
+            const totalCells = firstDay + daysInMonth;
+            const remainingCells = 7 - (totalCells % 7);
+            if (remainingCells < 7) {
+                for (let day = 1; day <= remainingCells; day++) {
+                    const btn = createDayButton(day, true, year, month + 1);
+                    daysContainer.appendChild(btn);
+                }
+            }
+        }
+        
+        function createDayButton(day, isOtherMonth, year, month) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'date-picker-day';
+            btn.textContent = day;
+            
+            if (isOtherMonth) {
+                btn.classList.add('other-month');
+            }
+            
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectDate(year, month, day);
+            });
+            
+            return btn;
+        }
+        
+        function selectDate(year, month, day) {
+            selectedDate = new Date(year, month, day);
+            selectedDate.setHours(0, 0, 0, 0);
+            
+            const dateInput = document.getElementById('startDate');
+            const dateValue = document.getElementById('startDateValue');
+            const popup = document.getElementById('datePickerPopup');
+            
+            // Format for display
+            const formatted = selectedDate.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            dateInput.value = formatted;
+            
+            // Store ISO format for backend
+            dateValue.value = selectedDate.toISOString().split('T')[0];
+            
+            popup.classList.remove('active');
+            renderCalendar();
+            
+            // Show update button
+            const updateBtn = document.getElementById('updateDateBtn');
+            if (updateBtn) updateBtn.style.display = 'inline-block';
+        }
+        
+        window.getDateValue = function() {
+            return document.getElementById('startDateValue').value;
+        }
+        
+        window.setDateValue = function(isoDate) {
+            if (!isoDate) {
+                // Set default (30 days ago)
+                const defaultDate = new Date();
+                defaultDate.setDate(defaultDate.getDate() - 30);
+                isoDate = defaultDate.toISOString().split('T')[0];
+            }
+            
+            const date = new Date(isoDate + 'T00:00:00');
+            selectedDate = date;
+            currentDate = new Date(date);
+            
+            const dateInput = document.getElementById('startDate');
+            const dateValue = document.getElementById('startDateValue');
+            
+            const formatted = date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            dateInput.value = formatted;
+            dateValue.value = isoDate;
+        }
+        
+        // Initialize date picker
+        setTimeout(() => {
+            initDatePicker();
+            // Set default date
+            const defaultDate = new Date();
+            defaultDate.setDate(defaultDate.getDate() - 30);
+            setDateValue(defaultDate.toISOString().split('T')[0]);
+        }, 100);
+        // Update sidebar user info
+        function updateSidebarUser(email) {
+            const avatar = document.getElementById('sidebarUserAvatar');
+            const name = document.getElementById('sidebarUserName');
+            
+            if (avatar && email) {
+                avatar.textContent = email.charAt(0).toUpperCase();
+            }
+            if (name && email) {
+                name.textContent = email.split('@')[0];
+            }
+        }
+        
+        // Handle logout
+        window.handleLogout = async function() {
+            console.log('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Âª Logout clicked');
+            try {
+                await supabase.auth.signOut();
+                console.log('ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Signed out');
+                window.location.href = 'login.html';
+            } catch (err) {
+                console.error('ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Logout error:', err);
+                alert('Logout failed: ' + err.message);
+            }
+        };
+        
+        // Test that function is available
+        console.log('ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ handleLogout function registered:', typeof window.handleLogout);
+
+        // Load accounts
+        async function loadAccounts() {
+            console.log('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾ Loading accounts...');
+            
+            try {
+                const { data: accounts, error } = await supabase
+                    .from('payment_accounts')
+                    .select('account_id, account_name, warmup_start_date, payment_provider')
+                    .eq('is_active', true)
+                    .order('payment_provider, account_name');
+
+                console.log('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒâ€¦Ã‚Â  Accounts query result:', { accounts, error });
+
+                if (error) {
+                    console.error('ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Error loading accounts:', error);
+                    
+                    if (error.code === '42501' || error.message.includes('policy')) {
+                        showError('ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â Access denied. Run this SQL:\n\nCREATE POLICY "Allow authenticated read" ON payment_accounts FOR SELECT TO authenticated USING (true);');
+                    } else {
+                        showError(`Failed to load accounts: ${error.message}`);
+                    }
+                    return;
+                }
+
+                if (!accounts || accounts.length === 0) {
+                    console.warn('ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â No accounts found');
+                    showError('No payment accounts found.');
+                    return;
+                }
+
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date,
+                        payment_provider: account.payment_provider
+                    };
+                });
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date
+                    };
+                });
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date
+                    };
+                });
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date
+                    };
+                });
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date
+                    };
+                });
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date
+                    };
+                });
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date
+                    };
+                });
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date
+                    };
+                });
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date
+                    };
+                });
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date
+                    };
+                });
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date
+                    };
+                });
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date
+                    };
+                });
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date
+                    };
+                });
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date
+                    };
+                });
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date
+                    };
+                });
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date
+                    };
+                });
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date
+                    };
+                });
+                // Populate custom dropdown
+                populateCustomDropdown(accounts);
+                
+                // Store accounts data
+                window.accountsData = {};
+                accounts.forEach(account => {
+                    window.accountsData[account.account_id] = {
+                        account_name: account.account_name,
+                        warmup_start_date: account.warmup_start_date
+                    };
+                });
+                
+                console.log(`ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Loaded ${accounts.length} accounts`);
+            } catch (err) {
+                console.error('ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Exception:', err);
+                showError(`Exception: ${err.message}`);
+            }
+        }
+
+        function handleAccountChange() {
+            const accountId = document.getElementById('accountSelect').value;
+            const dateInput = document.getElementById('startDate');
+            const editBtn = document.getElementById('editDateBtn');
+            const saveDateBtn = document.getElementById('saveDateBtn');
+            const cancelDateBtn = document.getElementById('cancelDateBtn');
+            const dateStatus = document.getElementById('dateStatus');
+            
+            // Reset edit mode
+            dateInput.disabled = true;
+            dateInput.style.cursor = 'default';
+            editBtn.style.display = 'none';
+            saveDateBtn.style.display = 'none';
+            cancelDateBtn.style.display = 'none';
+            
+            if (!accountId) {
+                setDateValue('');
+                dateStatus.textContent = '';
+                return;
+            }
+            
+            const accountData = window.accountsData[accountId];
+            
+            if (accountData && accountData.warmup_start_date) {
+                setDateValue(accountData.warmup_start_date);
+                dateStatus.textContent = 'ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Stored in database';
+                dateStatus.style.color = 'var(--color-success)';
+                editBtn.style.display = 'inline-block';
+            } else {
+                // Set default date (30 days ago) if no stored date
+                const defaultDate = new Date();
+                defaultDate.setDate(defaultDate.getDate() - 30);
+                setDateValue(defaultDate.toISOString().split('T')[0]);
+                dateStatus.textContent = 'ÃƒÂ¢Ã…Â¡Ã‚Â  No stored date - click Edit to set';
+                dateStatus.style.color = 'var(--color-warning)';
+                editBtn.style.display = 'inline-block';
+            }
+        }
+
+        function enableDateEdit() {
+            const dateInput = document.getElementById('startDate');
+            const editBtn = document.getElementById('editDateBtn');
+            const saveDateBtn = document.getElementById('saveDateBtn');
+            const cancelDateBtn = document.getElementById('cancelDateBtn');
+            const dateStatus = document.getElementById('dateStatus');
+            
+            // Store original value for cancel
+            window.originalDateValue = getDateValue();
+            
+            // Enable editing
+            dateInput.disabled = false;
+            dateInput.style.cursor = 'pointer';
+            editBtn.style.display = 'none';
+            saveDateBtn.style.display = 'inline-block';
+            cancelDateBtn.style.display = 'inline-block';
+            
+            dateStatus.textContent = 'Click date to change';
+            dateStatus.style.color = 'var(--color-text-secondary)';
+        }
+
+        function cancelDateEdit() {
+            const dateInput = document.getElementById('startDate');
+            const editBtn = document.getElementById('editDateBtn');
+            const saveDateBtn = document.getElementById('saveDateBtn');
+            const cancelDateBtn = document.getElementById('cancelDateBtn');
+            const dateStatus = document.getElementById('dateStatus');
+            const popup = document.getElementById('datePickerPopup');
+            
+            // Restore original value
+            if (window.originalDateValue) {
+                setDateValue(window.originalDateValue);
+            }
+            
+            // Disable editing
+            dateInput.disabled = true;
+            dateInput.style.cursor = 'default';
+            editBtn.style.display = 'inline-block';
+            saveDateBtn.style.display = 'none';
+            cancelDateBtn.style.display = 'none';
+            popup.classList.remove('active');
+            
+            // Restore status message
+            const accountId = document.getElementById('accountSelect').value;
+            const accountData = window.accountsData[accountId];
+            if (accountData && accountData.warmup_start_date) {
+                dateStatus.textContent = 'ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Stored in database';
+                dateStatus.style.color = 'var(--color-success)';
+            } else {
+                dateStatus.textContent = 'ÃƒÂ¢Ã…Â¡Ã‚Â  No stored date - click Edit to set';
+                dateStatus.style.color = 'var(--color-warning)';
+            }
+        }
+
+        async function saveWarmupDate() {
+            const accountId = document.getElementById('accountSelect').value;
+            const startDate = getDateValue();
+            const dateInput = document.getElementById('startDate');
+            const editBtn = document.getElementById('editDateBtn');
+            const saveDateBtn = document.getElementById('saveDateBtn');
+            const cancelDateBtn = document.getElementById('cancelDateBtn');
+            const dateStatus = document.getElementById('dateStatus');
+            const popup = document.getElementById('datePickerPopup');
+            
+            console.log('ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Å¾ Save warmup date called');
+            console.log('Account ID:', accountId);
+            console.log('Start Date:', startDate);
+            
+            if (!accountId) {
+                showError('Please select an account first');
+                return;
+            }
+            
+            if (!startDate) {
+                showError('Please select a warmup start date');
+                return;
+            }
+            
+            saveDateBtn.disabled = true;
+            cancelDateBtn.disabled = true;
+            dateStatus.textContent = 'Saving...';
+            dateStatus.style.color = 'var(--color-text-tertiary)';
+            
+            try {
+                console.log('ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â¤ Sending update to Supabase...');
+                console.log('Update payload:', { warmup_start_date: startDate });
+                console.log('Filters:', { account_id: accountId, payment_provider: window.accountsData[accountId]?.payment_provider || 'stripe' });
+                
+                const { data, error } = await supabase
+                    .from('payment_accounts')
+                    .update({ warmup_start_date: startDate })
+                    .eq('account_id', accountId)
+                    .eq('payment_provider', window.accountsData[accountId]?.payment_provider || 'stripe')
+                    .select();
+                
+                console.log('ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â¥ Supabase response:', { data, error });
+                
+                if (error) {
+                    console.error('ÃƒÂ¢Ã‚ÂÃ…â€™ Supabase error:', error);
+                    throw error;
+                }
+                
+                if (!data || data.length === 0) {
+                    console.warn('ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â No rows updated - account may not exist');
+                    throw new Error('Account not found or no changes made');
+                }
+                
+                // Update local cache
+                if (window.accountsData[accountId]) {
+                    window.accountsData[accountId].warmup_start_date = startDate;
+                }
+                
+                // Disable editing
+                dateInput.disabled = true;
+                dateInput.style.cursor = 'default';
+                editBtn.style.display = 'inline-block';
+                saveDateBtn.style.display = 'none';
+                cancelDateBtn.style.display = 'none';
+                popup.classList.remove('active');
+                
+                dateStatus.textContent = 'ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Date saved successfully';
+                dateStatus.style.color = 'var(--color-success)';
+                
+                console.log('ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Warmup start date saved successfully');
+            } catch (error) {
+                console.error('ÃƒÂ¢Ã‚ÂÃ…â€™ Error saving date:', error);
+                console.error('Error details:', {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details,
+                    hint: error.hint
+                });
+                dateStatus.textContent = 'ÃƒÂ¢Ã…â€œÃ¢â‚¬â€ Failed to save date';
+                dateStatus.style.color = 'var(--color-error)';
+                showError(`Failed to save date: ${error.message}`);
+            } finally {
+                saveDateBtn.disabled = false;
+                cancelDateBtn.disabled = false;
+            }
+        }
+
+        // Make functions globally available
+        window.enableDateEdit = enableDateEdit;
+        window.cancelDateEdit = cancelDateEdit;
+        window.saveWarmupDate = saveWarmupDate;
+        window.handleAccountChange = handleAccountChange;
+
+        // Set default date (will be overridden when account is selected)
+        const defaultDate = new Date();
+        defaultDate.setDate(defaultDate.getDate() - 30);
+        document.getElementById('startDate').value = defaultDate.toISOString().split('T')[0];
+
+        async function generateReport() {
+            const accountId = document.getElementById('accountSelect').value;
+            const startDate = getDateValue();
+
+            if (!accountId) {
+                showError('Please select a Stripe account');
+                return;
+            }
+
+            if (!startDate) {
+                showError('Please select a warmup start date');
+                return;
+            }
+
+            document.getElementById('errorMessage').classList.add('hidden');
+            document.getElementById('reportContainer').classList.add('hidden');
+            document.getElementById('loadingMessage').classList.remove('hidden');
+            document.getElementById('generateBtn').disabled = true;
+
+            try {
+                console.log('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒâ€¦Ã‚Â  Generating report...');
+                
+                const { data, error } = await supabase.functions.invoke('warmup-compliance-report', {
+                    body: { account_id: accountId, warmup_start_date: startDate }
+                });
+
+                if (error) throw error;
+
+                console.log('ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Report generated');
+                
+                displaySummary(data.summary);
+                displayDailyReports(data.daily_reports);
+
+                document.getElementById('reportContainer').classList.remove('hidden');
+            } catch (error) {
+                console.error('ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Error:', error);
+                showError(error.message || 'Failed to generate report. Ensure Edge Function is deployed.');
+            } finally {
+                document.getElementById('loadingMessage').classList.add('hidden');
+                document.getElementById('generateBtn').disabled = false;
+            }
+        }
+        
+        // Make function available globally for onclick handler
+        window.generateReport = generateReport;
+        
+        // Confirm functions are available
+        console.log('ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ generateReport registered:', typeof window.generateReport);
+        console.log('ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ handleLogout registered:', typeof window.handleLogout);
+
+        function displaySummary(summary) {
+            document.getElementById('summaryGrid').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Account</div>
+                    <div class="stat-value" style="font-size: 18px;">${summary.account_name}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Current Week</div>
+                    <div class="stat-value">${summary.current_week}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Days</div>
+                    <div class="stat-value">${summary.total_days}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Compliant Days</div>
+                    <div class="stat-value success">${summary.compliant_days}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Violation Days</div>
+                    <div class="stat-value ${summary.violation_days > 0 ? 'danger' : ''}">${summary.violation_days}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Compliance Rate</div>
+                    <div class="stat-value ${summary.compliance_rate >= 90 ? 'success' : 'danger'}">${summary.compliance_rate}%</div>
+                </div>
+            `;
+        }
+
+        function displayDailyReports(reports) {
+            document.getElementById('reportTableBody').innerHTML = reports.map(report => {
+                const volumePercent = report.utilization.volume_percent;
+                const volumeClass = volumePercent < 70 ? 'low' : volumePercent < 90 ? 'medium' : 'high';
+
+                return `
+                    <tr>
+                        <td><strong>${formatDate(report.date)}</strong></td>
+                        <td>Week ${report.week_number}</td>
+                        <td>
+                            <div>$${(report.actual.daily_volume / 100).toFixed(2)} / $${(report.limits.max_daily_volume / 100).toFixed(2)}</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill ${volumeClass}" style="width: ${Math.min(100, volumePercent)}%"></div>
+                            </div>
+                            <div style="font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px;">${volumePercent}%</div>
+                        </td>
+                        <td>
+                            <div>$${(report.actual.max_transaction_size / 100).toFixed(2)} / $${(report.limits.max_transaction_size / 100).toFixed(2)}</div>
+                            <div style="font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px;">${report.utilization.transaction_size_percent}%</div>
+                        </td>
+                        <td>
+                            <div>${report.actual.transaction_count} / ${report.limits.max_transactions_per_day}</div>
+                            <div style="font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px;">${report.utilization.count_percent}%</div>
+                        </td>
+                        <td>
+                            <span class="badge ${report.status === 'COMPLIANT' ? 'badge-success' : 'badge-error'}">${report.status}</span>
+                        </td>
+                        <td>
+                            ${report.violations.length > 0 ? `
+                                <ul class="violations-list">
+                                    ${report.violations.map(v => `<li>${v}</li>`).join('')}
+                                </ul>
+                            ` : '<span style="color: var(--color-text-tertiary);">None</span>'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        // Smooth page transitions
+        document.querySelectorAll('.nav-item').forEach(link => {
+            link.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (href && href !== 'warmup-compliance.html' && !href.startsWith('#')) {
+                    e.preventDefault();
+                    const mainWrapper = document.querySelector('.main-wrapper');
+                    if (mainWrapper) {
+                        mainWrapper.style.animation = 'fadeOut 0.2s ease-out';
+                        mainWrapper.style.opacity = '0';
+                    }
+                    setTimeout(() => { window.location.href = href; }, 200);
+                }
+            });
+        });
+
+        // Check auth and initialize
+        window.addEventListener('DOMContentLoaded', async () => {
+            console.log('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾ DOMContentLoaded event fired');
+            
+            try {
+                console.log('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒâ€šÃ‚Â Checking authentication...');
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                console.log('Session result:', { session, error });
+                
+                if (error) {
+                    console.error('ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Session error:', error);
+                    alert('Session error: ' + error.message);
+                    return;
+                }
+                
+                if (!session) {
+                    console.log('ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ No session found - redirecting to login');
+                    setTimeout(() => {
+                        window.location.href = 'login.html?redirect=warmup-compliance.html';
+                    }, 1000);
+                    return;
+                }
+                
+                console.log('ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Session found:', session.user.email);
+                console.log('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â Authenticated - initializing...');
+                
+                updateSidebarUser(session.user.email);
+                console.log('ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Sidebar updated');
+                
+                await loadAccounts();
+                console.log('ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ Accounts loaded');
+                
+            } catch (err) {
+                console.error('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢Ãƒâ€šÃ‚Â¥ Fatal error in DOMContentLoaded:', err);
+                alert('Fatal error: ' + err.message);
+            }
+        });
+    </script>
+</body>
+</html>

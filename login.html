@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<!--
+    IMPORTANT: This file must be served via HTTP/HTTPS, not opened directly as a file.
+    
+    To test locally, use one of these methods:
+    1. Python: python -m http.server 8000
+    2. Node.js: npx http-server
+    3. PHP: php -S localhost:8000
+    
+    Then visit: http://localhost:8000/login.html
+-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Portal - Sign In</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --color-bg: #f8f9fa;
+            --color-white: #ffffff;
+            --color-text: #1a1a1a;
+            --color-text-secondary: #6b7280;
+            --color-text-tertiary: #9ca3af;
+            --color-primary: #06AED4;
+            --color-primary-hover: #0598ba;
+            --color-border: #e5e7eb;
+            --color-error: #dc2626;
+            --radius: 8px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .card {
+            background: var(--color-white);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+
+        .card-content {
+            padding: 60px 80px;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+
+        .logo-container h1 {
+            font-size: 32px;
+            font-weight: 600;
+            margin: 0 0 12px 0;
+            color: var(--color-text);
+        }
+
+        .logo-container p {
+            font-size: 16px;
+            color: var(--color-text-secondary);
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(6, 174, 212, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: var(--color-error);
+            border: 1px solid #fecaca;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .card-content {
+                padding: 40px 32px;
+            }
+
+            .logo-container h1 {
+                font-size: 28px;
+            }
+
+            .logo-container p {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .card-content {
+                padding: 32px 24px;
+            }
+
+            .logo-container {
+                margin-bottom: 32px;
+            }
+
+            .logo-container h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="card">
+            <div class="card-content">
+                <div class="logo-container">
+                    <h1>Data Portal</h1>
+                    <p>Sign in to access your analytics dashboard</p>
+                </div>
+
+                <div class="alert alert-error hidden" id="loginAlert"></div>
+
+                <form id="loginForm" method="POST" action="javascript:void(0);">
+                    <div class="form-group">
+                        <label for="loginEmail">Email Address</label>
+                        <input 
+                            type="email" 
+                            id="loginEmail" 
+                            name="email"
+                            required 
+                            placeholder="your@email.com" 
+                            aria-label="Email address"
+                            autocomplete="email">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input 
+                            type="password" 
+                            id="loginPassword" 
+                            name="password"
+                            required 
+                            placeholder="ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢" 
+                            aria-label="Password"
+                            autocomplete="current-password">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="signInBtn">Sign In</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing...');
+            
+            // Supabase configuration
+            const SUPABASE_URL = 'https://hzdybwclwqkcobpwxzoo.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6ZHlid2Nsd3FrY29icHd4em9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzU4ODQsImV4cCI6MjA4MTc1MTg4NH0.e0mSI7Qp9sRaclOwP61guBNtwTVHYXc-TtVaUON67QU';
+            
+            console.log('Initializing Supabase client...');
+            console.log('Supabase URL:', SUPABASE_URL);
+            
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('Supabase client created:', supabase);
+
+            const loginAlert = document.getElementById('loginAlert');
+            const signInBtn = document.getElementById('signInBtn');
+            const loginForm = document.getElementById('loginForm');
+
+            // Check if already logged in
+            async function checkSession() {
+                console.log('Checking existing session...');
+                const { data: { session } } = await supabase.auth.getSession();
+                console.log('Session check result:', session);
+                
+                if (session) {
+                    // Redirect to reports page if already logged in
+                    const redirectTo = new URLSearchParams(window.location.search).get('redirect') || 'reports.html';
+                    console.log('Already logged in, redirecting to:', redirectTo);
+                    window.location.href = redirectTo;
+                } else {
+                    console.log('No existing session found');
+                }
+            }
+
+            // Handle login
+            async function handleLogin(event) {
+                console.log('handleLogin called');
+                event.preventDefault();
+                event.stopPropagation();
+                console.log('Default prevented and propagation stopped');
+                
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                
+                console.log('Attempting login for email:', email);
+                
+                // Hide previous errors
+                loginAlert.classList.add('hidden');
+                loginAlert.textContent = '';
+                
+                // Disable button and show loading
+                signInBtn.disabled = true;
+                signInBtn.textContent = 'Signing in...';
+                
+                try {
+                    console.log('Calling supabase.auth.signInWithPassword...');
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: email,
+                        password: password,
+                    });
+                    
+                    console.log('Login response:', { data, error });
+                    
+                    if (error) {
+                        console.error('Login error:', error);
+                        throw error;
+                    }
+                    
+                    console.log('Login successful!', data);
+                    
+                    // Successful login - redirect
+                    const redirectTo = new URLSearchParams(window.location.search).get('redirect') || 'reports.html';
+                    console.log('Redirecting to:', redirectTo);
+                    window.location.href = redirectTo;
+                    
+                } catch (error) {
+                    console.error('Login exception:', error);
+                    loginAlert.textContent = error.message || 'Invalid email or password';
+                    loginAlert.classList.remove('hidden');
+                    
+                    // Re-enable button
+                    signInBtn.disabled = false;
+                    signInBtn.textContent = 'Sign In';
+                }
+                
+                return false; // Extra safeguard
+            }
+
+            // Attach event listener when DOM is ready
+            if (loginForm) {
+                console.log('Attaching submit event listener to form');
+                loginForm.addEventListener('submit', handleLogin, true); // Use capture phase
+            } else {
+                console.error('Login form not found!');
+            }
+
+            // Check session on page load
+            console.log('Page loaded, checking session...');
+            checkSession();
+        });
+    </script>
+</body>
+</html>
