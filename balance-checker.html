@@ -544,7 +544,7 @@
         
         .stats-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmin(200px, 1fr));
             gap: 16px;
             margin-bottom: 24px;
         }
@@ -566,6 +566,89 @@
             font-size: 24px;
             font-weight: 700;
             color: var(--color-text);
+        }
+
+        /* NEW: Contact Management Styles */
+        .contact-selector {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .contact-option {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .contact-option:hover {
+            border-color: var(--color-primary);
+        }
+
+        .contact-option.active {
+            border-color: var(--color-primary);
+            background: rgba(99, 91, 255, 0.1);
+        }
+
+        .contacts-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            margin-top: 12px;
+        }
+
+        .contact-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--color-border);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .contact-item:last-child {
+            border-bottom: none;
+        }
+
+        .contact-item:hover {
+            background: var(--color-bg);
+        }
+
+        .contact-item.selected {
+            background: rgba(99, 91, 255, 0.1);
+        }
+
+        .contact-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .contact-email {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding: 12px;
+            background: rgba(99, 91, 255, 0.05);
+            border-radius: var(--radius);
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            font-weight: normal;
+            cursor: pointer;
         }
         
         @media (max-width: 768px) {
@@ -679,15 +762,60 @@
                         <label>From Account</label>
                         <input type="text" id="fromAccount" disabled style="background: var(--color-bg);">
                     </div>
-                    
+
+                    <!-- NEW: Contact Selection -->
                     <div class="form-group">
-                        <label for="recipientEmail">Recipient Email *</label>
-                        <input 
-                            type="email" 
-                            id="recipientEmail" 
-                            placeholder="recipient@example.com"
-                            required
-                        >
+                        <label>Recipient Type</label>
+                        <div class="contact-selector">
+                            <div class="contact-option active" id="newContactOption" onclick="selectContactType('new')">
+                                <div>➕ New Recipient</div>
+                            </div>
+                            <div class="contact-option" id="existingContactOption" onclick="selectContactType('existing')">
+                                <div>📇 Saved Contact</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NEW: Existing Contacts List -->
+                    <div id="existingContactsSection" style="display: none;">
+                        <div class="form-group">
+                            <label>Select Contact</label>
+                            <div id="contactsLoadingState" style="text-align: center; padding: 20px; color: var(--color-text-secondary);">
+                                <div class="spinner" style="width: 24px; height: 24px; border-width: 2px;"></div>
+                                <p style="margin-top: 8px; font-size: 13px;">Loading contacts...</p>
+                            </div>
+                            <div id="contactsList" class="contacts-list" style="display: none;"></div>
+                            <div id="noContactsMessage" style="display: none; padding: 20px; text-align: center; color: var(--color-text-secondary); font-size: 14px;">
+                                No saved contacts found.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NEW: Wrapped existing recipient fields -->
+                    <div id="newRecipientSection">
+                        <div class="form-group">
+                            <label for="recipientEmail">Recipient Email *</label>
+                            <input 
+                                type="email" 
+                                id="recipientEmail" 
+                                placeholder="recipient@example.com"
+                            >
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="recipientName">Recipient Name</label>
+                            <input 
+                                type="text" 
+                                id="recipientName" 
+                                placeholder="Optional"
+                            >
+                        </div>
+
+                        <!-- NEW: Save as contact checkbox -->
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="saveAsContact">
+                            <label for="saveAsContact">💾 Save as contact in Airwallex</label>
+                        </div>
                     </div>
                     
                     <div class="form-group">
@@ -701,15 +829,6 @@
                             required
                         >
                         <div class="input-hint">Available balance: <span id="availableBalance">$0.00</span></div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="recipientName">Recipient Name</label>
-                        <input 
-                            type="text" 
-                            id="recipientName" 
-                            placeholder="Optional"
-                        >
                     </div>
                     
                     <div class="form-group">
@@ -760,48 +879,43 @@
         const SUPABASE_ANON_KEY = window.SUPABASE_CONFIG?.anonKey || '';
         
         if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-            document.body.innerHTML = '<div style="padding: 40px; text-align: center;"><h2>Config Error</h2><p>Please check config.js</p></div>';
-            throw new Error('Missing config');
+            document.body.innerHTML = '<div style="padding: 40px; text-align: center;"><h2>Configuration Required</h2><p>Please configure your Supabase credentials in config.js</p></div>';
+            throw new Error('Supabase configuration missing');
         }
-        
+
         const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         let currentBalances = [];
         let selectedAccount = null;
-        
-        window.addEventListener('DOMContentLoaded', async () => {
+        // NEW: Contact management variables
+        let availableContacts = [];
+        let selectedContact = null;
+        let currentContactType = 'new';
+
+        async function checkAuth() {
             const { data: { session } } = await mySupabase.auth.getSession();
             
             if (!session) {
-                window.location.href = 'login.html?redirect=balance-checker.html';
-                return;
-            }
-            
-            const userRole = session.user.user_metadata?.role || session.user.app_metadata?.role;
-            if (userRole !== 'admin') {
-                alert('Admin access required');
-                await mySupabase.auth.signOut();
                 window.location.href = 'login.html';
                 return;
             }
+
+            const userEmail = session.user.email || 'User';
+            const initials = userEmail.substring(0, 2).toUpperCase();
             
+            document.getElementById('sidebarUserAvatar').textContent = initials;
+            document.getElementById('sidebarUserName').textContent = userEmail;
+
             document.getElementById('authenticatedContent').classList.remove('hidden');
-            updateSidebarUser(session.user.email);
+
             loadBalances();
-        });
-        
-        function updateSidebarUser(email) {
-            const avatar = document.getElementById('sidebarUserAvatar');
-            const name = document.getElementById('sidebarUserName');
-            if (avatar && email) avatar.textContent = email.charAt(0).toUpperCase();
-            if (name && email) name.textContent = email;
         }
-        
-        window.handleLogout = async () => {
+
+        async function handleLogout() {
             await mySupabase.auth.signOut();
             window.location.href = 'login.html';
-        };
-        
+        }
+
         function showAlert(message, type = 'success') {
             const container = document.getElementById('alertContainer');
             const alert = document.createElement('div');
@@ -948,16 +1062,138 @@
                 currency: currency || 'CAD'
             }).format(amount || 0);
         }
+
+        // NEW: Contact type selection function
+        window.selectContactType = function(type) {
+            currentContactType = type;
+            selectedContact = null;
+
+            document.getElementById('newContactOption').classList.toggle('active', type === 'new');
+            document.getElementById('existingContactOption').classList.toggle('active', type === 'existing');
+
+            document.getElementById('newRecipientSection').style.display = type === 'new' ? 'block' : 'none';
+            document.getElementById('existingContactsSection').style.display = type === 'existing' ? 'block' : 'none';
+
+            if (type === 'existing') {
+                document.getElementById('recipientEmail').value = '';
+                document.getElementById('recipientName').value = '';
+                document.getElementById('recipientEmail').removeAttribute('required');
+                
+                // DEBUG: Show what account we're using
+                if (selectedAccount) {
+                    console.log('=== DEBUG: Account Information ===');
+                    console.log('Account ID:', selectedAccount.account_id);
+                    console.log('Full account object:', selectedAccount);
+                    alert(`Will search for contacts in account: ${selectedAccount.account_id}\n\nCheck console for full details.`);
+                }
+            } else {
+                document.getElementById('recipientEmail').setAttribute('required', 'required');
+            }
+
+            if (type === 'existing' && availableContacts.length === 0) {
+                loadContacts();
+            }
+        };
+
+        // NEW: Load contacts function
+        async function loadContacts() {
+            if (!selectedAccount) {
+                console.error('No account selected');
+                return;
+            }
+
+            console.log('Loading contacts for account:', selectedAccount.account_id);
+
+            document.getElementById('contactsLoadingState').style.display = 'block';
+            document.getElementById('contactsList').style.display = 'none';
+            document.getElementById('noContactsMessage').style.display = 'none';
+
+            try {
+                const { data: { session } } = await mySupabase.auth.getSession();
+                
+                console.log('Making request to airwallex-beneficiaries...');
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/airwallex-beneficiaries`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${session.access_token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'list',
+                        account_id: selectedAccount.account_id
+                    })
+                });
+
+                console.log('Response status:', response.status);
+                const result = await response.json();
+                console.log('Response data:', result);
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || 'Failed to load contacts');
+                }
+
+                availableContacts = result.beneficiaries || [];
+                console.log(`Loaded ${availableContacts.length} contacts:`, availableContacts);
+                displayContacts(availableContacts);
+
+            } catch (error) {
+                console.error('Error loading contacts:', error);
+                showAlert(`Error loading contacts: ${error.message}`, 'error');
+                document.getElementById('contactsLoadingState').style.display = 'none';
+                document.getElementById('noContactsMessage').style.display = 'block';
+            }
+        }
+
+        // NEW: Display contacts function
+        function displayContacts(contacts) {
+            document.getElementById('contactsLoadingState').style.display = 'none';
+
+            if (contacts.length === 0) {
+                document.getElementById('noContactsMessage').style.display = 'block';
+                return;
+            }
+
+            const contactsHtml = contacts.map(contact => `
+                <div class="contact-item" onclick="selectContact('${contact.id}')">
+                    <div class="contact-name">${contact.nickname || `${contact.first_name} ${contact.last_name}`}</div>
+                    <div class="contact-email">${contact.email}</div>
+                </div>
+            `).join('');
+
+            document.getElementById('contactsList').innerHTML = contactsHtml;
+            document.getElementById('contactsList').style.display = 'block';
+        }
+
+        // NEW: Select contact function
+        window.selectContact = function(contactId) {
+            selectedContact = availableContacts.find(c => c.id === contactId);
+            
+            const contactItems = document.querySelectorAll('.contact-item');
+            contactItems.forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.target.closest('.contact-item').classList.add('selected');
+        };
         
         window.openEtransferModal = function(accountIndex) {
             selectedAccount = currentBalances[accountIndex];
+            // NEW: Reset contact state
+            availableContacts = [];
+            selectedContact = null;
+            currentContactType = 'new';
             
             document.getElementById('fromAccount').value = selectedAccount.account_id;
             document.getElementById('availableBalance').textContent = formatCurrency(selectedAccount.available_balance, 'CAD');
             
-            // Clear form
             document.getElementById('etransferForm').reset();
             document.getElementById('fromAccount').value = selectedAccount.account_id;
+            
+            // NEW: Reset contact UI
+            document.getElementById('newContactOption').classList.add('active');
+            document.getElementById('existingContactOption').classList.remove('active');
+            document.getElementById('newRecipientSection').style.display = 'block';
+            document.getElementById('existingContactsSection').style.display = 'none';
+            document.getElementById('recipientEmail').setAttribute('required', 'required');
             
             document.getElementById('etransferModal').classList.add('show');
         };
@@ -965,6 +1201,8 @@
         window.closeEtransferModal = function() {
             document.getElementById('etransferModal').classList.remove('show');
             selectedAccount = null;
+            selectedContact = null;
+            availableContacts = [];
         };
         
         window.handleSendEtransfer = async function(event) {
@@ -974,15 +1212,33 @@
                 showAlert('No account selected', 'error');
                 return;
             }
-            
-            const recipientEmail = document.getElementById('recipientEmail').value.trim();
+
+            // NEW: Handle contact type selection
+            let recipientEmail, recipientName, beneficiaryId;
+
+            if (currentContactType === 'existing') {
+                if (!selectedContact) {
+                    showAlert('Please select a contact', 'error');
+                    return;
+                }
+                beneficiaryId = selectedContact.id;
+                recipientEmail = selectedContact.email;
+                recipientName = selectedContact.nickname || `${selectedContact.first_name} ${selectedContact.last_name}`;
+            } else {
+                recipientEmail = document.getElementById('recipientEmail').value.trim();
+                recipientName = document.getElementById('recipientName').value.trim();
+                if (!recipientEmail) {
+                    showAlert('Please enter recipient email', 'error');
+                    return;
+                }
+            }
+
             const amount = parseFloat(document.getElementById('amount').value);
-            const recipientName = document.getElementById('recipientName').value.trim();
             const securityQuestion = document.getElementById('securityQuestion').value.trim();
             const securityAnswer = document.getElementById('securityAnswer').value.trim();
             const message = document.getElementById('message').value.trim();
+            const saveAsContact = document.getElementById('saveAsContact').checked;
             
-            // Validate amount
             if (amount > selectedAccount.available_balance) {
                 showAlert('Amount exceeds available balance', 'error');
                 return;
@@ -995,22 +1251,31 @@
             try {
                 const { data: { session } } = await mySupabase.auth.getSession();
                 
+                // NEW: Build payload with contact support
+                const payload = {
+                    account_id: selectedAccount.account_id,
+                    amount: amount,
+                    security_question: securityQuestion,
+                    security_answer: securityAnswer,
+                    message: message || undefined,
+                    currency: 'CAD'
+                };
+
+                if (beneficiaryId) {
+                    payload.beneficiary_id = beneficiaryId;
+                } else {
+                    payload.recipient_email = recipientEmail;
+                    payload.recipient_name = recipientName || undefined;
+                    payload.save_as_contact = saveAsContact;
+                }
+                
                 const response = await fetch(`${SUPABASE_URL}/functions/v1/airwallex-etransfer`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${session.access_token}`,
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        account_id: selectedAccount.account_id,
-                        recipient_email: recipientEmail,
-                        amount: amount,
-                        recipient_name: recipientName || undefined,
-                        security_question: securityQuestion,
-                        security_answer: securityAnswer,
-                        message: message || undefined,
-                        currency: 'CAD'
-                    })
+                    body: JSON.stringify(payload)
                 });
                 
                 const result = await response.json();
@@ -1019,10 +1284,9 @@
                     throw new Error(result.error || 'Failed to send e-Transfer');
                 }
                 
-                showAlert('e-Transfer sent successfully!', 'success');
+                showAlert(result.message || 'e-Transfer sent successfully!', 'success');
                 closeEtransferModal();
                 
-                // Refresh balances after a delay
                 setTimeout(() => {
                     loadBalances();
                 }, 2000);
@@ -1036,12 +1300,14 @@
             }
         };
         
-        // Close modal when clicking outside
         document.getElementById('etransferModal').addEventListener('click', function(e) {
             if (e.target === this) {
                 closeEtransferModal();
             }
         });
+
+        // Initialize
+        checkAuth();
     </script>
 </body>
 </html>
