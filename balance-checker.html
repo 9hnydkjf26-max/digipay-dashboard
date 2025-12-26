@@ -1037,7 +1037,7 @@
                 return `
                     <div class="balance-card">
                         <div class="balance-header">
-                            <div class="account-name">${balance.account_id}</div>
+                            <div class="account-name">${balance.account_name || balance.account_id}</div>
                             <div class="provider-badge">AIRWALLEX</div>
                         </div>
                         
@@ -1153,12 +1153,26 @@
                 return;
             }
 
-            const contactsHtml = contacts.map(contact => `
-                <div class="contact-item" onclick="selectContact('${contact.id}')">
-                    <div class="contact-name">${contact.nickname || `${contact.first_name} ${contact.last_name}`}</div>
-                    <div class="contact-email">${contact.email}</div>
-                </div>
-            `).join('');
+            const contactsHtml = contacts.map(contact => {
+                // Determine display name
+                const displayName = contact.nickname || 
+                                  (contact.first_name && contact.last_name 
+                                      ? `${contact.first_name} ${contact.last_name}` 
+                                      : contact.first_name || contact.last_name || 'Unknown Contact');
+                
+                // Get email - Airwallex beneficiaries may have email in different places
+                const displayEmail = contact.email || 
+                                   contact.bank_details?.email || 
+                                   contact.payment_methods?.[0]?.email ||
+                                   'No email provided';
+                
+                return `
+                    <div class="contact-item" onclick="selectContact('${contact.id}')">
+                        <div class="contact-name">${displayName}</div>
+                        <div class="contact-email">${displayEmail}</div>
+                    </div>
+                `;
+            }).join('');
 
             document.getElementById('contactsList').innerHTML = contactsHtml;
             document.getElementById('contactsList').style.display = 'block';
