@@ -1779,7 +1779,7 @@
         async function loadOverview(startTs, endTs, accountFilter) {
             let query = supabase
                 .from('stripe_charges')
-                .select('amount, amount_refunded, currency, created, stripe_account_id, payment_provider')
+                .select('amount, amount_refunded, currency, created, stripe_account_id, payment_provider, status')
                 .gte('created', startTs)
                 .lte('created', endTs);
             
@@ -1803,9 +1803,11 @@
             console.log('Charges loaded:', charges.length);
             
             // Calculate stats (for full date range)
-            const totalCharges = charges.length;
-            const totalRevenue = charges.reduce((sum, c) => sum + c.amount, 0) / 100;
-            const totalRefunded = charges.reduce((sum, c) => sum + c.amount_refunded, 0) / 100;
+            // Only include succeeded transactions for revenue calculation
+            const successfulCharges = charges.filter(c => c.status === 'succeeded');
+            const totalCharges = successfulCharges.length;
+            const totalRevenue = successfulCharges.reduce((sum, c) => sum + c.amount, 0) / 100;
+            const totalRefunded = successfulCharges.reduce((sum, c) => sum + c.amount_refunded, 0) / 100;
             const refundRate = totalRevenue > 0 ? (totalRefunded / totalRevenue * 100) : 0;
             
             // Update UI
@@ -1821,7 +1823,7 @@
         async function loadAccountBreakdown(startTs, endTs) {
             const { data: charges } = await supabase
                 .from('stripe_charges')
-                .select('stripe_account_id, amount, amount_refunded, payment_provider')
+                .select('stripe_account_id, amount, amount_refunded, payment_provider, status')
                 .gte('created', startTs)
                 .lte('created', endTs);
             
@@ -1830,6 +1832,11 @@
             // Group by account
             const byAccount = {};
             charges.forEach(charge => {
+                // Only include succeeded transactions
+                if (charge.status !== 'succeeded') {
+                    return;
+                }
+                
                 const acc = charge.stripe_account_id;
                 if (!byAccount[acc]) {
                     byAccount[acc] = {
@@ -1955,8 +1962,10 @@
                 const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
                 const twelveMonthsAgoTs = Math.floor(twelveMonthsAgo.getTime() / 1000);
                 
-                // Filter charges to last 12 months
-                const last12MonthsCharges = charges.filter(c => c.created >= twelveMonthsAgoTs);
+                // Filter charges to last 12 months and only include succeeded transactions
+                const last12MonthsCharges = charges.filter(c => 
+                    c.created >= twelveMonthsAgoTs && c.status === 'succeeded'
+                );
                 
                 // Initialize all 12 months with zero
                 const monthlyData = {};
@@ -1996,8 +2005,10 @@
                 thirtyDaysAgo.setHours(0, 0, 0, 0);
                 const thirtyDaysAgoTs = Math.floor(thirtyDaysAgo.getTime() / 1000);
                 
-                // Filter charges to last 30 days
-                const last30DaysCharges = charges.filter(c => c.created >= thirtyDaysAgoTs);
+                // Filter charges to last 30 days and only include succeeded transactions
+                const last30DaysCharges = charges.filter(c => 
+                    c.created >= thirtyDaysAgoTs && c.status === 'succeeded'
+                );
                 
                 // Group data by day
                 const dailyData = {};
@@ -2350,12 +2361,13 @@
                 disputesQuery = disputesQuery.eq('stripe_account_id', accountFilter);
             }
             
-            // Fetch total charges for dispute rate calculation
+            // Fetch total charges for dispute rate calculation (only succeeded)
             let chargesQuery = supabase
                 .from('stripe_charges')
                 .select('amount')
                 .gte('created', startTs)
-                .lte('created', endTs);
+                .lte('created', endTs)
+                .eq('status', 'succeeded');
             
             if (accountFilter) {
                 chargesQuery = chargesQuery.eq('stripe_account_id', accountFilter);
