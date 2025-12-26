@@ -30,13 +30,22 @@ Deno.serve(async (req)=>{
     }
     console.log(`Admin ${user.email} initiating Interac e-Transfer`);
     // Parse request body
-    const { account_id, recipient_email, amount, recipient_name, security_question, security_answer, message, currency = 'CAD' } = await req.json();
+    const { account_id, recipient_email, amount, recipient_name, security_question, security_answer, message, currency = 'CAD', beneficiary_id, save_as_contact = false // Whether to save as new beneficiary
+     } = await req.json();
     // Validate required fields
-    if (!account_id || !recipient_email || !amount || !security_question || !security_answer) {
-      throw new Error('Missing required fields');
+    if (!account_id || !amount) {
+      throw new Error('Missing required fields: account_id and amount');
+    }
+    // Either beneficiary_id OR recipient_email must be provided
+    if (!beneficiary_id && !recipient_email) {
+      throw new Error('Either beneficiary_id or recipient_email is required');
     }
     if (amount <= 0) {
       throw new Error('Amount must be greater than 0');
+    }
+    // Security question/answer required if not using existing beneficiary
+    if (!beneficiary_id && (!security_question || !security_answer)) {
+      throw new Error('Security question and answer required for new recipients');
     }
     // Get account details from payment_accounts
     const { data: account, error: accountError } = await supabaseClient.from('payment_accounts').select('account_id, account_name, secret_key_name').eq('account_id', account_id).eq('payment_provider', 'airwallex').eq('is_active', true).single();
@@ -47,8 +56,8 @@ Deno.serve(async (req)=>{
       throw new Error('Account has no API credentials configured');
     }
     // Construct secret names
-    const clientIdSecretName = account.secret_key_name; // AIRWALLEX_ACCOUNT_N_KEY
-    const apiKeySecretName = account.secret_key_name.replace('_KEY', '_SECRET'); // AIRWALLEX_ACCOUNT_N_SECRET
+    const clientIdSecretName = account.secret_key_name;
+    const apiKeySecretName = account.secret_key_name.replace('_KEY', '_SECRET');
     const clientId = Deno.env.get(clientIdSecretName);
     const apiKey = Deno.env.get(apiKeySecretName);
     if (!clientId || !apiKey) {
@@ -69,13 +78,62 @@ Deno.serve(async (req)=>{
     }
     const authData = await authResponse.json();
     const token = authData.token;
-    // Create payout via Airwallex
-    // Note: Airwallex uses their payout API for Interac e-Transfers
-    const payoutPayload = {
+    let beneficiaryIdToUse = beneficiary_id;
+    let createdNewBeneficiary = false;
+    // If save_as_contact is true and no beneficiary_id provided, create a new beneficiary
+    if (save_as_contact && !beneficiary_id && recipient_email) {
+      console.log(`Creating new beneficiary: ${recipient_email}`);
+      const firstName = recipient_name ? recipient_name.split(' ')[0] : 'Recipient';
+      const lastName = recipient_name ? recipient_name.split(' ').slice(1).join(' ') || 'User' : 'User';
+      const createBeneficiaryPayload = {
+        email: recipient_email,
+        first_name: firstName,
+        last_name: lastName,
+        nickname: recipient_name || `${firstName} ${lastName}`,
+        entity_type: 'PERSONAL',
+        address: {
+          country_code: 'CA'
+        },
+        payment_methods: [
+          'INTERAC'
+        ]
+      };
+      const createBeneficiaryResponse = await fetch('https://api.airwallex.com/api/v1/beneficiaries/create', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(createBeneficiaryPayload)
+      });
+      if (createBeneficiaryResponse.ok) {
+        const beneficiaryData = await createBeneficiaryResponse.json();
+        beneficiaryIdToUse = beneficiaryData.id;
+        createdNewBeneficiary = true;
+        console.log(`Beneficiary created with ID: ${beneficiaryIdToUse}`);
+      } else {
+        const errorText = await createBeneficiaryResponse.text();
+        console.warn(`Failed to create beneficiary: ${errorText}`);
+      // Continue anyway - we'll use email directly in payout
+      }
+    }
+    // Create transfer via Airwallex Transfers API
+    console.log(`Creating transfer with currency: ${currency}, amount: ${amount}`);
+    const transferPayload = {
       request_id: `etransfer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      source_currency: currency,
-      source_amount: amount,
-      beneficiary: {
+      source_currency: currency.toUpperCase(),
+      transfer_currency: currency.toUpperCase(),
+      transfer_method: 'LOCAL',
+      transfer_amount: parseFloat(amount),
+      reference: message || `e-Transfer from ${account.account_name || account_id}`,
+      reason: message || 'Payment'
+    };
+    // Use beneficiary_id if available, otherwise use beneficiary details
+    if (beneficiaryIdToUse) {
+      transferPayload.beneficiary_id = beneficiaryIdToUse;
+    } else {
+      // For inline beneficiary without ID - simplified structure
+      transferPayload.beneficiary = {
         email: recipient_email,
         first_name: recipient_name ? recipient_name.split(' ')[0] : 'Recipient',
         last_name: recipient_name ? recipient_name.split(' ').slice(1).join(' ') || 'User' : 'User',
@@ -83,52 +141,60 @@ Deno.serve(async (req)=>{
         address: {
           country_code: 'CA'
         }
-      },
-      payment_method: {
-        type: 'INTERAC',
-        interac: {
-          security_question: security_question,
-          security_answer: security_answer
-        }
-      },
-      description: message || `e-Transfer from ${account.account_name || account_id}`
-    };
-    console.log('Creating Airwallex payout:', JSON.stringify(payoutPayload, null, 2));
-    const payoutResponse = await fetch('https://api.airwallex.com/api/v1/payouts/create', {
+      };
+    }
+    console.log('Creating Airwallex transfer:', JSON.stringify(transferPayload, null, 2));
+    // Airwallex Transfers API endpoint (correct endpoint for Interac e-Transfers)
+    const transferResponse = await fetch('https://api.airwallex.com/api/v1/transfers/create', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(payoutPayload)
+      body: JSON.stringify(transferPayload)
     });
-    if (!payoutResponse.ok) {
-      const errorText = await payoutResponse.text();
-      console.error('Payout error response:', errorText);
-      throw new Error(`Failed to create payout: ${errorText}`);
+    if (!transferResponse.ok) {
+      const errorText = await transferResponse.text();
+      console.error('Transfer API error:');
+      console.error('  Status:', transferResponse.status);
+      console.error('  Status Text:', transferResponse.statusText);
+      console.error('  Response:', errorText);
+      console.error('  Request URL:', 'https://api.airwallex.com/api/v1/transfers/create');
+      // Try to parse as JSON for better error message
+      let errorDetails;
+      try {
+        errorDetails = JSON.parse(errorText);
+      } catch  {
+        errorDetails = errorText;
+      }
+      throw new Error(`Failed to create transfer (${transferResponse.status}): ${JSON.stringify(errorDetails)}`);
     }
-    const payoutData = await payoutResponse.json();
-    console.log('Payout created:', JSON.stringify(payoutData, null, 2));
+    const transferData = await transferResponse.json();
+    console.log('Transfer created:', JSON.stringify(transferData, null, 2));
     // Log the e-Transfer in audit log
     await supabaseClient.from('etransfer_audit_log').insert({
       account_id: account_id,
-      recipient_email: recipient_email,
+      recipient_email: recipient_email || 'via_beneficiary',
       amount: amount,
       currency: currency,
-      payout_id: payoutData.id,
-      status: payoutData.status || 'PENDING',
+      payout_id: transferData.id,
+      status: transferData.status || 'PENDING',
       created_by: user.id,
       details: {
         recipient_name,
         message,
-        payout_data: payoutData
+        beneficiary_id: beneficiaryIdToUse,
+        created_new_beneficiary: createdNewBeneficiary,
+        transfer_data: transferData
       }
     });
     return new Response(JSON.stringify({
       success: true,
-      payout_id: payoutData.id,
-      status: payoutData.status,
-      message: 'e-Transfer initiated successfully'
+      transfer_id: transferData.id,
+      status: transferData.status,
+      beneficiary_id: beneficiaryIdToUse,
+      created_new_beneficiary: createdNewBeneficiary,
+      message: createdNewBeneficiary ? 'e-Transfer initiated and contact saved successfully' : 'e-Transfer initiated successfully'
     }), {
       headers: {
         ...corsHeaders,

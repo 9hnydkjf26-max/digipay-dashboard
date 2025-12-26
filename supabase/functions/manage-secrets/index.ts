@@ -62,7 +62,6 @@ Deno.serve(async (req)=>{
     }
     const managementApiUrl = `https://api.supabase.com/v1/projects/${supabaseProjectRef}/secrets`;
     let result;
-    let auditAction = action;
     switch(action){
       case 'list':
         {
@@ -97,9 +96,10 @@ Deno.serve(async (req)=>{
           if (!name || !value) {
             throw new Error('Missing required fields: name and value');
           }
-          // Validate secret name format (PROCESSOR_ACCOUNT_N_KEY format)
-          if (!/^(STRIPE|AIRWALLEX)_ACCOUNT_[0-9]+_KEY$/.test(name)) {
-            throw new Error('Secret name must follow format: PROCESSOR_ACCOUNT_N_KEY (e.g., STRIPE_ACCOUNT_1_KEY)');
+          // Validate secret name format (PROCESSOR_ACCOUNT_N_KEY or PROCESSOR_ACCOUNT_N_SECRET format)
+          // Updated regex to support both _KEY and _SECRET suffixes for Airwallex accounts
+          if (!/^(STRIPE|AIRWALLEX)_ACCOUNT_[0-9]+_(KEY|SECRET)$/.test(name)) {
+            throw new Error('Secret name must follow format: PROCESSOR_ACCOUNT_N_KEY or PROCESSOR_ACCOUNT_N_SECRET (e.g., STRIPE_ACCOUNT_1_KEY, AIRWALLEX_ACCOUNT_1_SECRET)');
           }
           // Set/update secret
           const response = await fetch(managementApiUrl, {

@@ -1,3 +1,4 @@
+// Airwallex Balance Checker Edge Function
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -200,7 +201,8 @@ Deno.serve(async (req)=>{
   };
   console.log('Primary balance selected:', JSON.stringify(primaryBalance, null, 2));
   return {
-    account_id: account.name || account.id,
+    account_id: account.id,
+    account_name: account.name || account.id,
     payment_provider: 'airwallex',
     primary_currency: primaryBalance.currency,
     available_balance: primaryBalance.available,
