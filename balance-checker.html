@@ -992,25 +992,17 @@
             }
             
             statsRow.innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-label">Total Accounts</div>
-                    <div class="stat-value">${totalAccounts}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Successful</div>
-                    <div class="stat-value" style="color: var(--color-success);">${successful}</div>
-                </div>
-                ${failed > 0 ? `
-                <div class="stat-card">
-                    <div class="stat-label">Failed</div>
-                    <div class="stat-value" style="color: var(--color-error);">${failed}</div>
-                </div>
-                ` : ''}
-                <div class="stat-card">
-                    <div class="stat-label">Total Balance (CAD)</div>
-                    <div class="stat-value">${formatCurrency(totalBalance, 'CAD')}</div>
-                </div>
-            `;
+    ${failed > 0 ? `
+    <div class="stat-card">
+        <div class="stat-label">Failed</div>
+        <div class="stat-value" style="color: var(--color-error);">${failed}</div>
+    </div>
+    ` : ''}
+    <div class="stat-card">
+        <div class="stat-label">Total Balance (CAD)</div>
+        <div class="stat-value">${formatCurrency(totalBalance, 'CAD')}</div>
+    </div>
+`;
         }
         
         function displayBalances(balances) {
@@ -1079,13 +1071,7 @@
                 document.getElementById('recipientName').value = '';
                 document.getElementById('recipientEmail').removeAttribute('required');
                 
-                // DEBUG: Show what account we're using
-                if (selectedAccount) {
-                    console.log('=== DEBUG: Account Information ===');
-                    console.log('Account ID:', selectedAccount.account_id);
-                    console.log('Full account object:', selectedAccount);
-                    alert(`Will search for contacts in account: ${selectedAccount.account_id}\n\nCheck console for full details.`);
-                }
+                
             } else {
                 document.getElementById('recipientEmail').setAttribute('required', 'required');
             }
@@ -1161,10 +1147,13 @@
                                       : contact.first_name || contact.last_name || 'Unknown Contact');
                 
                 // Get email - Airwallex beneficiaries may have email in different places
-                const displayEmail = contact.email || 
-                                   contact.bank_details?.email || 
-                                   contact.payment_methods?.[0]?.email ||
-                                   'No email provided';
+                const displayEmail = contact.beneficiary?.additional_info?.personal_email ||  // ← Added beneficiary wrapper!
+                   contact.beneficiary?.bank_details?.account_routing_value1 ||  // ← Backup email location
+                   contact.additional_info?.personal_email || 
+                   contact.email || 
+                   contact.bank_details?.email || 
+                   contact.payment_methods?.[0]?.email ||
+                   'No email provided';
                 
                 return `
                     <div class="contact-item" onclick="selectContact('${contact.id}')">
