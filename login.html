@@ -1,74 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
-<!--
-    IMPORTANT: This file must be served via HTTP/HTTPS, not opened directly as a file.
-    
-    To test locally, use one of these methods:
-    1. Python: python -m http.server 8000
-    2. Node.js: npx http-server
-    3. PHP: php -S localhost:8000
-    
-    Then visit: http://localhost:8000/login.html
--->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Portal - Sign In</title>
+    <title>Sign In - Data Portal</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
         :root {
-            --color-bg: #f8f9fa;
-            --color-white: #ffffff;
-            --color-text: #1a1a1a;
-            --color-text-secondary: #6b7280;
-            --color-text-tertiary: #9ca3af;
-            --color-primary: #06AED4;
-            --color-primary-hover: #0598ba;
-            --color-border: #e5e7eb;
-            --color-error: #dc2626;
-            --radius: 8px;
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --color-bg: #f8fafc;
+            --color-card: #ffffff;
+            --color-text: #1e293b;
+            --color-text-secondary: #64748b;
+            --color-border: #e2e8f0;
+            --color-primary: #06aed4;
+            --color-primary-hover: #0891b2;
+            --color-error: #cd4246;
         }
 
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: var(--color-bg);
             color: var(--color-text);
             line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
         }
 
         .login-container {
-            width: 100%;
-            max-width: 800px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
         }
 
         .card {
-            background: var(--color-white);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
-            overflow: hidden;
+            background: var(--color-card);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 440px;
         }
 
         .card-content {
-            padding: 60px 80px;
+            padding: 48px;
         }
 
         .logo-container {
@@ -220,7 +200,7 @@
                             id="loginPassword" 
                             name="password"
                             required 
-                            placeholder="ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢" 
+                            placeholder="Enter your password" 
                             aria-label="Password"
                             autocomplete="current-password">
                     </div>
