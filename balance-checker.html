@@ -1236,7 +1236,11 @@
                     return;
                 }
                 beneficiaryId = selectedContact.id;
-                recipientEmail = selectedContact.email;
+                recipientEmail = selectedContact.additional_info?.personal_email ||
+                selectedContact.email || 
+                selectedContact.bank_details?.email || 
+                selectedContact.payment_methods?.[0]?.email ||
+                '';
                 recipientName = selectedContact.nickname || `${selectedContact.first_name} ${selectedContact.last_name}`;
             } else {
                 recipientEmail = document.getElementById('recipientEmail').value.trim();
