@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Balance Checker - Secure</title>
+    <title>Airwallex Balance & Transfers</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -15,7 +17,6 @@
         }
         
         :root {
-            /* Light Mode (Default) */
             --color-text: #0a2540;
             --color-text-secondary: #425466;
             --color-text-tertiary: #697386;
@@ -26,6 +27,7 @@
             --color-primary: #635bff;
             --color-primary-hover: #5851ec;
             --color-success: #00d924;
+            --color-warning: #f59e0b;
             --color-error: #cd4246;
             --shadow-sm: 0 1px 3px rgba(50, 50, 93, 0.04);
             --shadow-md: 0 7px 14px rgba(50, 50, 93, 0.09), 0 3px 6px rgba(0, 0, 0, 0.07);
@@ -33,7 +35,6 @@
             --sidebar-width: 240px;
         }
         
-        /* Dark Mode */
         @media (prefers-color-scheme: dark) {
             :root {
                 --color-text: #e3e8ee;
@@ -46,6 +47,7 @@
                 --color-primary: #7c3aed;
                 --color-primary-hover: #6d28d9;
                 --color-success: #10b981;
+                --color-warning: #f59e0b;
                 --color-error: #ef4444;
                 --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
                 --shadow-md: 0 7px 14px rgba(0, 0, 0, 0.4), 0 3px 6px rgba(0, 0, 0, 0.3);
@@ -56,22 +58,23 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--color-bg);
             color: var(--color-text);
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
+            line-height: 1.5;
+        }
+        
+        #authenticatedContent {
             display: flex;
+            width: 100%;
             min-height: 100vh;
         }
         
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
+        #authenticatedContent.hidden {
+            display: none;
         }
         
-        /* Sidebar */
+        .hidden {
+            display: none !important;
+        }
+        
         .sidebar {
             width: var(--sidebar-width);
             background: var(--color-white);
@@ -94,16 +97,6 @@
             font-size: 20px;
             font-weight: 600;
             color: var(--color-text);
-            letter-spacing: -0.02em;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .sidebar-subtitle {
-            font-size: 12px;
-            color: var(--color-text-tertiary);
-            margin-top: 4px;
         }
         
         .sidebar-nav {
@@ -124,7 +117,6 @@
             color: var(--color-text-secondary);
             text-decoration: none;
             transition: all 0.15s;
-            cursor: pointer;
         }
         
         .nav-item:hover {
@@ -163,21 +155,17 @@
             height: 32px;
             border-radius: 50%;
             background: var(--color-primary);
-            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            color: white;
             font-weight: 600;
+            font-size: 14px;
         }
         
         .user-info-sidebar {
             flex: 1;
             min-width: 0;
-            min-height: 36px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
         }
         
         .user-name {
@@ -194,35 +182,32 @@
             color: var(--color-text-tertiary);
         }
         
-        /* Main Content */
         .main-wrapper {
             margin-left: var(--sidebar-width);
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-            max-width: calc(100vw - var(--sidebar-width));
-            animation: fadeIn 0.3s ease-in;
+            min-height: 100vh;
+            background: var(--color-bg);
+            width: 100%;
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             width: 100%;
             margin: 0 auto;
             padding: 40px 24px;
         }
         
         .header {
-            margin-bottom: 32px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
         }
         
         h1 {
             font-size: 28px;
             font-weight: 600;
-            letter-spacing: -0.02em;
             margin-bottom: 4px;
         }
         
@@ -231,12 +216,20 @@
             color: var(--color-text-tertiary);
         }
         
-        .user-info {
-            font-size: 13px;
-            color: var(--color-text-secondary);
+        .header-actions {
             display: flex;
-            align-items: center;
             gap: 12px;
+        }
+        
+        .admin-badge {
+            display: inline-block;
+            background: var(--color-primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 12px;
         }
         
         .card {
@@ -244,63 +237,96 @@
             border: 1px solid var(--color-border);
             border-radius: var(--radius);
             box-shadow: var(--shadow-sm);
-            overflow: visible;
-            margin-bottom: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .card-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
         }
         
         .card-content {
             padding: 24px;
         }
         
-        .login-screen {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 24px;
+        .balance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
         }
         
+        .balance-card {
+            background: var(--color-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: box-shadow 0.2s;
+        }
         
-        .form-group {
+        .balance-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+        
+        .balance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 16px;
         }
         
-        .form-group > label {
-            display: block;
-            font-size: 13px;
+        .account-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+        
+        .provider-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
             font-weight: 500;
-            color: var(--color-text-secondary);
+            background: rgba(0, 217, 36, 0.1);
+            color: var(--color-success);
+        }
+        
+        .balance-amount {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--color-text);
             margin-bottom: 8px;
         }
         
-        input, select {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--color-border);
-            border-radius: 6px;
-            font-size: 14px;
-            font-family: inherit;
-            color: var(--color-text);
-            background: var(--color-card);
-            transition: all 0.15s;
+        .balance-label {
+            font-size: 12px;
+            color: var(--color-text-tertiary);
+            margin-bottom: 16px;
         }
         
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        .balance-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--color-border);
         }
         
         .btn {
-            width: 100%;
             padding: 10px 16px;
             border: none;
-            border-radius: 6px;
+            border-radius: var(--radius);
+            font-family: inherit;
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.15s;
-            font-family: inherit;
+            transition: all 0.2s;
         }
         
         .btn-primary {
@@ -312,24 +338,89 @@
             background: var(--color-primary-hover);
         }
         
-        .btn-secondary {
-            background: transparent;
-            border: 1px solid var(--color-border);
-            color: var(--color-text-secondary);
-            width: auto;
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         
-        .btn-danger {
-            background: var(--color-error);
-            color: white;
+        .btn-secondary {
+            background: transparent;
+            color: var(--color-text);
+            border: 1px solid var(--color-border);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--color-bg);
+        }
+        
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+        
+        .btn-full {
+            width: 100%;
+        }
+        
+        .currency-list {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--color-border);
+        }
+        
+        .currency-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+        
+        .currency-code {
+            font-weight: 600;
+            color: var(--color-text);
+        }
+        
+        .currency-amount {
+            color: var(--color-text-secondary);
+        }
+        
+        .loading-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--color-text-secondary);
+        }
+        
+        .spinner {
+            border: 3px solid var(--color-border);
+            border-top: 3px solid var(--color-primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--color-text-secondary);
+        }
+        
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
         }
         
         .alert {
             padding: 12px 16px;
-            border-radius: 6px;
-            font-size: 13px;
-            margin-bottom: 16px;
-            border: 1px solid;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
             display: none;
         }
         
@@ -337,69 +428,144 @@
             display: block;
         }
         
-        .alert-error {
-            background: rgba(205, 66, 70, 0.05);
-            border-color: rgba(205, 66, 70, 0.2);
-            color: #a82124;
-        }
-        
         .alert-success {
-            background: rgba(0, 217, 36, 0.05);
-            border-color: rgba(0, 217, 36, 0.2);
-            color: #007817;
+            background: rgba(0, 217, 36, 0.1);
+            border: 1px solid var(--color-success);
+            color: var(--color-success);
         }
         
-        .hidden {
-            display: none !important;
+        .alert-error {
+            background: rgba(205, 66, 70, 0.1);
+            border: 1px solid var(--color-error);
+            color: var(--color-error);
         }
         
-        /* Login Screen */
-        .login-screen {
-            width: 100%;
-            min-height: 100vh;
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--color-warning);
+            color: var(--color-warning);
+        }
+        
+        /* Modal styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-overlay.show {
+            display: flex;
+        }
+        
+        .modal {
+            background: var(--color-card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--color-text-tertiary);
+            padding: 0;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            border-radius: 4px;
         }
         
-        /* Authenticated Content */
-        #authenticatedContent {
-            display: flex;
+        .modal-close:hover {
+            background: var(--color-bg);
+        }
+        
+        .modal-content {
+            padding: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        input[type="text"],
+        input[type="email"],
+        input[type="number"],
+        select,
+        textarea {
             width: 100%;
-            min-height: 100vh;
+            padding: 10px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            font-family: inherit;
+            font-size: 14px;
+            background: var(--color-white);
+            color: var(--color-text);
         }
         
-        #authenticatedContent.hidden {
-            display: none;
+        .input-hint {
+            margin-top: 4px;
+            font-size: 12px;
+            color: var(--color-text-tertiary);
         }
         
-        .loading {
-            text-align: center;
-            padding: 40px;
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
         }
         
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--color-border);
-            border-top-color: var(--color-primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto;
+        .stat-card {
+            background: var(--color-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            padding: 16px;
         }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .stat-label {
+            font-size: 12px;
+            color: var(--color-text-tertiary);
+            margin-bottom: 8px;
         }
         
-        /* Mobile Styles */
-        .mobile-header {
-            display: none;
-        }
-        
-        .mobile-overlay {
-            display: none;
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--color-text);
         }
         
         @media (max-width: 768px) {
@@ -414,468 +580,251 @@
             
             .main-wrapper {
                 margin-left: 0;
-                max-width: 100vw;
             }
             
-            .mobile-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 16px;
-                background: var(--color-white);
-                border-bottom: 1px solid var(--color-border);
-                position: sticky;
-                top: 0;
-                z-index: 90;
+            .balance-grid {
+                grid-template-columns: 1fr;
             }
-            
-            .hamburger {
-                background: none;
-                border: none;
-                cursor: pointer;
-                padding: 8px;
-                display: flex;
-                flex-direction: column;
-                gap: 4px;
-            }
-            
-            .hamburger span {
-                width: 20px;
-                height: 2px;
-                background: var(--color-text);
-                transition: all 0.3s;
-            }
-            
-            .mobile-overlay {
-                display: block;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                opacity: 0;
-                pointer-events: none;
-                transition: opacity 0.3s ease;
-                z-index: 90;
-            }
-            
-            .mobile-overlay.active {
-                opacity: 1;
-                pointer-events: all;
-            }
-            
-            .container {
-                padding: 24px 16px;
-            }
-            
-            h1 {
-                font-size: 24px;
-            }
-        }
-
-        /* Balance Checker Specific Styles */
-        .balance-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 16px;
-            margin-top: 24px;
-        }
-
-        .balance-card {
-            background: var(--color-card);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius);
-            padding: 20px;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .balance-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        .account-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--color-text);
-        }
-
-        .provider-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 500;
-            background: rgba(99, 91, 255, 0.1);
-            color: var(--color-primary);
-        }
-
-        .balance-amount {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--color-text);
-            margin-bottom: 8px;
-        }
-
-        .balance-label {
-            font-size: 12px;
-            color: var(--color-text-tertiary);
-            margin-bottom: 16px;
-        }
-
-        .balance-details {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding-top: 16px;
-            border-top: 1px solid var(--color-border);
-        }
-
-        .balance-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-        }
-
-        .balance-row-label {
-            color: var(--color-text-secondary);
-        }
-
-        .balance-row-value {
-            font-weight: 500;
-            color: var(--color-text);
-        }
-
-        .currency-list {
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid var(--color-border);
-        }
-
-        .currency-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            font-size: 12px;
-        }
-
-        .currency-code {
-            font-weight: 600;
-            color: var(--color-text);
-        }
-
-        .currency-amount {
-            color: var(--color-text-secondary);
-        }
-
-        .refresh-time {
-            font-size: 11px;
-            color: var(--color-text-tertiary);
-            text-align: center;
-            margin-top: 8px;
-        }
-
-        .error-message {
-            background: rgba(205, 66, 70, 0.05);
-            border: 1px solid rgba(205, 66, 70, 0.2);
-            border-radius: 6px;
-            padding: 12px;
-            margin-top: 16px;
-        }
-
-        .error-text {
-            font-size: 13px;
-            color: var(--color-error);
-        }
-
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .stat-card {
-            background: var(--color-card);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius);
-            padding: 16px;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: var(--color-text-tertiary);
-            margin-bottom: 8px;
-        }
-
-        .stat-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--color-text);
         }
     </style>
 </head>
 <body>
-    <!-- Login Screen (shown when not authenticated) -->
-    <div id="loginScreen" class="login-screen hidden">
-        <!-- Login screen managed by login.html redirect -->
-    </div>
-
-    <!-- Authenticated Content (shown when authenticated) -->
     <div id="authenticatedContent" class="hidden">
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo">
-                <span style="font-weight: 700; font-size: 18px;">DigiPay</span>
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">Dashboard</div>
             </div>
-        </div>
-        
-        <nav class="sidebar-nav">
-            <a href="stripe-refund-interface-secure.html" class="nav-item" aria-label="Navigate to Refunds page">
-                <span class="nav-item-icon">Ã°Å¸â€™Â¸</span>
-                Refunds
-            </a>
-            <a href="reports.html" class="nav-item" aria-label="Navigate to Reports page">
-                <span class="nav-item-icon">Ã°Å¸â€œÅ </span>
-                Reports
-            </a>
-            <a href="warmup-compliance.html" class="nav-item" aria-label="Navigate to Warmup Compliance page">
-                <span class="nav-item-icon">Ã°Å¸â€Â¥</span>
-                Warmup Compliance
-            </a>
-            <a href="balance-checker.html" class="nav-item active" aria-label="Navigate to Balance Checker page" aria-current="page">
-                <span class="nav-item-icon">Ã°Å¸â€™Â°</span>
-                Balance Checker
-            </a>
-        </nav>
-        
-        <div class="sidebar-footer">
-            <div class="user-profile">
-                <div class="user-avatar" id="sidebarUserAvatar"></div>
-                <div class="user-info-sidebar">
-                    <div class="user-name" id="sidebarUserName"></div>
-                    <div class="user-role">Admin</div>
-                </div>
-            </div>
-            <button class="btn btn-secondary" style="width: 100%;" onclick="handleLogout()">
-                Sign out
-            </button>
-        </div>
-    </div>
-
-    <!-- Main Content Wrapper -->
-    <div class="main-wrapper">
-    <!-- Mobile Overlay -->
-    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileSidebar()"></div>
-    
-    <!-- Mobile Header -->
-    <div class="mobile-header">
-        <button class="hamburger" onclick="toggleMobileSidebar()" aria-label="Toggle menu">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-weight: 700; font-size: 16px;">DigiPay</span>
-        </div>
-    </div>
-
-    <!-- Main Container -->
-    <div class="container">
-        <!-- Page Header -->
-        <div class="header">
-            <div>
-                <h1>Airwallex Balance Checker</h1>
-                <p class="subtitle">View real-time balances across all Airwallex accounts</p>
-            </div>
-            <button class="btn btn-primary" style="width: auto;" onclick="refreshBalances()">
-                Ã°Å¸â€â€ž Refresh Balances
-            </button>
-        </div>
-
-        <!-- Alert (for displaying messages) -->
-        <div id="alert" class="alert"></div>
-
-        <!-- Stats Row -->
-        <div class="stats-row" id="statsRow">
-            <!-- Stats will be populated here -->
-        </div>
-
-        <!-- Loading State -->
-        <div class="loading hidden" id="loadingState">
-            <div class="spinner"></div>
-            <p style="margin-top: 16px; font-size: 14px; color: var(--color-text-secondary);">Loading balances...</p>
-        </div>
-
-        <!-- Balance Cards Grid -->
-        <div class="balance-grid" id="balanceGrid">
-            <!-- Balance cards will be populated here -->
-        </div>
-
-    </div>
-    </div> <!-- Close main-wrapper -->
-    </div> <!-- Close authenticatedContent -->
-
-    <script type="module">
-        // ========================================
-        // CONFIGURATION - UPDATE THESE
-        // ========================================
-        const SUPABASE_URL = 'https://hzdybwclwqkcobpwxzoo.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6ZHlid2Nsd3FrY29icHd4em9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzU4ODQsImV4cCI6MjA4MTc1MTg4NH0.e0mSI7Qp9sRaclOwP61guBNtwTVHYXc-TtVaUON67QU';
-        
-        // Import Supabase client
-        import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-        
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        // ========================================
-        // AUTHENTICATION & SESSION MANAGEMENT
-        // ========================================
-        
-        // Check auth on load
-        window.addEventListener('DOMContentLoaded', async () => {
-            console.log('Page loaded, checking session...');
             
-            try {
-                const { data: { session }, error } = await supabase.auth.getSession();
-                console.log('Session check:', { session, error });
-                
-                if (!session) {
-                    // No session - redirect to login page
-                    console.log('No session, redirecting to login');
-                    window.location.href = 'login.html?redirect=balance-checker.html';
-                    return;
-                }
-                
-                console.log('Session found, showing authenticated content');
-                // Has session - show authenticated content
-                showAuthenticatedContent();
-                showMainApp(session.user);
-            } catch (err) {
-                console.error('Error during initialization:', err);
-                showAlert('Failed to initialize page: ' + err.message, 'error');
+            <nav class="sidebar-nav">
+                <a href="stripe-refund-interface-secure.html" class="nav-item">
+                    <span class="nav-item-icon">💸</span>
+                    Refunds
+                </a>
+                <a href="reports.html" class="nav-item">
+                    <span class="nav-item-icon">📊</span>
+                    Reports
+                </a>
+                <a href="warmup-compliance.html" class="nav-item">
+                    <span class="nav-item-icon">🔥</span>
+                    Warmup Compliance
+                </a>
+                <a href="balance-checker.html" class="nav-item active">
+                    <span class="nav-item-icon">💰</span>
+                    Balances
+                </a>
+                <a href="payment-accounts-manager.html" class="nav-item">
+                    <span class="nav-item-icon">🏦</span>
+                    Payment Accounts
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar" id="sidebarUserAvatar"></div>
+                    <div class="user-info-sidebar">
+                        <div class="user-name" id="sidebarUserName"></div>
+                        <div class="user-role">Admin</div>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" style="width: 100%;" onclick="handleLogout()">
+                    Sign out
+                </button>
+            </div>
+        </div>
+
+        <div class="main-wrapper">
+            <div class="container">
+                <div class="header">
+                    <div>
+                        <h1>
+                            💰 Airwallex Balances
+                            <span class="admin-badge">Admin</span>
+                        </h1>
+                        <p class="subtitle">View balances and send Interac e-Transfers</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" onclick="refreshBalances()">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <div id="alertContainer"></div>
+
+                <!-- Stats Row -->
+                <div class="stats-row" id="statsRow"></div>
+
+                <!-- Loading State -->
+                <div class="loading-state hidden" id="loadingState">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 16px;">Loading balances...</p>
+                </div>
+
+                <!-- Balance Cards Grid -->
+                <div class="balance-grid" id="balanceGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- e-Transfer Modal -->
+    <div class="modal-overlay" id="etransferModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Send Interac e-Transfer</div>
+                <button class="modal-close" onclick="closeEtransferModal()">×</button>
+            </div>
+            <div class="modal-content">
+                <form id="etransferForm" onsubmit="handleSendEtransfer(event)">
+                    <div class="form-group">
+                        <label>From Account</label>
+                        <input type="text" id="fromAccount" disabled style="background: var(--color-bg);">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="recipientEmail">Recipient Email *</label>
+                        <input 
+                            type="email" 
+                            id="recipientEmail" 
+                            placeholder="recipient@example.com"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="amount">Amount (CAD) *</label>
+                        <input 
+                            type="number" 
+                            id="amount" 
+                            placeholder="0.00"
+                            step="0.01"
+                            min="0.01"
+                            required
+                        >
+                        <div class="input-hint">Available balance: <span id="availableBalance">$0.00</span></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="recipientName">Recipient Name</label>
+                        <input 
+                            type="text" 
+                            id="recipientName" 
+                            placeholder="Optional"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="securityQuestion">Security Question *</label>
+                        <input 
+                            type="text" 
+                            id="securityQuestion" 
+                            placeholder="What is your favorite color?"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="securityAnswer">Security Answer *</label>
+                        <input 
+                            type="text" 
+                            id="securityAnswer" 
+                            placeholder="Answer to security question"
+                            required
+                        >
+                        <div class="input-hint">Recipient will need this to deposit the transfer</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="message">Message (Optional)</label>
+                        <textarea 
+                            id="message" 
+                            placeholder="Message to recipient"
+                            rows="3"
+                        ></textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 12px;">
+                        <button type="button" class="btn btn-secondary btn-full" onclick="closeEtransferModal()">
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-full" id="sendEtransferBtn">
+                            Send e-Transfer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = window.SUPABASE_CONFIG?.url || '';
+        const SUPABASE_ANON_KEY = window.SUPABASE_CONFIG?.anonKey || '';
+        
+        if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+            document.body.innerHTML = '<div style="padding: 40px; text-align: center;"><h2>Config Error</h2><p>Please check config.js</p></div>';
+            throw new Error('Missing config');
+        }
+        
+        const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentBalances = [];
+        let selectedAccount = null;
+        
+        window.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await mySupabase.auth.getSession();
+            
+            if (!session) {
+                window.location.href = 'login.html?redirect=balance-checker.html';
+                return;
             }
+            
+            const userRole = session.user.user_metadata?.role || session.user.app_metadata?.role;
+            if (userRole !== 'admin') {
+                alert('Admin access required');
+                await mySupabase.auth.signOut();
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            document.getElementById('authenticatedContent').classList.remove('hidden');
+            updateSidebarUser(session.user.email);
+            loadBalances();
         });
         
-        // Handle logout
-        window.handleLogout = async () => {
-            await supabase.auth.signOut();
-            window.location.href = 'login.html';
-        };
-        
-        // Mobile sidebar functions
-        window.toggleMobileSidebar = function() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('mobileOverlay');
-            sidebar.classList.toggle('mobile-open');
-            overlay.classList.toggle('active');
-        };
-        
-        window.closeMobileSidebar = function() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('mobileOverlay');
-            sidebar.classList.remove('mobile-open');
-            overlay.classList.remove('active');
-        };
-        
-        function showMainApp(user) {
-            updateSidebarUser(user.email);
-            // Initialize your page-specific functionality here
-            initializePage();
-        }
-        
-        function showAuthenticatedContent() {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('authenticatedContent').classList.remove('hidden');
-        }
-        
-        // Update sidebar user info
         function updateSidebarUser(email) {
             const avatar = document.getElementById('sidebarUserAvatar');
             const name = document.getElementById('sidebarUserName');
-            
-            if (avatar && email) {
-                avatar.textContent = email.charAt(0).toUpperCase();
-            }
-            if (name && email) {
-                name.textContent = email.split('@')[0];
-            }
+            if (avatar && email) avatar.textContent = email.charAt(0).toUpperCase();
+            if (name && email) name.textContent = email;
         }
         
-        // Smooth page transitions
-        document.querySelectorAll('.nav-item').forEach(link => {
-            link.addEventListener('click', function(e) {
-                const href = this.getAttribute('href');
-                if (href && !href.startsWith('#')) {
-                    e.preventDefault();
-                    const mainWrapper = document.querySelector('.main-wrapper');
-                    if (mainWrapper) {
-                        mainWrapper.style.animation = 'fadeOut 0.2s ease-out';
-                        mainWrapper.style.opacity = '0';
-                    }
-                    setTimeout(() => {
-                        window.location.href = href;
-                    }, 200);
-                }
-            });
-        });
-        
-        // Add fadeOut animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeOut {
-                from { opacity: 1; }
-                to { opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-        
-        // ========================================
-        // PAGE-SPECIFIC FUNCTIONALITY
-        // ========================================
-        
-        let isLoading = false;
-        
-        function initializePage() {
-            // Load balances on page load
-            loadBalances();
-        }
-
-        window.refreshBalances = async function() {
-            if (isLoading) {
-                console.log('Already loading, skipping duplicate request');
-                return;
-            }
-            await loadBalances();
+        window.handleLogout = async () => {
+            await mySupabase.auth.signOut();
+            window.location.href = 'login.html';
         };
         
+        function showAlert(message, type = 'success') {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} show`;
+            alert.textContent = message;
+            container.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
+        }
+        
+        window.refreshBalances = loadBalances;
+        
         async function loadBalances() {
-            if (isLoading) {
-                console.log('Already loading, skipping duplicate request');
-                return;
-            }
-            
-            isLoading = true;
             const loadingState = document.getElementById('loadingState');
             const balanceGrid = document.getElementById('balanceGrid');
             const statsRow = document.getElementById('statsRow');
             
-            // Show loading
             loadingState.classList.remove('hidden');
             balanceGrid.innerHTML = '';
             statsRow.innerHTML = '';
             
             try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!session) {
-                    throw new Error('Not authenticated');
-                }
+                const { data: { session } } = await mySupabase.auth.getSession();
                 
-                // Call the balance checker edge function
                 const response = await fetch(`${SUPABASE_URL}/functions/v1/airwallex-balance-checker`, {
                     method: 'POST',
                     headers: {
@@ -891,35 +840,31 @@
                     throw new Error(data.error || 'Failed to load balances');
                 }
                 
-                // Hide loading
                 loadingState.classList.add('hidden');
                 
-                // Display stats
+                currentBalances = data.balances || [];
+                
                 displayStats(data);
                 
-                // Display balances
-                if (data.balances && data.balances.length > 0) {
-                    displayBalances(data.balances);
+                if (currentBalances.length > 0) {
+                    displayBalances(currentBalances);
                 } else {
-                    balanceGrid.innerHTML = '<div class="card"><div class="card-content">No Airwallex accounts configured or no balances available.</div></div>';
+                    balanceGrid.innerHTML = '<div class="card"><div class="card-content"><div class="empty-state"><div class="empty-state-icon">🏦</div><p>No Airwallex accounts configured</p></div></div></div>';
                 }
                 
-                // Show errors if any
                 if (data.errors && data.errors.length > 0) {
-                    console.error('Balance errors details:', JSON.stringify(data.errors, null, 2));
+                    console.error('Balance errors:', data.errors);
                     const errorDetails = data.errors.map(e => `${e.account_id}: ${e.error}`).join(', ');
-                    showAlert(`${data.errors.length} account(s) failed to load: ${errorDetails}`, 'error');
+                    showAlert(`${data.errors.length} account(s) failed: ${errorDetails}`, 'error');
                 }
                 
             } catch (error) {
                 console.error('Error loading balances:', error);
                 loadingState.classList.add('hidden');
                 showAlert(error.message, 'error');
-            } finally {
-                isLoading = false;
             }
         }
-
+        
         function displayStats(data) {
             const statsRow = document.getElementById('statsRow');
             
@@ -927,7 +872,6 @@
             const successful = data.successful || 0;
             const failed = data.failed || 0;
             
-            // Calculate total balance across all accounts (in primary currency)
             let totalBalance = 0;
             if (data.balances) {
                 totalBalance = data.balances.reduce((sum, bal) => sum + (bal.total_balance || 0), 0);
@@ -949,22 +893,21 @@
                 </div>
                 ` : ''}
                 <div class="stat-card">
-                    <div class="stat-label">Total Balance (Primary)</div>
+                    <div class="stat-label">Total Balance (CAD)</div>
                     <div class="stat-value">${formatCurrency(totalBalance, 'CAD')}</div>
                 </div>
             `;
         }
-
+        
         function displayBalances(balances) {
             const balanceGrid = document.getElementById('balanceGrid');
             
-            balanceGrid.innerHTML = balances.map(balance => {
-                // Filter out currencies with zero balance
+            balanceGrid.innerHTML = balances.map((balance, index) => {
                 const nonZeroCurrencies = balance.balances_by_currency 
                     ? balance.balances_by_currency.filter(curr => curr.total > 0)
                     : [];
                 
-                const currenciesList = nonZeroCurrencies.length > 1
+                const currenciesList = nonZeroCurrencies.length > 0
                     ? `
                         <div class="currency-list">
                             ${nonZeroCurrencies.map(curr => `
@@ -981,61 +924,124 @@
                     <div class="balance-card">
                         <div class="balance-header">
                             <div class="account-name">${balance.account_id}</div>
-                            <div class="provider-badge">${balance.payment_provider.toUpperCase()}</div>
+                            <div class="provider-badge">AIRWALLEX</div>
                         </div>
                         
                         <div class="balance-amount">${formatCurrency(balance.total_balance, balance.primary_currency)}</div>
                         <div class="balance-label">Total Balance</div>
                         
-                        <div class="balance-details">
-                            <div class="balance-row">
-                                <span class="balance-row-label">Available:</span>
-                                <span class="balance-row-value">${formatCurrency(balance.available_balance, balance.primary_currency)}</span>
-                            </div>
-                            <div class="balance-row">
-                                <span class="balance-row-label">Pending:</span>
-                                <span class="balance-row-value">${formatCurrency(balance.pending_balance, balance.primary_currency)}</span>
-                            </div>
-                        </div>
-                        
                         ${currenciesList}
                         
-                        <div class="refresh-time">
-                            Last updated: ${formatDate(balance.retrieved_at)}
+                        <div class="balance-actions">
+                            <button class="btn btn-primary btn-sm btn-full" onclick="openEtransferModal(${index})">
+                                📤 Send e-Transfer
+                            </button>
                         </div>
                     </div>
                 `;
             }).join('');
         }
         
-        // ========================================
-        // UTILITY FUNCTIONS
-        // ========================================
-        
-        function showAlert(message, type) {
-            const alert = document.getElementById('alert');
-            alert.textContent = message;
-            alert.className = `alert alert-${type} show`;
-            setTimeout(() => alert.classList.remove('show'), 5000);
-        }
-        
         function formatCurrency(amount, currency) {
-            return new Intl.NumberFormat('en-US', {
+            return new Intl.NumberFormat('en-CA', {
                 style: 'currency',
-                currency: currency.toUpperCase()
-            }).format(amount);
+                currency: currency || 'CAD'
+            }).format(amount || 0);
         }
         
-        function formatDate(dateString) {
-            return new Intl.DateTimeFormat('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit'
-            }).format(new Date(dateString));
-        }
+        window.openEtransferModal = function(accountIndex) {
+            selectedAccount = currentBalances[accountIndex];
+            
+            document.getElementById('fromAccount').value = selectedAccount.account_id;
+            document.getElementById('availableBalance').textContent = formatCurrency(selectedAccount.available_balance, 'CAD');
+            
+            // Clear form
+            document.getElementById('etransferForm').reset();
+            document.getElementById('fromAccount').value = selectedAccount.account_id;
+            
+            document.getElementById('etransferModal').classList.add('show');
+        };
         
+        window.closeEtransferModal = function() {
+            document.getElementById('etransferModal').classList.remove('show');
+            selectedAccount = null;
+        };
+        
+        window.handleSendEtransfer = async function(event) {
+            event.preventDefault();
+            
+            if (!selectedAccount) {
+                showAlert('No account selected', 'error');
+                return;
+            }
+            
+            const recipientEmail = document.getElementById('recipientEmail').value.trim();
+            const amount = parseFloat(document.getElementById('amount').value);
+            const recipientName = document.getElementById('recipientName').value.trim();
+            const securityQuestion = document.getElementById('securityQuestion').value.trim();
+            const securityAnswer = document.getElementById('securityAnswer').value.trim();
+            const message = document.getElementById('message').value.trim();
+            
+            // Validate amount
+            if (amount > selectedAccount.available_balance) {
+                showAlert('Amount exceeds available balance', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('sendEtransferBtn');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            
+            try {
+                const { data: { session } } = await mySupabase.auth.getSession();
+                
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/airwallex-etransfer`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${session.access_token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        account_id: selectedAccount.account_id,
+                        recipient_email: recipientEmail,
+                        amount: amount,
+                        recipient_name: recipientName || undefined,
+                        security_question: securityQuestion,
+                        security_answer: securityAnswer,
+                        message: message || undefined,
+                        currency: 'CAD'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || 'Failed to send e-Transfer');
+                }
+                
+                showAlert('e-Transfer sent successfully!', 'success');
+                closeEtransferModal();
+                
+                // Refresh balances after a delay
+                setTimeout(() => {
+                    loadBalances();
+                }, 2000);
+                
+            } catch (error) {
+                console.error('e-Transfer error:', error);
+                showAlert(`Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Send e-Transfer';
+            }
+        };
+        
+        // Close modal when clicking outside
+        document.getElementById('etransferModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEtransferModal();
+            }
+        });
     </script>
 </body>
 </html>
