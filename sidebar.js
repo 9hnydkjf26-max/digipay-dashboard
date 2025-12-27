@@ -162,11 +162,6 @@ function initSidebar(options = {}) {
     // Register global functions
     registerSidebarFunctions(options.supabase);
     
-    // Show page now that sidebar is ready
-    document.documentElement.classList.add('sidebar-ready');
-    document.documentElement.style.visibility = 'visible';
-    document.documentElement.style.opacity = '1';
-    
     console.log('✓ Sidebar initialized successfully');
 }
 

@@ -1,17 +1,4 @@
 /* ========================================
-   ANTI-FLICKER: Hide page until sidebar loads
-   This MUST be at the top of the file
-   ======================================== */
-
-html:not(.sidebar-ready) {
-    visibility: hidden !important;
-}
-
-html.sidebar-ready {
-    visibility: visible !important;
-}
-
-/* ========================================
    SHARED SIDEBAR STYLES
    Include this file in all pages that use the sidebar component
    Based on: balance-checker-fixed2.html
