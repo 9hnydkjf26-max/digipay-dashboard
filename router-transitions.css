@@ -1,0 +1,96 @@
+/**
+ * ========================================
+ * ROUTER TRANSITION STYLES
+ * ========================================
+ * 
+ * Add these styles to your sidebar.css or include as a separate file.
+ * These ensure smooth page transitions when using the client-side router.
+ * 
+ * ========================================
+ */
+
+/* Smooth transition for main content during navigation */
+.main-wrapper {
+    transition: opacity 0.15s ease-out;
+}
+
+/* Prevent layout shift during transitions */
+.main-wrapper.loading {
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Optional: Loading indicator during navigation */
+.router-loading-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: var(--color-primary, #635bff);
+    z-index: 9999;
+    transition: width 0.3s ease;
+}
+
+/* View Transitions API enhancement (Chrome 111+) */
+@view-transition {
+    navigation: auto;
+}
+
+/* Keep sidebar completely stable during transitions */
+.sidebar {
+    view-transition-name: sidebar;
+}
+
+::view-transition-old(sidebar),
+::view-transition-new(sidebar) {
+    animation: none;
+    mix-blend-mode: normal;
+}
+
+/* Keep mobile header stable */
+.mobile-header {
+    view-transition-name: mobile-header;
+}
+
+::view-transition-old(mobile-header),
+::view-transition-new(mobile-header) {
+    animation: none;
+    mix-blend-mode: normal;
+}
+
+/* Animate only the main content */
+.main-wrapper {
+    view-transition-name: main-content;
+}
+
+::view-transition-old(main-content) {
+    animation: router-fade-out 0.15s ease-out forwards;
+}
+
+::view-transition-new(main-content) {
+    animation: router-fade-in 0.15s ease-in forwards;
+}
+
+@keyframes router-fade-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+@keyframes router-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Prevent FOUC (Flash of Unstyled Content) */
+.main-wrapper:not(.router-ready) {
+    opacity: 1;
+}
+
+/* Ensure sidebar never flickers */
+#sidebar,
+.sidebar,
+.mobile-overlay,
+.mobile-header {
+    /* These elements are OUTSIDE the router's content swap */
+    /* They should never be affected by page transitions */
+}

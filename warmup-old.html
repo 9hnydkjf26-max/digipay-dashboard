@@ -6,20 +6,7 @@
     <title>Warm Up - Data Portal</title>
     <!-- Shared Sidebar Component -->
     <link rel="stylesheet" href="sidebar.css">
-    <link rel="stylesheet" href="router-transitions.css">
     <script src="sidebar.js"></script>
-    <script src="router.js"></script>
-    
-    <!-- Initialize Supabase globally -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        if (!window.supabaseClient) {
-            window.supabaseClient = window.supabase.createClient(
-                'https://hzdybwclwqkcobpwxzoo.supabase.co',
-                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6ZHlid2Nsd3FrY29icHd4em9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzU4ODQsImV4cCI6MjA4MTc1MTg4NH0.e0mSI7Qp9sRaclOwP61guBNtwTVHYXc-TtVaUON67QU'
-            );
-        }
-    </script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -103,10 +90,9 @@
         }
         
         .main-content {
-            padding: 40px 24px;
+            padding: 40px;
             max-width: 1200px;
             width: 100%;
-            margin: 0 auto;
         }
         
         .page-header {
@@ -151,13 +137,12 @@
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 24px;
-            align-items: start;
+            align-items: end;
         }
         
         .form-group {
             display: flex;
             flex-direction: column;
-            min-height: 90px;
         }
         
         .form-label {
@@ -176,8 +161,6 @@
             color: var(--color-text);
             background: var(--color-card);
             transition: all 0.15s;
-            height: 42px;
-            box-sizing: border-box;
         }
         
         .form-input:focus, .form-select:focus {
@@ -195,8 +178,6 @@
             cursor: pointer;
             transition: all 0.15s;
             font-family: inherit;
-            height: 42px;
-            box-sizing: border-box;
         }
         
         .btn-primary {
@@ -381,8 +362,6 @@
             background-repeat: no-repeat;
             background-position: right 12px center;
             background-size: 18px;
-            height: 42px;
-            box-sizing: border-box;
         }
         
         .custom-dropdown-trigger:hover,
@@ -462,10 +441,6 @@
             .main-content {
                 padding: 20px;
             }
-            
-            .form-group {
-                min-height: auto;
-            }
         }
     </style>
 </head>
@@ -476,93 +451,6 @@
         
         <!-- Main Content Wrapper -->
         <div class="main-wrapper">
-            <!-- Inline styles for router compatibility -->
-            <style>
-                /* Page Layout */
-                .main-content { padding: 40px 24px; max-width: 1200px; width: 100%; margin: 0 auto; }
-                .page-header { margin-bottom: 32px; }
-                .page-title { font-size: 28px; font-weight: 600; color: var(--color-text); margin-bottom: 8px; }
-                .page-subtitle { font-size: 14px; color: var(--color-text-tertiary); }
-                
-                /* Cards */
-                .card { background: var(--color-card); border: 1px solid var(--color-border); border-radius: 8px; box-shadow: 0 1px 3px rgba(50, 50, 93, 0.04); margin-bottom: 24px; }
-                .card-header { padding: 20px 24px; border-bottom: 1px solid var(--color-border); }
-                .card-title { font-size: 16px; font-weight: 600; }
-                .card-body { padding: 24px; }
-                
-                /* Forms - Fixed alignment */
-                .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; align-items: start; }
-                .form-group { display: flex; flex-direction: column; min-height: 90px; }
-                .form-label { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 8px; flex-shrink: 0; }
-                .form-input, .form-select { padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 14px; font-family: inherit; color: var(--color-text); background: var(--color-card); transition: all 0.15s; height: 42px; box-sizing: border-box; }
-                .form-input:focus, .form-select:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1); }
-                .date-status { font-size: 12px; margin-top: 4px; min-height: 18px; }
-                
-                /* Buttons - scoped to main content */
-                .main-wrapper .btn { padding: 10px 20px; border: none; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: inherit; height: 42px; box-sizing: border-box; }
-                .main-wrapper .btn-primary { background: var(--color-primary); color: white; }
-                .main-wrapper .btn-primary:hover { background: var(--color-primary-hover); }
-                .main-wrapper .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-                .main-wrapper .btn-secondary { background: transparent; border: 1px solid var(--color-border); color: var(--color-text-secondary); }
-                .main-wrapper .btn-secondary:hover { background: var(--color-bg); }
-                
-                /* Stats Grid */
-                .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
-                .stat-card { background: var(--color-bg); border-radius: 8px; padding: 16px; }
-                .stat-label { font-size: 12px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-                .stat-value { font-size: 24px; font-weight: 600; }
-                .stat-value.success { color: var(--color-success); }
-                .stat-value.danger { color: var(--color-error); }
-                
-                /* Custom Dropdown */
-                .custom-dropdown { position: relative; }
-                .custom-dropdown-trigger { width: 100%; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 14px; font-family: inherit; color: var(--color-text); background: var(--color-card); cursor: pointer; transition: all 0.15s; text-align: left; display: flex; justify-content: space-between; align-items: center; height: 42px; box-sizing: border-box; }
-                .custom-dropdown-trigger::after { content: '▼'; font-size: 10px; color: var(--color-text-tertiary); }
-                .custom-dropdown-trigger:hover, .custom-dropdown-trigger.active { border-color: var(--color-primary); }
-                .custom-dropdown-trigger.placeholder { color: var(--color-text-tertiary); }
-                .custom-dropdown-menu { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--color-card); border: 1px solid var(--color-border); border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; display: none; max-height: 300px; overflow-y: auto; }
-                .custom-dropdown-menu.active { display: block; }
-                .custom-dropdown-option { padding: 10px 12px; cursor: pointer; font-size: 14px; transition: background 0.15s; }
-                .custom-dropdown-option:hover { background: var(--color-bg); }
-                .custom-dropdown-option.selected { background: rgba(99, 91, 255, 0.1); color: var(--color-primary); }
-                
-                /* Tables */
-                .table-wrapper { overflow-x: auto; }
-                table { width: 100%; border-collapse: collapse; }
-                th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--color-border); font-size: 13px; }
-                th { font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-size: 11px; background: var(--color-bg); }
-                
-                /* Progress Bar */
-                .progress-bar { height: 6px; background: var(--color-border); border-radius: 3px; overflow: hidden; margin-top: 6px; }
-                .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
-                .progress-fill.low { background: var(--color-success); }
-                .progress-fill.medium { background: var(--color-warning); }
-                .progress-fill.high { background: var(--color-error); }
-                
-                /* Badges */
-                .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; text-transform: uppercase; }
-                .badge-success { background: rgba(0, 217, 36, 0.1); color: #007817; }
-                .badge-error { background: rgba(205, 66, 70, 0.1); color: #a82124; }
-                
-                /* Alert */
-                .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; }
-                .alert-error { background: rgba(205, 66, 70, 0.1); border: 1px solid var(--color-error); color: #a82124; }
-                
-                /* Misc */
-                .violation-list { margin: 0; padding-left: 16px; font-size: 12px; color: var(--color-error); }
-                .violation-list li { margin-bottom: 2px; }
-                .error-message { background: rgba(205, 66, 70, 0.1); border: 1px solid var(--color-error); color: #a82124; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; }
-                .loading-message { text-align: center; padding: 40px; color: var(--color-text-tertiary); }
-                .empty-state { text-align: center; padding: 40px; color: var(--color-text-secondary); }
-                .hidden { display: none !important; }
-                
-                @media (max-width: 768px) {
-                    .form-row { grid-template-columns: 1fr; }
-                    .main-content { padding: 20px; }
-                    .form-group { min-height: auto; }
-                }
-            </style>
-            
             <div class="main-content">
                 <div class="page-header">
                     <h1 class="page-title">Warmup Compliance Report</h1>
@@ -648,117 +536,80 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
         // ========================================
-        // PAGE-SPECIFIC CONFIGURATION
-        // Use var to allow redeclaration when router navigates
+        // CONFIGURATION
         // ========================================
-        var SUPABASE_URL = 'https://hzdybwclwqkcobpwxzoo.supabase.co';
-        var supabase = window.supabaseClient;
+        const SUPABASE_URL = 'https://hzdybwclwqkcobpwxzoo.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6ZHlid2Nsd3FrY29icHd4em9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzU4ODQsImV4cCI6MjA4MTc1MTg4NH0.e0mSI7Qp9sRaclOwP61guBNtwTVHYXc-TtVaUON67QU';
         
-        function getSupabase() {
-            return window.supabaseClient;
-        }
+        import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
         
-        // ========================================
-        // INITIALIZATION (runs on direct page load)
-        // ========================================
-        document.addEventListener('DOMContentLoaded', async () => {
-            var supabase = getSupabase();
-            var session = (await supabase.auth.getSession()).data.session;
-            
-            if (!session) {
-                window.location.href = 'login.html?redirect=warmup.html';
-                return;
-            }
-            
-            // Initialize sidebar (only runs once)
-            SidebarComponent.init({ supabase: window.supabaseClient });
-            
-            // Initialize router (only runs once)
-            if (typeof Router !== 'undefined' && !Router.isReady()) {
-                Router.init({
-                    contentSelector: '.main-wrapper',
-                    transitionDuration: 100
-                });
-            }
-            
-            updateSidebarUser(session.user.email);
-            document.getElementById('authenticatedContent').classList.remove('hidden');
-            
-            await initPage();
-        });
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         // ========================================
-        // PAGE INIT - runs on first load AND router navigation
+        // INITIALIZATION
         // ========================================
         async function initPage() {
-            supabase = window.supabaseClient;
-            initDropdownListeners();
-            await loadAccounts();
+            try {
+                console.log('initPage starting...');
+                const { data: { session } } = await supabase.auth.getSession();
+                
+                if (!session) {
+                    console.log('No session, redirecting to login');
+                    window.location.href = 'login.html?redirect=warmup.html';
+                    return;
+                }
+                
+                console.log('Session found, initializing sidebar...');
+                console.log('SidebarComponent available:', typeof SidebarComponent !== 'undefined');
+                console.log('window.SidebarComponent:', window.SidebarComponent);
+                
+                // Initialize sidebar
+                if (typeof SidebarComponent === 'undefined') {
+                    console.error('SidebarComponent not loaded! Check if sidebar.js is included.');
+                    return;
+                }
+                
+                SidebarComponent.init({ supabase: supabase });
+                console.log('Sidebar initialized');
+                
+                updateSidebarUser(session.user.email);
+                console.log('User updated');
+                
+                // Show authenticated content
+                document.getElementById('authenticatedContent').classList.remove('hidden');
+                console.log('Content shown');
+                
+                await loadAccounts();
+                console.log('Accounts loaded');
+                
+            } catch (err) {
+                console.error('Fatal error:', err);
+                showError('Fatal error: ' + err.message);
+            }
         }
         
-        // Make initPage available to router
-        window.initPage = initPage;
-        
-        // ========================================
-        // DROPDOWN LISTENERS
-        // ========================================
-        function initDropdownListeners() {
-            var trigger = document.getElementById('accountTrigger');
-            var menu = document.getElementById('accountMenu');
-            
-            if (!trigger || !menu) return;
-            
-            // Remove existing listeners by cloning
-            var newTrigger = trigger.cloneNode(true);
-            trigger.parentNode.replaceChild(newTrigger, trigger);
-            
-            newTrigger.addEventListener('click', function(e) {
-                e.stopPropagation();
-                menu.classList.toggle('active');
-                newTrigger.classList.toggle('active');
-            });
-            
-            document.addEventListener('click', function(e) {
-                if (!newTrigger.contains(e.target) && !menu.contains(e.target)) {
-                    menu.classList.remove('active');
-                    newTrigger.classList.remove('active');
-                }
-            });
+        // Handle both cases: DOM already loaded or not yet
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPage);
+        } else {
+            initPage();
         }
         
         // ========================================
         // ACCOUNT LOADING
         // ========================================
         async function loadAccounts() {
-            // Use cached accounts if available
-            if (window._cachedWarmupAccounts) {
-                populateCustomDropdown(window._cachedWarmupAccounts);
-                window.accountsData = {};
-                window._cachedWarmupAccounts.forEach(function(account) {
-                    window.accountsData[account.account_id] = {
-                        account_name: account.account_name,
-                        warmup_start_date: account.warmup_start_date,
-                        payment_provider: account.payment_provider
-                    };
-                });
-                return;
-            }
-            
-            var supabase = getSupabase();
-            var result = await supabase
+            const { data: accounts, error } = await supabase
                 .from('payment_accounts')
                 .select('account_id, account_name, warmup_start_date, payment_provider')
                 .eq('payment_provider', 'stripe')
                 .eq('is_active', true)
                 .order('account_name');
-            
-            var accounts = result.data;
-            var error = result.error;
 
             if (error) {
-                showError('Failed to load accounts: ' + error.message);
+                showError(`Failed to load accounts: ${error.message}`);
                 return;
             }
 
@@ -767,15 +618,12 @@
                 return;
             }
 
-            // Cache accounts
-            window._cachedWarmupAccounts = accounts;
-            
             // Populate custom dropdown
             populateCustomDropdown(accounts);
             
             // Store accounts data
             window.accountsData = {};
-            accounts.forEach(function(account) {
+            accounts.forEach(account => {
                 window.accountsData[account.account_id] = {
                     account_name: account.account_name,
                     warmup_start_date: account.warmup_start_date,
@@ -788,26 +636,24 @@
         // CUSTOM DROPDOWN
         // ========================================
         function populateCustomDropdown(accounts) {
-            var trigger = document.getElementById('accountTrigger');
-            var menu = document.getElementById('accountMenu');
-            var hiddenSelect = document.getElementById('accountSelect');
-            
-            if (!menu) return;
+            const trigger = document.getElementById('accountTrigger');
+            const menu = document.getElementById('accountMenu');
+            const hiddenSelect = document.getElementById('accountSelect');
             
             menu.innerHTML = '';
             
-            accounts.forEach(function(account) {
-                var option = document.createElement('div');
+            accounts.forEach((account, index) => {
+                const option = document.createElement('div');
                 option.className = 'custom-dropdown-option';
                 option.textContent = account.account_name || account.account_id;
                 option.dataset.value = account.account_id;
                 
-                option.addEventListener('click', function() {
+                option.addEventListener('click', () => {
                     trigger.textContent = account.account_name || account.account_id;
                     trigger.classList.remove('placeholder');
                     hiddenSelect.value = account.account_id;
                     
-                    menu.querySelectorAll('.custom-dropdown-option').forEach(function(opt) {
+                    menu.querySelectorAll('.custom-dropdown-option').forEach(opt => {
                         opt.classList.remove('selected');
                     });
                     option.classList.add('selected');
@@ -819,6 +665,21 @@
                 });
                 
                 menu.appendChild(option);
+            });
+            
+            // Toggle dropdown
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menu.classList.toggle('active');
+                trigger.classList.toggle('active');
+            });
+            
+            // Close on outside click
+            document.addEventListener('click', (e) => {
+                if (!trigger.contains(e.target) && !menu.contains(e.target)) {
+                    menu.classList.remove('active');
+                    trigger.classList.remove('active');
+                }
             });
         }
         
@@ -869,11 +730,11 @@
         };
         
         window.saveWarmupDate = async function() {
-            var accountId = document.getElementById('accountSelect').value;
-            var newDate = document.getElementById('startDate').value;
-            var dateStatus = document.getElementById('dateStatus');
-            var saveDateBtn = document.getElementById('saveDateBtn');
-            var cancelDateBtn = document.getElementById('cancelDateBtn');
+            const accountId = document.getElementById('accountSelect').value;
+            const newDate = document.getElementById('startDate').value;
+            const dateStatus = document.getElementById('dateStatus');
+            const saveDateBtn = document.getElementById('saveDateBtn');
+            const cancelDateBtn = document.getElementById('cancelDateBtn');
             
             if (!accountId || !newDate) {
                 showError('Please select an account and date');
@@ -885,20 +746,14 @@
             dateStatus.textContent = 'Saving...';
             
             try {
-                var supabase = getSupabase();
-                var result = await supabase
+                const { error } = await supabase
                     .from('payment_accounts')
                     .update({ warmup_start_date: newDate })
                     .eq('account_id', accountId);
                 
-                if (result.error) throw result.error;
+                if (error) throw error;
                 
                 window.accountsData[accountId].warmup_start_date = newDate;
-                // Also update cache
-                if (window._cachedWarmupAccounts) {
-                    var cached = window._cachedWarmupAccounts.find(function(a) { return a.account_id === accountId; });
-                    if (cached) cached.warmup_start_date = newDate;
-                }
                 
                 document.getElementById('startDate').disabled = true;
                 document.getElementById('editDateBtn').style.display = 'block';
@@ -910,7 +765,7 @@
             } catch (error) {
                 dateStatus.textContent = '✗ Failed to save date';
                 dateStatus.style.color = 'var(--color-error)';
-                showError('Failed to save date: ' + error.message);
+                showError(`Failed to save date: ${error.message}`);
             } finally {
                 saveDateBtn.disabled = false;
                 cancelDateBtn.disabled = false;
@@ -921,8 +776,8 @@
         // REPORT GENERATION
         // ========================================
         window.generateReport = async function() {
-            var accountId = document.getElementById('accountSelect').value;
-            var startDate = document.getElementById('startDate').value;
+            const accountId = document.getElementById('accountSelect').value;
+            const startDate = document.getElementById('startDate').value;
 
             if (!accountId) {
                 showError('Please select a Stripe account');
@@ -940,15 +795,14 @@
             document.getElementById('generateBtn').disabled = true;
 
             try {
-                var supabase = getSupabase();
-                var result = await supabase.functions.invoke('warmup-compliance-report', {
+                const { data, error } = await supabase.functions.invoke('warmup-compliance-report', {
                     body: { account_id: accountId, warmup_start_date: startDate }
                 });
 
-                if (result.error) throw result.error;
+                if (error) throw error;
                 
-                displaySummary(result.data.summary);
-                displayDailyReports(result.data.daily_reports);
+                displaySummary(data.summary);
+                displayDailyReports(data.daily_reports);
 
                 document.getElementById('reportContainer').classList.remove('hidden');
             } catch (error) {

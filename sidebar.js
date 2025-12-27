@@ -4,23 +4,14 @@
  * ========================================
  * 
  * This module provides a reusable sidebar component for all dashboard pages.
- * Based on: balance-checker-fixed2.html
- * 
- * It handles:
- * - Rendering the sidebar HTML
- * - User profile display
- * - Navigation with active state detection
- * - Mobile sidebar toggle functionality
- * - Logout functionality
+ * Works with router.js to provide SPA-like navigation without page reloads.
  * 
  * USAGE:
- * 1. Include this script in your HTML page
- * 2. Call initSidebar() after DOM is loaded
- * 3. Make sure you have a Supabase client available
- * 
- * CRITICAL DEPENDENCIES:
- * - Supabase client must be initialized before calling initSidebar()
- * - CSS from sidebar.css must be included
+ * 1. Include sidebar.css in <head>
+ * 2. Include this script in <head> or before </body>
+ * 3. Include router.js after this script
+ * 4. Call initSidebar() after DOM is loaded
+ * 5. Call Router.init() after initSidebar()
  * 
  * ========================================
  */
@@ -63,22 +54,24 @@ const NAVIGATION_ITEMS = [
 // Sidebar configuration
 const SIDEBAR_CONFIG = {
     logoText: 'Dashboard',
-    logoSubtitle: null, // Set to null to hide subtitle
-    logoImage: 'digipaylogo.svg', // Logo image file - set to null to use text instead
-    logoHeight: '40px',    // Logo height for desktop sidebar
-    logoHeightMobile: '32px', // Logo height for mobile header
+    logoSubtitle: null,
+    logoImage: 'digipaylogo.svg',
+    logoHeight: '40px',
+    logoHeightMobile: '32px',
     defaultRole: 'Admin'
 };
 
+// Store Supabase client reference
+let _supabaseClient = null;
+
 /**
  * Generate the sidebar HTML
- * @param {string} activePage - The filename of the current page (e.g., 'reports.html')
+ * @param {string} activePage - The filename of the current page
  * @returns {string} - The sidebar HTML string
  */
 function generateSidebarHTML(activePage) {
     const currentPage = activePage || window.location.pathname.split('/').pop() || 'index.html';
     
-    // Generate navigation items
     const navItemsHTML = NAVIGATION_ITEMS.map(item => {
         const isActive = currentPage === item.href || 
                         currentPage.includes(item.href.replace('.html', ''));
@@ -93,7 +86,6 @@ function generateSidebarHTML(activePage) {
         `;
     }).join('');
     
-    // Generate logo HTML
     const logoHTML = SIDEBAR_CONFIG.logoImage 
         ? `<img src="${SIDEBAR_CONFIG.logoImage}" alt="Logo" style="height: ${SIDEBAR_CONFIG.logoHeight || '32px'}; width: auto; display: block; margin: 0 auto;">`
         : SIDEBAR_CONFIG.logoText;
@@ -143,15 +135,22 @@ function generateSidebarHTML(activePage) {
 /**
  * Initialize the sidebar component
  * @param {Object} options - Configuration options
- * @param {HTMLElement} options.container - The container element to insert the sidebar before
- * @param {Object} options.supabase - The Supabase client instance
- * @param {string} options.activePage - Override the active page detection
  */
 function initSidebar(options = {}) {
     const container = options.container || document.querySelector('.main-wrapper') || document.querySelector('#authenticatedContent');
     
     if (!container) {
-        console.error('Sidebar: No container found. Make sure you have a .main-wrapper or #authenticatedContent element.');
+        console.error('Sidebar: No container found.');
+        return;
+    }
+    
+    // Store Supabase reference
+    _supabaseClient = options.supabase || window.supabase || window.mySupabase;
+    
+    // Check if sidebar already exists (don't duplicate)
+    if (document.getElementById('sidebar')) {
+        console.log('Sidebar: Already initialized');
+        setActivePage(options.activePage);
         return;
     }
     
@@ -159,97 +158,128 @@ function initSidebar(options = {}) {
     const sidebarHTML = generateSidebarHTML(options.activePage);
     container.insertAdjacentHTML('beforebegin', sidebarHTML);
     
-    // Register global functions
-    registerSidebarFunctions(options.supabase);
+    // Initialize user display
+    initUserDisplay();
     
-    console.log('✓ Sidebar initialized successfully');
+    console.log('Sidebar: Initialized successfully');
 }
 
 /**
- * Register global sidebar functions
- * @param {Object} supabaseClient - The Supabase client instance
+ * Initialize user display in sidebar
  */
-function registerSidebarFunctions(supabaseClient) {
-    // Store supabase reference for logout
-    window._sidebarSupabase = supabaseClient;
+async function initUserDisplay() {
+    const supabase = _supabaseClient || window.supabase || window.mySupabase;
     
-    /**
-     * Handle user logout
-     * Signs out from Supabase and redirects to login page
-     */
-    window.handleLogout = async function() {
-        console.log('🚪 Logout clicked');
-        try {
-            const client = window._sidebarSupabase || window.supabase || window.mySupabase;
-            if (client) {
-                await client.auth.signOut();
-                console.log('✓ Signed out successfully');
-            }
-            window.location.href = 'login.html';
-        } catch (err) {
-            console.error('✗ Logout error:', err);
-            // Still redirect to login even if signOut fails
-            window.location.href = 'login.html';
+    if (!supabase) {
+        console.warn('Sidebar: Supabase client not available for user display');
+        return;
+    }
+    
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && user.email) {
+            updateSidebarUser(user.email);
         }
-    };
-    
-    /**
-     * Toggle mobile sidebar visibility
-     */
-    window.toggleMobileSidebar = function() {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('mobileOverlay');
-        if (sidebar) sidebar.classList.toggle('mobile-open');
-        if (overlay) overlay.classList.toggle('active');
-    };
-    
-    /**
-     * Close mobile sidebar
-     */
-    window.closeMobileSidebar = function() {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('mobileOverlay');
-        if (sidebar) sidebar.classList.remove('mobile-open');
-        if (overlay) overlay.classList.remove('active');
-    };
-    
-    /**
-     * Toggle sidebar (alternative function name used by some pages)
-     */
-    window.toggleSidebar = function() {
-        window.toggleMobileSidebar();
-    };
-    
-    /**
-     * Update sidebar user information
-     * @param {string} email - The user's email address
-     */
-    window.updateSidebarUser = function(email) {
-        const avatar = document.getElementById('sidebarUserAvatar');
-        const name = document.getElementById('sidebarUserName');
-        
-        if (avatar && email) {
-            // Show first letter(s) as avatar
-            avatar.textContent = email.substring(0, 2).toUpperCase();
-        }
-        if (name && email) {
-            // Show username part of email
-            name.textContent = email.split('@')[0];
-        }
-    };
-    
-    console.log('✓ Sidebar functions registered');
+    } catch (error) {
+        console.error('Sidebar: Error getting user:', error);
+    }
 }
 
 /**
- * Update navigation to reflect the current active page
- * @param {string} activePage - The filename of the active page
+ * Update sidebar with user information
+ * @param {string} email - User's email address
  */
-function setActivePage(activePage) {
-    const navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(item => {
+function updateSidebarUser(email) {
+    const avatarEl = document.getElementById('sidebarUserAvatar');
+    const nameEl = document.getElementById('sidebarUserName');
+    
+    if (avatarEl && email) {
+        const initials = email.substring(0, 2).toUpperCase();
+        avatarEl.textContent = initials;
+    }
+    
+    if (nameEl && email) {
+        const username = email.split('@')[0];
+        nameEl.textContent = username;
+    }
+}
+
+// Make updateSidebarUser available globally
+window.updateSidebarUser = updateSidebarUser;
+
+/**
+ * Handle logout
+ */
+async function handleLogout() {
+    const supabase = _supabaseClient || window.supabase || window.mySupabase;
+    
+    try {
+        if (supabase) {
+            await supabase.auth.signOut();
+        }
+    } catch (error) {
+        console.error('Logout error:', error);
+    }
+    
+    // Always redirect to login
+    window.location.href = 'login.html';
+}
+
+// Make handleLogout available globally
+window.handleLogout = handleLogout;
+
+/**
+ * Toggle mobile sidebar
+ */
+function toggleMobileSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('mobileOverlay');
+    
+    if (sidebar) {
+        sidebar.classList.toggle('mobile-open');
+    }
+    if (overlay) {
+        overlay.classList.toggle('active');
+    }
+}
+
+/**
+ * Close mobile sidebar
+ */
+function closeMobileSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('mobileOverlay');
+    
+    if (sidebar) {
+        sidebar.classList.remove('mobile-open');
+    }
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+}
+
+// Alias for compatibility
+function toggleSidebar() {
+    toggleMobileSidebar();
+}
+
+// Make mobile functions available globally
+window.toggleMobileSidebar = toggleMobileSidebar;
+window.closeMobileSidebar = closeMobileSidebar;
+window.toggleSidebar = toggleSidebar;
+
+/**
+ * Set the active page in navigation
+ * @param {string} page - Optional page name override
+ */
+function setActivePage(page) {
+    const currentPage = page || window.location.pathname.split('/').pop() || 'index.html';
+    
+    document.querySelectorAll('.nav-item').forEach(item => {
         const href = item.getAttribute('href');
-        if (href === activePage || activePage.includes(href.replace('.html', ''))) {
+        const isActive = href === currentPage || currentPage.includes(href.replace('.html', ''));
+        
+        if (isActive) {
             item.classList.add('active');
             item.setAttribute('aria-current', 'page');
         } else {
@@ -257,50 +287,38 @@ function setActivePage(activePage) {
             item.removeAttribute('aria-current');
         }
     });
+    
+    // Close mobile sidebar on navigation
+    closeMobileSidebar();
 }
+
+// Make setActivePage available globally (router needs this)
+window.setActivePage = setActivePage;
 
 /**
- * Add smooth page transitions when navigating
+ * DEPRECATED: Use Router.init() instead
+ * Kept for backwards compatibility
  */
 function enableSmoothTransitions() {
-    document.querySelectorAll('.nav-item').forEach(link => {
-        link.addEventListener('click', function(e) {
-            const href = this.getAttribute('href');
-            const currentPage = window.location.pathname.split('/').pop();
-            
-            // Don't animate if clicking current page or anchor links
-            if (href && href !== currentPage && !href.startsWith('#')) {
-                e.preventDefault();
-                const mainWrapper = document.querySelector('.main-wrapper');
-                if (mainWrapper) {
-                    mainWrapper.style.transition = 'opacity 0.2s ease-out';
-                    mainWrapper.style.opacity = '0';
-                }
-                setTimeout(() => {
-                    window.location.href = href;
-                }, 200);
-            }
-        });
-    });
+    console.warn('Sidebar: enableSmoothTransitions() is deprecated. Use Router.init() instead.');
 }
 
-// Export functions for module usage
+// Export for module usage
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         initSidebar,
-        updateSidebarUser: window.updateSidebarUser,
+        updateSidebarUser,
         setActivePage,
-        enableSmoothTransitions,
         NAVIGATION_ITEMS,
         SIDEBAR_CONFIG
     };
 }
 
-// Make available globally
+// Global API
 window.SidebarComponent = {
     init: initSidebar,
+    updateUser: updateSidebarUser,
     setActivePage,
-    enableSmoothTransitions,
     NAVIGATION_ITEMS,
     SIDEBAR_CONFIG
 };

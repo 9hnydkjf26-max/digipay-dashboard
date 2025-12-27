@@ -7,12 +7,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <script src="config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        var SUPABASE_URL = 'https://hzdybwclwqkcobpwxzoo.supabase.co';
+        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6ZHlid2Nsd3FrY29icHd4em9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzU4ODQsImV4cCI6MjA4MTc1MTg4NH0.e0mSI7Qp9sRaclOwP61guBNtwTVHYXc-TtVaUON67QU';
+        if (!window.supabaseClient) {
+            window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+    </script>
     
     <!-- Shared Sidebar Component -->
     <link rel="stylesheet" href="sidebar.css">
+    <link rel="stylesheet" href="router-transitions.css">
     <script src="sidebar.js"></script>
+    <script src="router.js"></script>
     
     <style>
         * {
@@ -526,6 +534,70 @@
 
         <!-- Main Content -->
         <div class="main-wrapper">
+            <!-- Inline styles for router compatibility -->
+            <style>
+                /* Container */
+                .container { max-width: 1200px; width: 100%; margin: 0 auto; padding: 40px 24px; }
+                .header { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: center; }
+                h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; }
+                .subtitle { font-size: 14px; color: var(--color-text-tertiary); }
+                
+                /* Buttons - scoped to main content */
+                .main-wrapper .btn { padding: 10px 16px; border: none; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+                .main-wrapper .btn-primary { background: var(--color-primary); color: white; }
+                .main-wrapper .btn-primary:hover { background: var(--color-primary-hover); }
+                .main-wrapper .btn-secondary { background: transparent; border: 1px solid var(--color-border); color: var(--color-text-secondary); }
+                
+                /* Stats Grid */
+                .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+                .stat-card { background: var(--color-card); border: 1px solid var(--color-border); border-radius: 8px; padding: 20px; }
+                .stat-label { font-size: 12px; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; margin-bottom: 8px; }
+                .stat-value { font-size: 32px; font-weight: 600; color: var(--color-text); letter-spacing: -0.02em; }
+                
+                /* Loading & Empty States */
+                .loading { text-align: center; padding: 60px 24px; color: var(--color-text-tertiary); }
+                .spinner { width: 24px; height: 24px; border: 3px solid var(--color-border); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 0.6s linear infinite; margin: 0 auto 12px; }
+                @keyframes spin { to { transform: rotate(360deg); } }
+                .empty-state { text-align: center; padding: 60px 24px; }
+                .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+                .empty-text { color: var(--color-text-tertiary); font-size: 14px; }
+                
+                /* Balance Grid */
+                .balance-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+                .balance-card { background: var(--color-card); border: 1px solid var(--color-border); border-radius: 8px; padding: 20px; transition: box-shadow 0.2s; }
+                .balance-card:hover { box-shadow: 0 7px 14px rgba(50, 50, 93, 0.09), 0 3px 6px rgba(0, 0, 0, 0.07); }
+                .balance-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+                .account-name { font-weight: 600; font-size: 16px; }
+                .provider-badge { font-size: 11px; background: var(--color-bg); padding: 4px 8px; border-radius: 4px; text-transform: uppercase; color: var(--color-text-secondary); }
+                .balance-amount { font-size: 28px; font-weight: 600; color: var(--color-text); margin-bottom: 4px; }
+                .balance-label { font-size: 13px; color: var(--color-text-tertiary); margin-bottom: 16px; }
+                .currency-list { border-top: 1px solid var(--color-border); padding-top: 16px; margin-bottom: 16px; }
+                .currency-item { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+                .currency-code { color: var(--color-text-secondary); }
+                .currency-amount { font-weight: 500; }
+                
+                /* Alerts */
+                .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; display: none; }
+                .alert.show { display: block; }
+                .alert-success { background: rgba(0, 217, 36, 0.1); color: #007817; border: 1px solid var(--color-success); }
+                .alert-error { background: rgba(205, 66, 70, 0.1); color: #a82124; border: 1px solid var(--color-error); }
+                
+                /* Balance Actions */
+                .balance-actions { display: flex; gap: 8px; padding-top: 16px; border-top: 1px solid var(--color-border); }
+                .main-wrapper .btn-action { flex: 1; padding: 10px 16px; border: none; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s; background: var(--color-primary); color: white; }
+                .main-wrapper .btn-action:hover { background: var(--color-primary-hover); }
+                
+                .hidden { display: none !important; }
+                
+                @media (max-width: 768px) {
+                    .container { padding: 20px 16px; }
+                    h1 { font-size: 24px; }
+                    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+                    .balance-grid { grid-template-columns: 1fr; }
+                    .header { flex-direction: column; align-items: flex-start; gap: 16px; }
+                }
+            </style>
+            
             <div class="container">
                 <div class="header">
                     <div>
@@ -662,87 +734,110 @@
 
     <script>
         // ========================================
-        // CONFIGURATION
+        // PAGE-SPECIFIC CONFIGURATION
+        // Use var to allow redeclaration when router navigates
         // ========================================
-        const SUPABASE_URL = window.SUPABASE_CONFIG?.url || '';
-        const SUPABASE_ANON_KEY = window.SUPABASE_CONFIG?.anonKey || '';
+        var SUPABASE_URL = 'https://hzdybwclwqkcobpwxzoo.supabase.co';
+        var supabase = window.supabaseClient;
         
-        if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-            document.body.innerHTML = '<div style="padding: 40px; text-align: center;"><h2>Configuration Required</h2><p>Please configure your Supabase credentials in config.js</p></div>';
-            throw new Error('Supabase configuration missing');
+        function getSupabase() {
+            return window.supabaseClient;
         }
-
-        const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        let currentBalances = [];
-        let selectedAccount = null;
-        let availableContacts = [];
-        let selectedContact = null;
-        let currentContactType = 'new';
+        // Global state
+        var currentBalances = [];
+        var selectedAccount = null;
+        var availableContacts = [];
+        var selectedContact = null;
+        var currentContactType = 'new';
 
         // ========================================
-        // AUTHENTICATION
+        // INITIALIZATION (runs on direct page load)
         // ========================================
-        async function checkAuth() {
-            const { data: { session } } = await mySupabase.auth.getSession();
+        document.addEventListener('DOMContentLoaded', async function() {
+            var supabase = getSupabase();
+            var session = (await supabase.auth.getSession()).data.session;
             
             if (!session) {
-                window.location.href = 'login.html';
+                window.location.href = 'login.html?redirect=balances.html';
                 return;
             }
-
-            // Initialize shared sidebar component
-            SidebarComponent.init({
-                supabase: mySupabase
-            });
             
-            // Update user info in sidebar
+            // Initialize sidebar (only runs once)
+            SidebarComponent.init({ supabase: window.supabaseClient });
+            
+            // Initialize router (only runs once)
+            if (typeof Router !== 'undefined' && !Router.isReady()) {
+                Router.init({
+                    contentSelector: '.main-wrapper',
+                    transitionDuration: 100
+                });
+            }
+            
             updateSidebarUser(session.user.email);
-
             document.getElementById('authenticatedContent').classList.remove('hidden');
-
-            loadBalances();
+            
+            await initPage();
+        });
+        
+        // ========================================
+        // PAGE INIT - runs on first load AND router navigation
+        // ========================================
+        async function initPage() {
+            supabase = window.supabaseClient;
+            currentBalances = [];
+            selectedAccount = null;
+            availableContacts = [];
+            selectedContact = null;
+            currentContactType = 'new';
+            await loadBalances();
         }
+        
+        // Make initPage available to router
+        window.initPage = initPage;
 
         // ========================================
         // ALERTS
         // ========================================
-        function showAlert(message, type = 'success') {
-            const container = document.getElementById('alertContainer');
-            const alert = document.createElement('div');
-            alert.className = `alert alert-${type} show`;
-            alert.textContent = message;
-            container.appendChild(alert);
-            setTimeout(() => alert.remove(), 5000);
+        function showAlert(message, type) {
+            type = type || 'success';
+            var container = document.getElementById('alertContainer');
+            if (!container) return;
+            var alertEl = document.createElement('div');
+            alertEl.className = 'alert alert-' + type + ' show';
+            alertEl.textContent = message;
+            container.appendChild(alertEl);
+            setTimeout(function() { alertEl.remove(); }, 5000);
         }
 
         // ========================================
         // LOAD BALANCES
         // ========================================
         async function loadBalances() {
-            const loadingState = document.getElementById('loadingState');
-            const balancesGrid = document.getElementById('balancesGrid');
-            const emptyState = document.getElementById('emptyState');
-            const statsRow = document.getElementById('statsRow');
+            var loadingState = document.getElementById('loadingState');
+            var balancesGrid = document.getElementById('balancesGrid');
+            var emptyState = document.getElementById('emptyState');
+            var statsRow = document.getElementById('statsRow');
 
-            loadingState.classList.remove('hidden');
-            balancesGrid.classList.add('hidden');
-            emptyState.classList.add('hidden');
-            statsRow.classList.add('hidden');
+            if (loadingState) loadingState.classList.remove('hidden');
+            if (balancesGrid) balancesGrid.classList.add('hidden');
+            if (emptyState) emptyState.classList.add('hidden');
+            if (statsRow) statsRow.classList.add('hidden');
 
             try {
-                const { data: { session } } = await mySupabase.auth.getSession();
+                var supabase = getSupabase();
+                var session = (await supabase.auth.getSession()).data.session;
                 
-                const response = await fetch(`${SUPABASE_URL}/functions/v1/airwallex-balance-checker`, {
+                var response = await fetch(SUPABASE_URL + '/functions/v1/airwallex-balance-checker', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${session.access_token}`,
+                        'Authorization': 'Bearer ' + session.access_token,
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({})
                 });
 
-                const result = await response.json();
+                var result = await response.json();
 
                 if (!response.ok) {
                     throw new Error(result.error || 'Failed to load balances');
@@ -751,69 +846,72 @@
                 currentBalances = result.balances || [];
 
                 if (currentBalances.length === 0) {
-                    emptyState.classList.remove('hidden');
+                    if (emptyState) emptyState.classList.remove('hidden');
                 } else {
                     renderBalances(currentBalances);
                     renderStats(currentBalances);
-                    balancesGrid.classList.remove('hidden');
-                    statsRow.classList.remove('hidden');
+                    if (balancesGrid) balancesGrid.classList.remove('hidden');
+                    if (statsRow) statsRow.classList.remove('hidden');
                 }
             } catch (error) {
                 console.error('Error loading balances:', error);
                 showAlert('Failed to load balances: ' + error.message, 'error');
-                emptyState.classList.remove('hidden');
+                if (emptyState) emptyState.classList.remove('hidden');
             } finally {
-                loadingState.classList.add('hidden');
+                if (loadingState) loadingState.classList.add('hidden');
             }
         }
 
         function renderStats(balances) {
-            const statsRow = document.getElementById('statsRow');
-            const totalAccounts = balances.length;
-            const totalCAD = balances.reduce((sum, b) => sum + (b.available_balance || 0), 0);
+            var statsRow = document.getElementById('statsRow');
+            var totalAccounts = balances.length;
+            var totalCAD = balances.reduce(function(sum, b) { return sum + (b.available_balance || 0); }, 0);
 
-            statsRow.innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-label">Total Accounts</div>
-                    <div class="stat-value">${totalAccounts}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Total CAD Balance</div>
-                    <div class="stat-value">$${formatNumber(totalCAD)}</div>
-                </div>
-            `;
+            statsRow.innerHTML = 
+                '<div class="stat-card">' +
+                    '<div class="stat-label">Total Accounts</div>' +
+                    '<div class="stat-value">' + totalAccounts + '</div>' +
+                '</div>' +
+                '<div class="stat-card">' +
+                    '<div class="stat-label">Total CAD Balance</div>' +
+                    '<div class="stat-value">$' + formatNumber(totalCAD) + '</div>' +
+                '</div>';
         }
 
         function renderBalances(balances) {
-            const grid = document.getElementById('balancesGrid');
+            var grid = document.getElementById('balancesGrid');
             
-            grid.innerHTML = balances.map((balance, index) => `
-                <div class="balance-card">
-                    <div class="balance-header">
-                        <div class="account-name">${escapeHtml(balance.account_name || balance.account_id)}</div>
-                        <div class="provider-badge">${escapeHtml(balance.payment_provider)}</div>
-                    </div>
-                    
-                    <div class="balance-amount">$${formatNumber(balance.available_balance)}</div>
-                    <div class="balance-label">Available Balance (${balance.primary_currency})</div>
-                    
-                    ${balance.balances_by_currency && balance.balances_by_currency.length > 0 ?
-                        `<div class="currency-list">
-                            ${balance.balances_by_currency.filter(curr => curr.available > 0).slice(0, 5).map(curr => `
-                                <div class="currency-item">
-                                    <span class="currency-code">${escapeHtml(curr.currency)}</span>
-                                    <span class="currency-amount">${formatNumber(curr.available)}</span>
-                                </div>
-                            `).join('')}
-                        </div>` : ''}
-                    
-                    <div class="balance-actions">
-                        <button class="btn btn-primary btn-sm btn-full" onclick="openEtransferModal(${index})">
-                            Send e-Transfer
-                        </button>
-                    </div>
-                </div>
-            `).join('');
+            grid.innerHTML = balances.map(function(balance, index) {
+                var currencyHtml = '';
+                if (balance.balances_by_currency && balance.balances_by_currency.length > 0) {
+                    var filteredCurrencies = balance.balances_by_currency.filter(function(curr) { return curr.available > 0; }).slice(0, 5);
+                    if (filteredCurrencies.length > 0) {
+                        currencyHtml = '<div class="currency-list">' +
+                            filteredCurrencies.map(function(curr) {
+                                return '<div class="currency-item">' +
+                                    '<span class="currency-code">' + escapeHtml(curr.currency) + '</span>' +
+                                    '<span class="currency-amount">' + formatNumber(curr.available) + '</span>' +
+                                '</div>';
+                            }).join('') +
+                        '</div>';
+                    }
+                }
+                
+                return '<div class="balance-card">' +
+                    '<div class="balance-header">' +
+                        '<div class="account-name">' + escapeHtml(balance.account_name || balance.account_id) + '</div>' +
+                        '<div class="provider-badge">' + escapeHtml(balance.payment_provider) + '</div>' +
+                    '</div>' +
+                    '<div class="balance-amount">$' + formatNumber(balance.available_balance) + '</div>' +
+                    '<div class="balance-label">Available Balance (' + balance.primary_currency + ')</div>' +
+                    currencyHtml +
+                    '<div class="balance-actions">' +
+                        '<button class="btn btn-primary btn-sm btn-full" onclick="openEtransferModal(' + index + ')">' +
+                            'Send e-Transfer' +
+                        '</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
         }
 
         // ========================================
@@ -851,12 +949,13 @@
             document.getElementById('noContactsMessage').style.display = 'none';
 
             try {
-                const { data: { session } } = await mySupabase.auth.getSession();
+                var supabase = getSupabase();
+                var session = (await supabase.auth.getSession()).data.session;
                 
-                const response = await fetch(`${SUPABASE_URL}/functions/v1/airwallex-beneficiaries`, {
+                var response = await fetch(SUPABASE_URL + '/functions/v1/airwallex-beneficiaries', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${session.access_token}`,
+                        'Authorization': 'Bearer ' + session.access_token,
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
@@ -865,7 +964,7 @@
                     })
                 });
 
-                const result = await response.json();
+                var result = await response.json();
 
                 if (!response.ok || !result.success) {
                     throw new Error(result.error || 'Failed to load contacts');
@@ -876,7 +975,7 @@
 
             } catch (error) {
                 console.error('Error loading contacts:', error);
-                showAlert(`Error loading contacts: ${error.message}`, 'error');
+                showAlert('Error loading contacts: ' + error.message, 'error');
                 document.getElementById('contactsLoadingState').style.display = 'none';
                 document.getElementById('noContactsMessage').style.display = 'block';
             }
@@ -890,26 +989,24 @@
                 return;
             }
 
-            const contactsHtml = contacts.map(contact => {
-                const displayName = contact.nickname || 
+            var contactsHtml = contacts.map(function(contact) {
+                var displayName = contact.nickname || 
                                   (contact.first_name && contact.last_name 
-                                      ? `${contact.first_name} ${contact.last_name}` 
+                                      ? contact.first_name + ' ' + contact.last_name 
                                       : contact.first_name || contact.last_name || 'Unknown Contact');
                 
-                const displayEmail = contact.beneficiary?.additional_info?.personal_email ||
-                   contact.beneficiary?.bank_details?.account_routing_value1 ||
-                   contact.additional_info?.personal_email || 
+                var displayEmail = (contact.beneficiary && contact.beneficiary.additional_info && contact.beneficiary.additional_info.personal_email) ||
+                   (contact.beneficiary && contact.beneficiary.bank_details && contact.beneficiary.bank_details.account_routing_value1) ||
+                   (contact.additional_info && contact.additional_info.personal_email) || 
                    contact.email || 
-                   contact.bank_details?.email || 
-                   contact.payment_methods?.[0]?.email ||
+                   (contact.bank_details && contact.bank_details.email) || 
+                   (contact.payment_methods && contact.payment_methods[0] && contact.payment_methods[0].email) ||
                    'No email provided';
                 
-                return `
-                    <div class="contact-item" onclick="selectContact('${contact.id}')">
-                        <div class="contact-name">${displayName}</div>
-                        <div class="contact-email">${displayEmail}</div>
-                    </div>
-                `;
+                return '<div class="contact-item" onclick="selectContact(\'' + contact.id + '\')">' +
+                        '<div class="contact-name">' + displayName + '</div>' +
+                        '<div class="contact-email">' + displayEmail + '</div>' +
+                    '</div>';
             }).join('');
 
             document.getElementById('contactsList').innerHTML = contactsHtml;
@@ -917,10 +1014,10 @@
         }
 
         window.selectContact = function(contactId) {
-            selectedContact = availableContacts.find(c => c.id === contactId);
+            selectedContact = availableContacts.find(function(c) { return c.id === contactId; });
             
-            const contactItems = document.querySelectorAll('.contact-item');
-            contactItems.forEach(item => {
+            var contactItems = document.querySelectorAll('.contact-item');
+            contactItems.forEach(function(item) {
                 item.classList.remove('selected');
             });
             event.target.closest('.contact-item').classList.add('selected');
@@ -936,7 +1033,7 @@
             currentContactType = 'new';
             
             document.getElementById('fromAccount').value = selectedAccount.account_id;
-            document.getElementById('availableBalance').textContent = `$${formatNumber(selectedAccount.available_balance)}`;
+            document.getElementById('availableBalance').textContent = '$' + formatNumber(selectedAccount.available_balance);
             
             document.getElementById('etransferForm').reset();
             document.getElementById('fromAccount').value = selectedAccount.account_id;
@@ -966,7 +1063,7 @@
                 return;
             }
 
-            let recipientEmail, recipientName, beneficiaryId;
+            var recipientEmail, recipientName, beneficiaryId;
 
             if (currentContactType === 'existing') {
                 if (!selectedContact) {
@@ -974,12 +1071,12 @@
                     return;
                 }
                 beneficiaryId = selectedContact.id;
-                recipientEmail = selectedContact.additional_info?.personal_email ||
+                recipientEmail = (selectedContact.additional_info && selectedContact.additional_info.personal_email) ||
                 selectedContact.email || 
-                selectedContact.bank_details?.email || 
-                selectedContact.payment_methods?.[0]?.email ||
+                (selectedContact.bank_details && selectedContact.bank_details.email) || 
+                (selectedContact.payment_methods && selectedContact.payment_methods[0] && selectedContact.payment_methods[0].email) ||
                 '';
-                recipientName = selectedContact.nickname || `${selectedContact.first_name} ${selectedContact.last_name}`;
+                recipientName = selectedContact.nickname || (selectedContact.first_name + ' ' + selectedContact.last_name);
             } else {
                 recipientEmail = document.getElementById('recipientEmail').value.trim();
                 recipientName = document.getElementById('recipientName').value.trim();
@@ -989,25 +1086,26 @@
                 }
             }
 
-            const amount = parseFloat(document.getElementById('amount').value);
-            const securityQuestion = document.getElementById('securityQuestion').value.trim();
-            const securityAnswer = document.getElementById('securityAnswer').value.trim();
-            const message = document.getElementById('message').value.trim();
-            const saveAsContact = document.getElementById('saveAsContact').checked;
+            var amount = parseFloat(document.getElementById('amount').value);
+            var securityQuestion = document.getElementById('securityQuestion').value.trim();
+            var securityAnswer = document.getElementById('securityAnswer').value.trim();
+            var message = document.getElementById('message').value.trim();
+            var saveAsContact = document.getElementById('saveAsContact').checked;
             
             if (amount > selectedAccount.available_balance) {
                 showAlert('Amount exceeds available balance', 'error');
                 return;
             }
             
-            const btn = document.getElementById('sendEtransferBtn');
+            var btn = document.getElementById('sendEtransferBtn');
             btn.disabled = true;
             btn.textContent = 'Sending...';
             
             try {
-                const { data: { session } } = await mySupabase.auth.getSession();
+                var supabase = getSupabase();
+                var session = (await supabase.auth.getSession()).data.session;
                 
-                const payload = {
+                var payload = {
                     account_id: selectedAccount.account_id,
                     amount: amount,
                     security_question: securityQuestion,
@@ -1024,16 +1122,16 @@
                     payload.save_as_contact = saveAsContact;
                 }
                 
-                const response = await fetch(`${SUPABASE_URL}/functions/v1/airwallex-etransfer`, {
+                var response = await fetch(SUPABASE_URL + '/functions/v1/airwallex-etransfer', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${session.access_token}`,
+                        'Authorization': 'Bearer ' + session.access_token,
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(payload)
                 });
                 
-                const result = await response.json();
+                var result = await response.json();
                 
                 if (!response.ok || !result.success) {
                     throw new Error(result.error || 'Failed to send e-Transfer');
@@ -1066,20 +1164,20 @@
         }
 
         function escapeHtml(text) {
-            const div = document.createElement('div');
+            var div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        // Close modal when clicking outside
-        document.getElementById('etransferModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeEtransferModal();
-            }
-        });
-
-        // Initialize
-        checkAuth();
+        // Close modal when clicking outside (only attach once)
+        var etransferModal = document.getElementById('etransferModal');
+        if (etransferModal) {
+            etransferModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeEtransferModal();
+                }
+            });
+        }
     </script>
 </body>
 </html>
