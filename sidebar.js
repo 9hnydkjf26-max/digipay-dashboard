@@ -29,7 +29,7 @@
 // Add/remove items here to update all pages at once
 const NAVIGATION_ITEMS = [
     {
-        href: 'stripe-refund-interface-secure.html',
+        href: 'refunds.html',
         icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h10a5 5 0 0 1 5 5v6H8a5 5 0 0 1-5-5v-6z"/><path d="M7 10V6a5 5 0 0 1 10 0v4"/></svg>',
         label: 'Refunds',
         ariaLabel: 'Navigate to Refunds page'
@@ -41,22 +41,22 @@ const NAVIGATION_ITEMS = [
         ariaLabel: 'Navigate to Reports page'
     },
     {
-        href: 'warmup-compliance.html',
+        href: 'warmup.html',
         icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="m16.24 16.24 2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="m4.93 19.07 2.83-2.83"/><path d="m16.24 7.76 2.83-2.83"/></svg>',
-        label: 'Warmup Compliance',
-        ariaLabel: 'Navigate to Warmup Compliance page'
+        label: 'Warm Up',
+        ariaLabel: 'Navigate to Warm Up page'
     },
     {
-        href: 'balance-checker.html',
+        href: 'balances.html',
         icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 10v4"/><path d="M2 10h20"/></svg>',
         label: 'Balances',
         ariaLabel: 'Navigate to Balances page'
     },
     {
-        href: 'api-secrets-manager.html',
-        icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="7.5" r="5.5"/><path d="m21 21-5.2-5.2"/><path d="M12 12l9 9"/></svg>',
-        label: 'API Secrets',
-        ariaLabel: 'Navigate to API Secrets page'
+        href: 'admin.html',
+        icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+        label: 'Admin',
+        ariaLabel: 'Navigate to Admin page'
     }
 ];
 
@@ -161,6 +161,11 @@ function initSidebar(options = {}) {
     
     // Register global functions
     registerSidebarFunctions(options.supabase);
+    
+    // Show page now that sidebar is ready
+    document.documentElement.classList.add('sidebar-ready');
+    document.documentElement.style.visibility = 'visible';
+    document.documentElement.style.opacity = '1';
     
     console.log('✓ Sidebar initialized successfully');
 }

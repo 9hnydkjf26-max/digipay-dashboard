@@ -7,6 +7,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Anti-flicker: hide page until sidebar loads -->
+    <style>html{visibility:hidden;opacity:0}</style>
+    <!-- Shared Sidebar Component -->
+    <link rel="stylesheet" href="sidebar.css">
+    <script src="sidebar.js"></script>
     <style>
         * {
             margin: 0;
@@ -63,136 +68,8 @@
         }
         
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-        
-        /* Sidebar */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: var(--color-white);
-            border-right: 1px solid var(--color-border);
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            height: 100vh;
-            left: 0;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .sidebar-header {
-            padding: 24px 20px;
-            border-bottom: 1px solid var(--color-border);
-        }
-        
-        .sidebar-logo {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--color-text);
-            letter-spacing: -0.02em;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        
-        .sidebar-subtitle {
-            font-size: 12px;
-            color: var(--color-text-tertiary);
-            margin-top: 4px;
-        }
-        
-        .sidebar-nav {
-            flex: 1;
-            padding: 16px 12px;
-            overflow-y: auto;
-        }
-        
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            margin-bottom: 4px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--color-text-secondary);
-            text-decoration: none;
-            transition: all 0.15s;
-            cursor: pointer;
-        }
-        
-        .nav-item:hover {
-            background: var(--color-bg);
-            color: var(--color-text);
-        }
-        
-        .nav-item.active {
-            background: rgba(99, 91, 255, 0.1);
-            color: var(--color-primary);
-        }
-        
-        .nav-item-icon {
-            font-size: 18px;
-            width: 20px;
-            text-align: center;
-        }
-        
-        .sidebar-footer {
-            padding: 16px 12px;
-            border-top: 1px solid var(--color-border);
-        }
-        
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            background: var(--color-bg);
-            border-radius: 6px;
-            margin-bottom: 8px;
-        }
-        
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--color-primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
-        .user-info-sidebar {
-            flex: 1;
-            min-width: 0;
-            min-height: 36px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        
-        .user-name {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--color-text);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .user-role {
-            font-size: 11px;
-            color: var(--color-text-tertiary);
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         
         /* Main Content */
@@ -203,7 +80,6 @@
             flex-direction: column;
             overflow-x: hidden;
             max-width: calc(100vw - var(--sidebar-width));
-            animation: fadeIn 0.3s ease-in;
         }
         
         .container {
@@ -211,13 +87,6 @@
             width: 100%;
             margin: 0 auto;
             padding: 40px 24px;
-        }
-        
-        .header {
-            margin-bottom: 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
         
         h1 {
@@ -232,14 +101,6 @@
             color: var(--color-text-tertiary);
         }
         
-        .user-info {
-            font-size: 13px;
-            color: var(--color-text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
         .card {
             background: var(--color-card);
             border: 1px solid var(--color-border);
@@ -252,15 +113,6 @@
         .card-content {
             padding: 24px;
         }
-        
-        .login-screen {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 24px;
-        }
-        
         
         .form-group {
             margin-bottom: 16px;
@@ -289,11 +141,10 @@
         input:focus, select:focus {
             outline: none;
             border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+            box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
         }
         
         .btn {
-            width: 100%;
             padding: 10px 16px;
             border: none;
             border-radius: 6px;
@@ -317,7 +168,6 @@
             background: transparent;
             border: 1px solid var(--color-border);
             color: var(--color-text-secondary);
-            width: auto;
         }
         
         .btn-danger {
@@ -325,12 +175,23 @@
             color: white;
         }
         
+        .hidden {
+            display: none !important;
+        }
+        
+        #authenticatedContent {
+            display: flex;
+            width: 100%;
+        }
+        
+        #authenticatedContent.hidden {
+            display: none;
+        }
+        
         .alert {
             padding: 12px 16px;
-            border-radius: 6px;
-            font-size: 13px;
+            border-radius: var(--radius);
             margin-bottom: 16px;
-            border: 1px solid;
             display: none;
         }
         
@@ -338,63 +199,41 @@
             display: block;
         }
         
-        .alert-error {
-            background: rgba(205, 66, 70, 0.05);
-            border-color: rgba(205, 66, 70, 0.2);
-            color: #a82124;
-        }
-        
         .alert-success {
-            background: rgba(0, 217, 36, 0.05);
-            border-color: rgba(0, 217, 36, 0.2);
+            background: rgba(0, 217, 36, 0.1);
+            border: 1px solid var(--color-success);
             color: #007817;
         }
         
-        .hidden {
-            display: none !important;
-        }
-        
-        /* Login Screen */
-        .login-screen {
-            width: 100%;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        /* Authenticated Content */
-        #authenticatedContent {
-            display: flex;
-            width: 100%;
-            min-height: 100vh;
-        }
-        
-        #authenticatedContent.hidden {
-            display: none;
+        .alert-error {
+            background: rgba(205, 66, 70, 0.1);
+            border: 1px solid var(--color-error);
+            color: #a82124;
         }
         
         .loading {
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             padding: 40px;
+            gap: 12px;
         }
         
         .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--color-border);
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--color-border);
             border-top-color: var(--color-primary);
             border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            margin: 0 auto 12px;
+            animation: spin 0.8s linear infinite;
         }
         
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
         
-        /* Additional styles from previous version */
+        /* Charge styles */
         .charge-item { border-bottom: 1px solid var(--color-border); }
         .charge-header { padding: 20px 24px; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 24px; }
         .charge-main { display: flex; align-items: center; gap: 16px; }
@@ -433,264 +272,35 @@
         }
         .action-buttons { display: flex; gap: 8px; margin-top: 16px; }
         
-        /* Mobile Styles */
-        .mobile-menu-btn {
-            display: none;
-            position: fixed;
-            top: 16px;
-            left: 16px;
-            z-index: 99;
-            background: var(--color-white);
-            border: 1px solid var(--color-border);
-            padding: 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            box-shadow: var(--shadow-sm);
-        }
-        
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s;
-            }
-            
-            .sidebar.mobile-open {
-                transform: translateX(0);
-            }
-            
-            .main-wrapper {
-                margin-left: 0;
-            }
-            
-            .mobile-menu-btn {
-                display: block !important;
-            }
-            
-            .charge-header {
-                grid-template-columns: 1fr;
-            }
-            
-            .charge-actions {
-                justify-content: flex-end;
-            }
-            
-            .details-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        /* Mobile Responsive Styles */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-            }
-            
-            .sidebar.mobile-open {
-                transform: translateX(0);
-            }
-            
-            .mobile-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 99;
-            }
-            
-            .mobile-overlay.active {
-                display: block;
-            }
-            
-            .main-wrapper {
-                margin-left: 0;
-                max-width: 100vw;
-            }
-            
-            .mobile-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 16px 20px;
-                background: var(--color-white);
-                border-bottom: 1px solid var(--color-border);
-                position: sticky;
-                top: 0;
-                z-index: 50;
-            }
-            
-            .hamburger {
-                width: 40px;
-                height: 40px;
-                background: none;
-                border: none;
-                cursor: pointer;
-                padding: 8px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                gap: 4px;
-            }
-            
-            .hamburger span {
-                width: 24px;
-                height: 2px;
-                background: var(--color-text);
-                border-radius: 2px;
-                transition: all 0.3s;
-            }
-            
-            .container {
-                padding: 20px 16px;
-            }
-            
-            h1 {
-                font-size: 24px;
-            }
-            
-            .search-form {
-                flex-direction: column;
-            }
-            
-            .search-form input,
-            .search-form button {
-                width: 100%;
-            }
-            
-            .results-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .btn {
-                width: 100%;
-            }
-            
-            .modal-content {
-                width: 95%;
-                margin: 20px auto;
-                max-height: 90vh;
-                overflow-y: auto;
-            }
-        }
-        
-        @media (min-width: 769px) {
-            .mobile-header {
-                display: none;
-            }
-            
-            .mobile-overlay {
-                display: none;
-            }
-        }
-    
-        /* Enhanced Select/Dropdown Styling */
-        select,
-        .form-select {
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            padding: 10px 12px;
-            padding-right: 40px;
-            background: var(--color-white, #ffffff);
-            border: 1px solid var(--color-border, #e3e8ee);
-            border-radius: 6px;
-            color: var(--color-text, #0a2540);
-            font-size: 14px;
-            font-family: inherit;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.15s;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23635bff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 18px;
-        }
-        
-        select:hover,
-        .form-select:hover {
-            border-color: var(--color-primary, #635bff);
-            background-color: var(--color-bg, #f6f9fc);
-            box-shadow: 0 2px 4px rgba(99, 91, 255, 0.1);
-        }
-        
-        select:focus,
-        .form-select:focus {
-            outline: none;
-            border-color: var(--color-primary, #635bff);
-            box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
-            background-color: var(--color-white, #ffffff);
-        }
-        
-        select option,
-        .form-select option {
-            padding: 12px 16px;
-            background: var(--color-white, #ffffff);
-            color: var(--color-text, #0a2540);
-            font-weight: 500;
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            select,
-            .form-select {
-                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%237c3aed' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-            }
-            
-            select:hover,
-            .form-select:hover {
-                box-shadow: 0 2px 4px rgba(124, 58, 237, 0.2);
-            }
-        }
-
-    
-/* Custom Dropdown Component */
+        /* Custom Dropdown */
         .custom-dropdown {
             position: relative;
-            width: 100%;
         }
         
         .custom-dropdown-trigger {
             width: 100%;
             padding: 10px 12px;
             padding-right: 40px;
-            background: var(--color-white);
             border: 1px solid var(--color-border);
             border-radius: 6px;
-            color: var(--color-text);
             font-size: 14px;
-            font-family: inherit;
-            font-weight: 500;
-            height: 42px;
+            color: var(--color-text);
+            background: var(--color-card);
             cursor: pointer;
             transition: all 0.15s;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23635bff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-position: right 12px center;
             background-size: 18px;
         }
         
-        .custom-dropdown-trigger:hover {
-            border-color: var(--color-primary);
-            background-color: var(--color-bg);
-            box-shadow: 0 2px 4px rgba(99, 91, 255, 0.1);
-        }
-        
+        .custom-dropdown-trigger:hover,
         .custom-dropdown-trigger.active {
             border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
         }
         
         .custom-dropdown-trigger.placeholder {
             color: var(--color-text-tertiary);
-            font-weight: 400;
         }
         
         .custom-dropdown-menu {
@@ -747,7 +357,7 @@
         }
         
         .custom-dropdown-option.selected::after {
-            content: 'ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“';
+            content: '✓';
             position: absolute;
             right: 16px;
             color: var(--color-primary);
@@ -763,137 +373,118 @@
             border-bottom: none;
         }
         
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .main-wrapper {
+                margin-left: 0;
+                max-width: 100vw;
+            }
+            
+            .container {
+                padding: 20px 16px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .charge-header {
+                grid-template-columns: 1fr;
+            }
+            
+            .charge-actions {
+                justify-content: flex-end;
+            }
+            
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- Mobile Menu Button -->
-    <button class="mobile-menu-btn" onclick="toggleSidebar()">
-        <span style="font-size: 20px;">Ã¢ËœÂ°</span>
-    </button>
-
     <!-- Authenticated Content -->
-    <div id="authenticatedContent">
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo">
-            </div>
-        </div>
+    <div id="authenticatedContent" class="hidden">
+        <!-- Sidebar injected by sidebar.js -->
         
-        <nav class="sidebar-nav">
-            <a href="stripe-refund-interface-secure.html" class="nav-item active" aria-label="Navigate to Refunds page" aria-current="page">
-                <span class="nav-item-icon">&#x1F4B8;</span>
-                Refunds
-            </a>
-            <a href="reports.html" class="nav-item" aria-label="Navigate to Reports page">
-                <span class="nav-item-icon">&#x1F4CA;</span>
-                Reports
-            </a>
-            <a href="warmup-compliance.html" class="nav-item" aria-label="Navigate to Warmup Compliance page">
-                <span class="nav-item-icon">&#x1F525;</span>
-                Warmup Compliance
-            </a>
-        </nav>
-        
-        <div class="sidebar-footer">
-            <div class="user-profile">
-                <div class="user-avatar" id="sidebarUserAvatar"></div>
-                <div class="user-info-sidebar">
-                    <div class="user-name" id="sidebarUserName"></div>
-                    <div class="user-role">Admin</div>
-                </div>
-            </div>
-            <button class="btn btn-secondary" style="width: 100%;" onclick="handleLogout()">
-                Sign out
-            </button>
-        </div>
-    </div>
-
-    <!-- Main Content Wrapper -->
-    <div class="main-wrapper">
-    <!-- Mobile Overlay -->
-    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileSidebar()"></div>
-    
-    <!-- Mobile Header -->
-    <div class="mobile-header">
-        <button class="hamburger" onclick="toggleMobileSidebar()" aria-label="Toggle menu">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
-        <div style="display: flex; align-items: center; gap: 8px;">
-        </div>
-        <div style="width: 40px;"></div>
-    </div>
-    
-    <div class="container">
-        <h1 style="margin-bottom: 8px;">Refunds</h1>
-        <p class="subtitle" style="margin-bottom: 32px;">Search and process customer refunds</p>
-        
-        <div class="alert" id="alert"></div>
-        
-        <div class="card">
-                <div class="card-content">
-                    <div class="form-group">
-                        <label for="searchEmail">Email address</label>
-                        <input type="email" id="searchEmail" placeholder="customer@example.com">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="account">Account</label>
-                        <div class="custom-dropdown">
-                            <div class="custom-dropdown-trigger" id="accountTrigger">
-                                All Accounts
-                            </div>
-                            <div class="custom-dropdown-menu" id="accountMenu"></div>
+        <!-- Main Content Wrapper -->
+        <div class="main-wrapper">
+            <div class="container">
+                <h1 style="margin-bottom: 8px;">Refunds</h1>
+                <p class="subtitle" style="margin-bottom: 32px;">Search and process customer refunds</p>
+                
+                <div class="alert" id="alert"></div>
+                
+                <div class="card">
+                    <div class="card-content">
+                        <div class="form-group">
+                            <label for="searchEmail">Email address</label>
+                            <input type="email" id="searchEmail" placeholder="customer@example.com">
                         </div>
-                        <input type="hidden" id="account" value="">
+                        
+                        <div class="form-group">
+                            <label for="account">Account</label>
+                            <div class="custom-dropdown">
+                                <div class="custom-dropdown-trigger" id="accountTrigger">
+                                    All Accounts
+                                </div>
+                                <div class="custom-dropdown-menu" id="accountMenu"></div>
+                            </div>
+                            <input type="hidden" id="account" value="">
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="searchCharges()">Search</button>
                     </div>
-                    
-                    <button class="btn btn-primary" onclick="searchCharges()">Search</button>
                 </div>
-            </div>
-            
-            <div class="loading hidden" id="loading">
-                <div class="spinner"></div>
-                <p style="font-size: 13px; color: var(--color-text-tertiary);">Searching...</p>
-            </div>
-            
-            <div class="card hidden" id="results">
-                <div style="padding: 16px 24px; background: var(--color-bg); border-bottom: 1px solid var(--color-border); font-size: 13px;" id="resultsHeader"></div>
-                <div id="chargesList"></div>
+                
+                <div class="loading hidden" id="loading">
+                    <div class="spinner"></div>
+                    <p style="font-size: 13px; color: var(--color-text-tertiary);">Searching...</p>
+                </div>
+                
+                <div class="card hidden" id="results">
+                    <div style="padding: 16px 24px; background: var(--color-bg); border-bottom: 1px solid var(--color-border); font-size: 13px;" id="resultsHeader"></div>
+                    <div id="chargesList"></div>
+                </div>
             </div>
         </div>
     </div>
-    </div> <!-- Close container -->
 
+    <script src="config.js"></script>
     <script type="module">
         // ========================================
-        // CONFIGURATION - UPDATE THESE
+        // CONFIGURATION
         // ========================================
         const SUPABASE_URL = 'https://hzdybwclwqkcobpwxzoo.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6ZHlid2Nsd3FrY29icHd4em9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzU4ODQsImV4cCI6MjA4MTc1MTg4NH0.e0mSI7Qp9sRaclOwP61guBNtwTVHYXc-TtVaUON67QU';
         
-        // Import Supabase client
         import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
         
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        // Check auth on load
+        // ========================================
+        // INITIALIZATION
+        // ========================================
         window.addEventListener('DOMContentLoaded', async () => {
             const { data: { session } } = await supabase.auth.getSession();
             
             if (!session) {
-                // No session - redirect to login page
-                window.location.href = 'login.html?redirect=stripe-refund-interface-secure.html';
+                window.location.href = 'login.html?redirect=refunds.html';
                 return;
             }
             
-            // Has session - show authenticated content
+            // Initialize sidebar component
+            SidebarComponent.init({ supabase: supabase });
+            updateSidebarUser(session.user.email);
+            
+            // Show authenticated content
             document.getElementById('authenticatedContent').classList.remove('hidden');
             showMainApp(session.user);
         });
         
+        // ========================================
+        // AUTH HANDLERS
+        // ========================================
         window.handleLogin = async (event) => {
             event.preventDefault();
             
@@ -910,7 +501,6 @@
                 return;
             }
             
-            // Check if user has required role
             const userRole = data.user.user_metadata?.role || data.user.app_metadata?.role;
             const allowedRoles = ['refund_admin', 'admin', 'support'];
             
@@ -920,50 +510,16 @@
                 return;
             }
             
-            // Show authenticated content and load data
-            showAuthenticatedContent();
+            document.getElementById('authenticatedContent').classList.remove('hidden');
+            updateSidebarUser(data.user.email);
             showMainApp(data.user);
         };
         
-        window.handleLogout = async () => {
-            await supabase.auth.signOut();
-            window.location.href = 'login.html';
-        };
-        
-        // Mobile sidebar functions
-        window.toggleMobileSidebar = function() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('mobileOverlay');
-            sidebar.classList.toggle('mobile-open');
-            overlay.classList.toggle('active');
-        };
-        
-        window.closeMobileSidebar = function() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('mobileOverlay');
-            sidebar.classList.remove('mobile-open');
-            overlay.classList.remove('active');
-        };
-        
+        // ========================================
+        // MAIN APP
+        // ========================================
         function showMainApp(user) {
-            updateSidebarUser(user.email);
             loadAccounts();
-        }
-        
-        function showLoginScreen() {
-            document.getElementById('authenticatedContent').classList.add('hidden');
-            document.getElementById('loginScreen').classList.remove('hidden');
-        }
-        
-        function showAuthenticatedContent() {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('authenticatedContent').classList.remove('hidden');
-        }
-        
-        function showLoginAlert(message) {
-            const alert = document.getElementById('loginAlert');
-            alert.textContent = message;
-            alert.classList.add('show');
         }
         
         async function loadAccounts() {
@@ -987,6 +543,9 @@
             }
         }
         
+        // ========================================
+        // SEARCH & REFUND
+        // ========================================
         window.searchCharges = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
@@ -1002,7 +561,6 @@
                 return;
             }
             
-            // Hide results and clear previous search header
             document.getElementById('loading').classList.remove('hidden');
             document.getElementById('results').classList.add('hidden');
             document.getElementById('resultsHeader').textContent = '';
@@ -1040,48 +598,34 @@
             const header = document.getElementById('resultsHeader');
             const list = document.getElementById('chargesList');
             
-            // Always update the header with the current search email
-            header.textContent = `${data.charges.length} charge${data.charges.length > 1 ? 's' : ''} Ã¢â‚¬Â¢ ${data.email}`;
+            header.textContent = `${data.charges.length} charge${data.charges.length > 1 ? 's' : ''} found for ${data.email}`;
             
             if (data.charges.length === 0) {
-                list.innerHTML = '<div style="padding: 60px; text-align: center; color: var(--color-text-tertiary);">No charges found</div>';
+                list.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--color-text-tertiary);">No charges found</div>';
                 results.classList.remove('hidden');
                 return;
             }
             
             list.innerHTML = data.charges.map(charge => {
-                const providerBadge = charge.payment_provider === 'airwallex' ? 
-                    '<span class="badge" style="background: #00d4aa; margin-left: 8px;">Airwallex</span>' : 
-                    '<span class="badge" style="background: #635bff; margin-left: 8px;">Stripe</span>';
-                
-                const refundStatus = charge.is_refundable ? 'badge-success' : 'badge-error';
-                const refundText = charge.is_refundable ? 'Refundable' : 'Refunded';
-                
+                const statusClass = charge.status === 'succeeded' ? 'badge-success' : 'badge-error';
                 return `
                 <div class="charge-item">
                     <div class="charge-header" onclick="toggleDetails('${charge.id}')">
                         <div class="charge-main">
-                            <div class="charge-amount">${formatCurrency(charge.amount_dollars, charge.currency)}</div>
+                            <div class="charge-amount">${formatCurrency(charge.amount, charge.currency)}</div>
                             <div class="charge-meta">
-                                <div class="charge-id">${charge.id}${providerBadge}</div>
-                                ${charge.billing_name ? `<div class="charge-date" style="font-weight: 500;">${charge.billing_name}</div>` : ''}
-                                <div class="charge-date">${formatDate(charge.created_date)}</div>
+                                <div class="charge-id">${charge.id}</div>
+                                <div class="charge-date">${formatDate(charge.created)}</div>
                             </div>
                         </div>
-                        <span class="badge ${refundStatus}">
-                            ${refundText}
-                        </span>
+                        <div class="charge-actions">
+                            <span class="badge ${statusClass}">${charge.status}</span>
+                        </div>
                     </div>
                     <div class="charge-details" id="details-${charge.id}">
                         <div class="details-grid">
-                            <div class="detail-item">
-                                <div class="detail-label">Account</div>
-                                <div class="detail-value">${charge.stripe_account_id}</div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Provider</div>
-                                <div class="detail-value">${charge.payment_provider || 'stripe'}</div>
-                            </div>
+                            <div class="detail-item"><div class="detail-label">Account</div><div class="detail-value">${charge.stripe_account_id}</div></div>
+                            <div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${charge.status}</div></div>
                             ${charge.billing_name ? `<div class="detail-item"><div class="detail-label">Name</div><div class="detail-value">${charge.billing_name}</div></div>` : ''}
                             ${charge.billing_email ? `<div class="detail-item"><div class="detail-label">Email</div><div class="detail-value">${charge.billing_email}</div></div>` : ''}
                             ${charge.is_refundable ? `<div class="detail-item"><div class="detail-label">Refundable</div><div class="detail-value" style="color: var(--color-success); font-weight: 600;">${formatCurrency(charge.refundable_amount, charge.currency)}</div></div>` : ''}
@@ -1191,6 +735,9 @@
             }
         };
         
+        // ========================================
+        // UTILITY FUNCTIONS
+        // ========================================
         function showAlert(message, type) {
             const alert = document.getElementById('alert');
             alert.textContent = message;
@@ -1215,130 +762,79 @@
             }).format(new Date(dateString));
         }
         
-        // Toggle mobile sidebar
-        window.toggleSidebar = function() {
-            document.getElementById('sidebar').classList.toggle('mobile-open');
-        };
-        
-        // Update sidebar user info
-        function updateSidebarUser(email) {
-            const avatar = document.getElementById('sidebarUserAvatar');
-            const name = document.getElementById('sidebarUserName');
+        // ========================================
+        // CUSTOM DROPDOWN
+        // ========================================
+        function initCustomDropdown(triggerId, menuId, hiddenInputId, onChangeCallback) {
+            const trigger = document.getElementById(triggerId);
+            const menu = document.getElementById(menuId);
+            const hiddenInput = document.getElementById(hiddenInputId);
             
-            if (avatar && email) {
-                avatar.textContent = email.charAt(0).toUpperCase();
-            }
-            if (name && email) {
-                name.textContent = email.split('@')[0];
-            }
-        }
-        
-        // Smooth page transitions
-        document.querySelectorAll('.nav-item').forEach(link => {
-            link.addEventListener('click', function(e) {
-                const href = this.getAttribute('href');
-                if (href && href !== 'stripe-refund-interface-secure.html' && !href.startsWith('#')) {
-                    e.preventDefault();
-                    const mainWrapper = document.querySelector('.main-wrapper');
-                    if (mainWrapper) {
-                        mainWrapper.style.animation = 'fadeOut 0.2s ease-out';
-                        mainWrapper.style.opacity = '0';
-                    }
-                    setTimeout(() => {
-                        window.location.href = href;
-                    }, 200);
+            if (!trigger || !menu) return;
+            
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menu.classList.toggle('active');
+                trigger.classList.toggle('active');
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!trigger.contains(e.target) && !menu.contains(e.target)) {
+                    menu.classList.remove('active');
+                    trigger.classList.remove('active');
                 }
             });
-        });
+        }
         
-        // Add fadeOut animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeOut {
-                from { opacity: 1; }
-                to { opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-    
-
-        // Custom Dropdown Functions (if not already defined)
-        function initCustomDropdown(triggerId, menuId, hiddenSelectId) {
-                const trigger = document.getElementById(triggerId);
-                const menu = document.getElementById(menuId);
+        function populateCustomDropdown(triggerId, menuId, hiddenInputId, options, onChangeCallback) {
+            const trigger = document.getElementById(triggerId);
+            const menu = document.getElementById(menuId);
+            const hiddenSelect = document.getElementById(hiddenInputId);
+            
+            if (!menu) return;
+            
+            menu.innerHTML = '';
+            
+            options.forEach((item, index) => {
+                const option = document.createElement('div');
+                option.className = 'custom-dropdown-option' + (index === 0 ? ' selected' : '');
+                option.textContent = item.label;
+                option.dataset.value = item.value;
                 
-                if (!trigger || !menu) return;
-                
-                trigger.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    menu.classList.toggle('active');
-                    trigger.classList.toggle('active');
-                });
-                
-                document.addEventListener('click', (e) => {
-                    if (!menu.contains(e.target) && e.target !== trigger) {
-                        menu.classList.remove('active');
-                        trigger.classList.remove('active');
+                option.addEventListener('click', () => {
+                    trigger.textContent = item.label;
+                    trigger.classList.remove('placeholder');
+                    
+                    if (hiddenSelect) {
+                        hiddenSelect.value = item.value;
+                    }
+                    
+                    menu.querySelectorAll('.custom-dropdown-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    option.classList.add('selected');
+                    
+                    menu.classList.remove('active');
+                    trigger.classList.remove('active');
+                    
+                    if (onChangeCallback) {
+                        onChangeCallback();
                     }
                 });
-            }
-            
-        function populateCustomDropdown(triggerId, menuId, hiddenSelectId, items, onChangeCallback) {
-                const menu = document.getElementById(menuId);
-                const trigger = document.getElementById(triggerId);
-                const hiddenSelect = document.getElementById(hiddenSelectId);
                 
-                if (!menu || !trigger) return;
-                
-                menu.innerHTML = '';
-                
-                items.forEach(item => {
-                    const option = document.createElement('div');
-                    option.className = 'custom-dropdown-option';
-                    option.textContent = item.label;
-                    option.dataset.value = item.value;
-                    
-                    option.addEventListener('click', () => {
-                        trigger.textContent = item.label;
-                        trigger.classList.remove('placeholder');
-                        
-                        if (hiddenSelect) {
-                            hiddenSelect.value = item.value;
-                        }
-                        
-                        menu.querySelectorAll('.custom-dropdown-option').forEach(opt => {
-                            opt.classList.remove('selected');
-                        });
-                        option.classList.add('selected');
-                        
-                        menu.classList.remove('active');
-                        trigger.classList.remove('active');
-                        
-                        if (onChangeCallback) {
-                            onChangeCallback();
-                        }
-                    });
-                    
-                    menu.appendChild(option);
-                });
-                console.log('Dropdown populated with', menu.children.length, 'options');
-            }
+                menu.appendChild(option);
+            });
+        }
         
-        // Initialize Refund Interface Dropdown
         function initRefundDropdown() {
             initCustomDropdown('accountTrigger', 'accountMenu', 'account');
         }
         
-        // Global function to populate account dropdown (called after accounts load)
         window.populateAccountDropdown = function(accounts) {
-            console.log('populateAccountDropdown received:', accounts);
-            
-            // Start with "All Accounts" option
             const options = [
                 { value: '', label: 'All Accounts' }
             ];
             
-            // Add individual accounts
             const accountOptions = accounts.map(acc => {
                 const accountName = acc.account_name || acc.name || acc.account_id || acc.id;
                 const provider = acc.payment_provider || 'stripe';
@@ -1351,8 +847,6 @@
             });
             
             options.push(...accountOptions);
-            console.log('Mapped options:', options);
-            
             populateCustomDropdown('accountTrigger', 'accountMenu', 'account', options);
         };
         
@@ -1364,9 +858,6 @@
         } else {
             setTimeout(initRefundDropdown, 100);
         }
-
     </script>
-    </div> <!-- Close main-wrapper -->
-    </div> <!-- Close authenticatedContent -->
 </body>
 </html>

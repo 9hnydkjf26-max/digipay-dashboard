@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     
+    <!-- Anti-flicker: hide page until sidebar loads -->
+    <style>html{visibility:hidden;opacity:0}</style>
     <!-- Shared Sidebar Component -->
     <link rel="stylesheet" href="sidebar.css">
     <script src="sidebar.js"></script>
@@ -1088,7 +1090,6 @@
                     loadRefunds(startTimestamp, endTimestamp, accountFilter),
                     loadDisputes(startTimestamp, endTimestamp, accountFilter)
                 ]);
-                showToast('Success', 'Reports loaded successfully', 'success');
             } catch (error) {
                 console.error('Error loading reports:', error);
                 showToast('Error', error.message || 'Failed to load reports', 'error');
