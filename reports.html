@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<!-- FILE_VERSION: v2.2-1766596161 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reports - Refund Portal</title>
+    <title>Reports - Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Shared Sidebar Component -->
+    <link rel="stylesheet" href="sidebar.css">
+    <script src="sidebar.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -20,24 +20,23 @@
         }
         
         :root {
-            /* Light Mode (Default) */
-            --color-text: #0a2540;
-            --color-text-secondary: #425466;
-            --color-text-tertiary: #697386;
-            --color-border: #e3e8ee;
-            --color-bg: #f6f9fc;
-            --color-white: #ffffff;
-            --color-card: #ffffff;
             --color-primary: #635bff;
             --color-primary-hover: #5851ec;
             --color-success: #00d924;
             --color-error: #cd4246;
-            --shadow-sm: 0 1px 3px rgba(50, 50, 93, 0.04);
+            --color-warning: #ff991f;
+            --color-bg: #f6f9fc;
+            --color-card: #ffffff;
+            --color-white: #ffffff;
+            --color-text: #0a2540;
+            --color-text-secondary: #425466;
+            --color-text-tertiary: #697386;
+            --color-border: #e3e8ee;
             --radius: 8px;
+            --shadow-sm: 0 1px 3px rgba(50, 50, 93, 0.04);
             --sidebar-width: 240px;
         }
         
-        /* Dark Mode */
         @media (prefers-color-scheme: dark) {
             :root {
                 --color-text: #e3e8ee;
@@ -63,34 +62,12 @@
             -webkit-font-smoothing: antialiased;
             display: flex;
             min-height: 100vh;
-            margin: 0;
-            padding: 0;
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-        
-        /* Login Screen */
-        .login-screen {
-            width: 100%;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
         }
         
         .hidden {
             display: none !important;
         }
         
-        /* Authenticated Content */
         #authenticatedContent {
             display: flex;
             width: 100%;
@@ -101,160 +78,18 @@
             display: none;
         }
         
-        /* Sidebar */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: var(--color-white);
-            border-right: 1px solid var(--color-border);
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            height: 100vh;
-            left: 0;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .sidebar-header {
-            padding: 24px 20px;
-            border-bottom: 1px solid var(--color-border);
-        }
-        
-        .sidebar-logo {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--color-text);
-            letter-spacing: -0.02em;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        
-        .sidebar-subtitle {
-            font-size: 12px;
-            color: var(--color-text-tertiary);
-            margin-top: 4px;
-        }
-        
-        .sidebar-nav {
-            flex: 1;
-            padding: 16px 12px;
-            overflow-y: auto;
-        }
-        
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            margin-bottom: 4px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--color-text-secondary);
-            text-decoration: none;
-            transition: all 0.15s;
-            cursor: pointer;
-        }
-        
-        .nav-item:hover {
-            background: var(--color-bg);
-            color: var(--color-text);
-        }
-        
-        .nav-item.active {
-            background: rgba(99, 91, 255, 0.1);
-            color: var(--color-primary);
-        }
-        
-        .nav-item-icon {
-            font-size: 18px;
-            width: 20px;
-            text-align: center;
-        }
-        
-        .sidebar-footer {
-            padding: 16px 12px;
-            border-top: 1px solid var(--color-border);
-        }
-        
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            background: var(--color-bg);
-            border-radius: 6px;
-            margin-bottom: 8px;
-        }
-        
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--color-primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
-        .user-info-sidebar {
-            flex: 1;
-            min-width: 0;
-            min-height: 36px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        
-        .user-name {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--color-text);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .user-role {
-            font-size: 11px;
-            color: var(--color-text-tertiary);
-        }
-        
         /* Main Content */
-        .main-wrapper {
-            margin-left: var(--sidebar-width);
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-            max-width: calc(100vw - var(--sidebar-width));
-            animation: fadeIn 0.3s ease-in;
-        }
-        
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             width: 100%;
             margin: 0 auto;
             padding: 40px 24px;
-        }
-        
-        .header {
-            margin-bottom: 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
         
         h1 {
             font-size: 28px;
             font-weight: 600;
             letter-spacing: -0.02em;
-            margin-bottom: 4px;
         }
         
         .subtitle {
@@ -262,115 +97,23 @@
             color: var(--color-text-tertiary);
         }
         
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 13px;
-            color: var(--color-text-secondary);
-        }
-        
-        .nav-tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 24px;
-            border-bottom: 1px solid var(--color-border);
-        }
-        
-        .nav-tab {
-            padding: 12px 16px;
-            background: transparent;
-            border: none;
-            border-bottom: 2px solid transparent;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--color-text-secondary);
-            cursor: pointer;
-            transition: all 0.15s;
-            text-decoration: none;
-        }
-        
-        .nav-tab:hover {
-            color: var(--color-text);
-        }
-        
-        .nav-tab.active {
-            color: var(--color-primary);
-            border-bottom-color: var(--color-primary);
-        }
-        
+        /* Cards */
         .card {
             background: var(--color-card);
             border: 1px solid var(--color-border);
             border-radius: var(--radius);
             box-shadow: var(--shadow-sm);
-            overflow: visible;
-            margin-bottom: 16px;
+            margin-bottom: 24px;
         }
         
         .card-content {
             padding: 24px;
         }
         
-        .form-group {
-            margin-bottom: 16px;
-        }
-        
-        .form-group > label {
-            display: block;
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--color-text-secondary);
-            margin-bottom: 8px;
-        }
-        
-        select, input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--color-border);
-            border-radius: 6px;
-            font-size: 14px;
-            font-family: inherit;
-            color: var(--color-text);
-            background: var(--color-card);
-            transition: all 0.15s;
-        }
-        
-        select:focus, input:focus {
-            outline: none;
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
-        }
-        
-        .btn {
-            padding: 10px 16px;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.15s;
-            font-family: inherit;
-        }
-        
-        .btn-primary {
-            background: var(--color-primary);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background: var(--color-primary-hover);
-        }
-        
-        .btn-secondary {
-            background: transparent;
-            border: 1px solid var(--color-border);
-            color: var(--color-text-secondary);
-        }
-        
+        /* Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 16px;
             margin-bottom: 24px;
         }
@@ -392,10 +135,9 @@
         }
         
         .stat-value {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: 600;
             color: var(--color-text);
-            letter-spacing: -0.02em;
         }
         
         .stat-change {
@@ -403,12 +145,127 @@
             margin-top: 8px;
         }
         
-        .stat-change.positive {
-            color: var(--color-success);
+        .stat-change.positive { color: var(--color-success); }
+        .stat-change.negative { color: var(--color-error); }
+        
+        /* Buttons */
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: inherit;
         }
         
-        .stat-change.negative {
-            color: var(--color-error);
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+        }
+        
+        .btn-primary.loading {
+            position: relative;
+            color: transparent !important;
+            pointer-events: none;
+            box-sizing: border-box !important;
+            transition: none !important;
+            padding: 10px 16px !important;
+            width: 160px !important;
+            height: 42px !important;
+        }
+        
+        .btn-primary.loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.6s linear infinite;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--color-border);
+            color: var(--color-text-secondary);
+        }
+        
+        /* Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 12px;
+        }
+        
+        .nav-tab {
+            padding: 8px 16px;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        
+        .nav-tab:hover {
+            background: var(--color-bg);
+            color: var(--color-text);
+        }
+        
+        .nav-tab.active {
+            background: rgba(99, 91, 255, 0.1);
+            color: var(--color-primary);
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            background: var(--color-card);
+            color: var(--color-text);
+        }
+        
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        /* Tables */
+        .table-wrapper {
+            overflow-x: auto;
         }
         
         table {
@@ -416,34 +273,30 @@
             border-collapse: collapse;
         }
         
-        thead {
-            background: var(--color-bg);
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
             border-bottom: 1px solid var(--color-border);
         }
         
         th {
-            text-align: left;
-            padding: 12px 16px;
-            font-size: 11px;
-            font-weight: 500;
-            color: var(--color-text-tertiary);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            background: var(--color-bg);
         }
         
         td {
-            padding: 16px;
-            border-bottom: 1px solid var(--color-border);
             font-size: 14px;
+            color: var(--color-text);
         }
         
-        tbody tr:hover {
-            background: rgba(124, 58, 237, 0.1);
-        }
-        
+        /* Loading */
         .loading {
             text-align: center;
-            padding: 60px 24px;
+            padding: 40px;
             color: var(--color-text-tertiary);
         }
         
@@ -461,356 +314,29 @@
             to { transform: rotate(360deg); }
         }
         
+        /* Empty State */
         .empty-state {
             text-align: center;
-            padding: 60px 24px;
+            padding: 40px;
         }
         
         .empty-icon {
             font-size: 48px;
-            margin-bottom: 16px;
-            opacity: 0.3;
+            margin-bottom: 12px;
+            opacity: 0.5;
         }
         
         .empty-text {
             color: var(--color-text-tertiary);
-            font-size: 14px;
         }
         
-        /* Mobile Responsive Styles */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-            }
-            
-            .sidebar.mobile-open {
-                transform: translateX(0);
-            }
-            
-            .mobile-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 99;
-            }
-            
-            .mobile-overlay.active {
-                display: block;
-            }
-            
-            .main-wrapper {
-                margin-left: 0;
-                max-width: 100vw;
-            }
-            
-            .mobile-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 16px 20px;
-                background: var(--color-white);
-                border-bottom: 1px solid var(--color-border);
-                position: sticky;
-                top: 0;
-                z-index: 50;
-            }
-            
-            .hamburger {
-                width: 40px;
-                height: 40px;
-                background: none;
-                border: none;
-                cursor: pointer;
-                padding: 8px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                gap: 4px;
-            }
-            
-            .hamburger span {
-                width: 24px;
-                height: 2px;
-                background: var(--color-text);
-                border-radius: 2px;
-                transition: all 0.3s;
-            }
-            
-            .container {
-                padding: 20px 16px;
-            }
-            
-            h1 {
-                font-size: 24px;
-            }
-            
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .filters {
-                flex-direction: column;
-            }
-            
-            .form-group {
-                width: 100%;
-            }
-            
-            .nav-tabs {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
-                -ms-overflow-style: none;
-            }
-            
-            .nav-tabs::-webkit-scrollbar {
-                display: none;
-            }
-            
-            .nav-tab {
-                white-space: nowrap;
-                flex-shrink: 0;
-            }
-            
-            .table-wrapper {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            table {
-                min-width: 600px;
-            }
-            
-            .btn {
-                width: 100%;
-            }
-        }
-        
-        @media (min-width: 769px) {
-            .mobile-header {
-                display: none;
-            }
-            
-            .mobile-overlay {
-                display: none;
-            }
-        }
-        
-        .alert {
-            padding: 12px 16px;
-            border-radius: 6px;
-            font-size: 13px;
-            margin-bottom: 16px;
-            border: 1px solid;
-            display: none;
-        }
-        
-        .alert.show {
-            display: block;
-        }
-        
-        /* Loading Spinner */
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .btn.loading {
-            position: relative;
-            color: var(--color-primary) !important;
-            pointer-events: none;
-            box-sizing: border-box !important;
-            transition: none !important;
-            padding: 10px 16px !important;
-            width: 160px !important;
-            height: 42px !important;
-        }
-        
-        .btn.loading::after {
-            content: '';
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            top: 50%;
-            left: 50%;
-            margin-left: -8px;
-            margin-top: -8px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.6s linear infinite;
-        }
-        
-        .skeleton {
-            background: linear-gradient(90deg, var(--color-border) 25%, var(--color-bg) 50%, var(--color-border) 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-            border-radius: 4px;
-        }
-        
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-        
-        .skeleton-text {
-            height: 16px;
-            margin: 8px 0;
-        }
-        
-        .skeleton-stat {
-            height: 60px;
-        }
-        
-        /* Toast Notifications */
-        .toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-width: 400px;
-        }
-        
-        .toast {
-            background: var(--color-white);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius);
-            padding: 16px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            animation: slideIn 0.3s ease;
-            transition: opacity 0.3s, transform 0.3s;
-        }
-        
-        .toast.hiding {
-            opacity: 0;
-            transform: translateX(100%);
-        }
-        
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(100%);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
-        .toast-icon {
-            flex-shrink: 0;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-        }
-        
-        .toast-content {
-            flex: 1;
-        }
-        
-        .toast-title {
-            font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 4px;
-            color: var(--color-text);
-        }
-        
-        .toast-message {
-            font-size: 13px;
-            color: var(--color-text-secondary);
-        }
-        
-        .toast-close {
-            background: none;
-            border: none;
-            color: var(--color-text-tertiary);
-            cursor: pointer;
-            font-size: 18px;
-            line-height: 1;
-            padding: 0;
-            width: 20px;
-            height: 20px;
-        }
-        
-        .toast-close:hover {
-            color: var(--color-text);
-        }
-        
-        .toast.success { border-left: 4px solid var(--color-success); }
-        .toast.error { border-left: 4px solid var(--color-error); }
-        .toast.info { border-left: 4px solid var(--color-primary); }
-        .toast.warning { border-left: 4px solid #ff991f; }
-        
-        /* Focus Indicators */
-        button:focus-visible,
-        a:focus-visible,
-        input:focus-visible,
-        select:focus-visible {
-            outline: 2px solid var(--color-primary);
-            outline-offset: 2px;
-        }
-        
-        .nav-item:focus-visible {
-            outline: 2px solid var(--color-primary);
-            outline-offset: -2px;
-        }
-        
-        .alert-error {
-            background: rgba(205, 66, 70, 0.05);
-            border-color: rgba(205, 66, 70, 0.2);
-            color: #a82124;
-        }
-        
-        .filters {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-        
-        .hidden {
-            display: none !important;
-        }
-        
-        .chart-container {
-            padding: 24px;
-            background: var(--color-white);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius);
-            margin-bottom: 24px;
-        }
-        
+        /* Chart */
         .chart-title {
             font-size: 16px;
             font-weight: 600;
-            margin-bottom: 16px;
             color: var(--color-text);
         }
         
-        /* Chart Toggle */
         .chart-toggle {
             display: flex;
             gap: 0;
@@ -820,7 +346,7 @@
         }
         
         .chart-toggle-btn {
-            padding: 6px 16px;
+            padding: 6px 12px;
             background: transparent;
             border: none;
             border-radius: 4px;
@@ -829,342 +355,74 @@
             color: var(--color-text-secondary);
             cursor: pointer;
             transition: all 0.15s;
-            white-space: nowrap;
-        }
-        
-        .chart-toggle-btn:hover {
-            color: var(--color-text);
         }
         
         .chart-toggle-btn.active {
             background: var(--color-white);
-            color: var(--color-primary);
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            color: var(--color-text);
+            box-shadow: var(--shadow-sm);
         }
         
-        @media (prefers-color-scheme: dark) {
-            .chart-toggle-btn.active {
-                background: var(--color-card);
-            }
-        }
-    
-        /* Enhanced Select/Dropdown Styling */
-        select,
-        .form-select {
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            padding: 10px 12px;
-            padding-right: 40px;
-            background: var(--color-white, #ffffff);
-            border: 1px solid var(--color-border, #e3e8ee);
-            border-radius: 6px;
-            color: var(--color-text, #0a2540);
-            font-size: 14px;
-            font-family: inherit;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.15s;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23635bff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 18px;
-        }
-        
-        select:hover,
-        .form-select:hover {
-            border-color: var(--color-primary, #635bff);
-            background-color: var(--color-bg, #f6f9fc);
-            box-shadow: 0 2px 4px rgba(99, 91, 255, 0.1);
-        }
-        
-        select:focus,
-        .form-select:focus {
-            outline: none;
-            border-color: var(--color-primary, #635bff);
-            box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
-            background-color: var(--color-white, #ffffff);
-        }
-        
-        select option,
-        .form-select option {
-            padding: 12px 16px;
-            background: var(--color-white, #ffffff);
-            color: var(--color-text, #0a2540);
-            font-weight: 500;
-        }
-        
-        @media (prefers-color-scheme: dark) {
-            select,
-            .form-select {
-                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%237c3aed' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-            }
-            
-            select:hover,
-            .form-select:hover {
-                box-shadow: 0 2px 4px rgba(124, 58, 237, 0.2);
-            }
-        }
-
-    
-/* Custom Dropdown Component */
+        /* Custom Dropdown */
         .custom-dropdown {
             position: relative;
-            width: 100%;
         }
         
         .custom-dropdown-trigger {
             width: 100%;
             padding: 10px 12px;
-            padding-right: 40px;
-            background: var(--color-white);
             border: 1px solid var(--color-border);
             border-radius: 6px;
-            color: var(--color-text);
             font-size: 14px;
-            font-family: inherit;
-            font-weight: 500;
-            height: 42px;
+            background: var(--color-card);
+            color: var(--color-text);
             cursor: pointer;
-            transition: all 0.15s;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23635bff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 18px;
+            align-items: center;
         }
         
-        .custom-dropdown-trigger:hover {
-            border-color: var(--color-primary);
-            background-color: var(--color-bg);
-            box-shadow: 0 2px 4px rgba(99, 91, 255, 0.1);
-        }
-        
-        .custom-dropdown-trigger.active {
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
-        }
-        
-        .custom-dropdown-trigger.placeholder {
+        .custom-dropdown-trigger::after {
+            content: '▼';
+            font-size: 10px;
             color: var(--color-text-tertiary);
-            font-weight: 400;
         }
         
         .custom-dropdown-menu {
             position: absolute;
-            top: calc(100% + 8px);
+            top: calc(100% + 4px);
             left: 0;
             right: 0;
-            background: var(--color-white);
+            background: var(--color-card);
             border: 1px solid var(--color-border);
-            border-radius: 8px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 100;
+            display: none;
             max-height: 300px;
             overflow-y: auto;
-            z-index: 1000;
-            display: none;
-            animation: dropdownFadeIn 0.2s ease-out;
         }
         
         .custom-dropdown-menu.active {
             display: block;
         }
         
-        @keyframes dropdownFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-8px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
         .custom-dropdown-option {
-            padding: 12px 16px;
+            padding: 10px 12px;
             cursor: pointer;
-            transition: all 0.15s;
             font-size: 14px;
-            color: var(--color-text);
-            font-weight: 500;
-            border-bottom: 1px solid transparent;
         }
         
         .custom-dropdown-option:hover {
             background: var(--color-bg);
-            border-bottom-color: var(--color-border);
         }
         
         .custom-dropdown-option.selected {
-            background: linear-gradient(90deg, rgba(99, 91, 255, 0.1) 0%, rgba(99, 91, 255, 0.05) 100%);
+            background: rgba(99, 91, 255, 0.1);
             color: var(--color-primary);
-            font-weight: 600;
-            position: relative;
         }
         
-        .custom-dropdown-option.selected::after {
-            content: 'Ã¢Å“â€œ';
-            position: absolute;
-            right: 16px;
-            color: var(--color-primary);
-            font-weight: 600;
-        }
-        
-        .custom-dropdown-option:first-child {
-            border-radius: 8px 8px 0 0;
-        }
-        
-        .custom-dropdown-option:last-child {
-            border-radius: 0 0 8px 8px;
-            border-bottom: none;
-        }
-        
-        /* Custom Calendar Date Picker (from warmup-compliance) */
-        .custom-date-picker {
-            position: relative;
-        }
-        
-        .date-picker-popup {
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            background: var(--color-white);
-            border: 1px solid var(--color-border);
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-            padding: 16px;
-            z-index: 1000;
-            min-width: 300px;
-            display: none;
-            animation: datePickerFadeIn 0.2s ease-out;
-        }
-        
-        .date-picker-popup.active {
-            display: block;
-        }
-        
-        @keyframes datePickerFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-8px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .date-picker-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-            padding: 0 4px;
-        }
-        
-        .date-picker-month-year {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--color-text);
-        }
-        
-        .date-picker-nav {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .date-picker-nav-btn {
-            width: 32px;
-            height: 32px;
-            border: none;
-            background: transparent;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.15s;
-            color: var(--color-text-secondary);
-        }
-        
-        .date-picker-nav-btn:hover {
-            background: var(--color-bg);
-            color: var(--color-text);
-        }
-        
-        .date-picker-weekdays {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-            margin-bottom: 4px;
-        }
-        
-        .date-picker-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-        }
-        
-        .date-picker-weekday {
-            text-align: center;
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--color-text-tertiary);
-            padding: 8px 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .date-picker-day {
-            aspect-ratio: 1;
-            border: none;
-            background: transparent;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            color: var(--color-text);
-            transition: all 0.15s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 500;
-        }
-        
-        .date-picker-day:hover {
-            background: var(--color-bg);
-        }
-        
-        .date-picker-day.today {
-            color: var(--color-primary);
-            font-weight: 600;
-        }
-        
-        .date-picker-day.selected {
-            background: var(--color-primary);
-            color: white;
-        }
-        
-        .date-picker-day.selected:hover {
-            background: var(--color-primary-hover);
-        }
-        
-        .date-picker-day.other-month {
-            color: var(--color-text-tertiary);
-            opacity: 0.4;
-        }
-        
-        .date-picker-day:disabled {
-            cursor: not-allowed;
-            opacity: 0.3;
-        }
-        
-        /* Custom date range container */
+        /* Custom Date Range */
         .custom-date-range-container {
             display: none;
             margin-top: 12px;
@@ -1172,7 +430,6 @@
             background: var(--color-white);
             border: 1px solid var(--color-border);
             border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
         }
         
         .custom-date-range-container.active {
@@ -1190,10 +447,7 @@
         }
         
         .date-range-field label {
-            display: block;
             font-size: 12px;
-            font-weight: 500;
-            color: var(--color-text-secondary);
             margin-bottom: 6px;
         }
         
@@ -1210,7 +464,6 @@
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.15s;
             border: 1px solid var(--color-border);
             background: var(--color-white);
             color: var(--color-text-secondary);
@@ -1226,11 +479,115 @@
             border-color: var(--color-primary);
         }
         
-        .date-range-btn.primary:hover {
-            background: var(--color-primary-hover);
-            border-color: var(--color-primary-hover);
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
         
+        .toast {
+            background: var(--color-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            min-width: 300px;
+            max-width: 400px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .toast-icon {
+            font-size: 16px;
+        }
+        
+        .toast-content {
+            flex: 1;
+        }
+        
+        .toast-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        
+        .toast-message {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--color-text-tertiary);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0;
+        }
+        
+        .toast.success { border-left: 4px solid var(--color-success); }
+        .toast.error { border-left: 4px solid var(--color-error); }
+        .toast.info { border-left: 4px solid var(--color-primary); }
+        
+        /* Alert */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            display: none;
+        }
+        
+        .alert.show {
+            display: block;
+        }
+        
+        .alert-error {
+            background: rgba(205, 66, 70, 0.1);
+            border: 1px solid var(--color-error);
+            color: var(--color-error);
+        }
+        
+        /* Mobile */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 16px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .filters {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1239,370 +596,235 @@
     <div class="toast-container" id="toastContainer"></div>
     
     <!-- Authenticated Content -->
-    <div id="authenticatedContent">
-    
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo">
-            </div>
-        </div>
+    <div id="authenticatedContent" class="hidden">
+        <!-- Sidebar is inserted automatically by sidebar.js -->
         
-        <nav class="sidebar-nav">
-            <a href="stripe-refund-interface-secure.html" class="nav-item" aria-label="Navigate to Refunds page">
-                <span class="nav-item-icon">&#x1F4B8;</span>
-                Refunds
-            </a>
-            <a href="reports.html" class="nav-item active" aria-label="Navigate to Reports page" aria-current="page">
-                <span class="nav-item-icon">&#x1F4CA;</span>
-                Reports
-            </a>
-            <a href="warmup-compliance.html" class="nav-item" aria-label="Navigate to Warmup Compliance page">
-                <span class="nav-item-icon">&#x1F525;</span>
-                Warmup Compliance
-            </a>
-        </nav>
-        
-        <div class="sidebar-footer">
-            <div class="user-profile">
-                <div class="user-avatar" id="sidebarUserAvatar"></div>
-                <div class="user-info-sidebar">
-                    <div class="user-name" id="sidebarUserName"></div>
-                    <div class="user-role">Admin</div>
+        <!-- Main Content Wrapper -->
+        <div class="main-wrapper">
+            <div class="container">
+                <h1 style="margin-bottom: 8px;">Reports</h1>
+                <p class="subtitle" style="margin-bottom: 32px;">Transaction analytics and insights</p>
+                
+                <div class="nav-tabs" role="tablist">
+                    <button class="nav-tab active" onclick="showTab('overview')" role="tab" aria-selected="true">Overview</button>
+                    <button class="nav-tab" onclick="showTab('by-account')" role="tab" aria-selected="false">By Account</button>
+                    <button class="nav-tab" onclick="showTab('refunds')" role="tab" aria-selected="false">Refunds</button>
+                    <button class="nav-tab" onclick="showTab('disputes')" role="tab" aria-selected="false">Disputes</button>
                 </div>
-            </div>
-            <button class="btn btn-secondary" style="width: 100%;" onclick="handleLogout()">
-                Sign out
-            </button>
-        </div>
-    </div>
-
-    <!-- Main Content Wrapper -->
-    <div class="main-wrapper">
-    <!-- Mobile Overlay -->
-    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileSidebar()"></div>
-    
-    <!-- Mobile Header -->
-    <div class="mobile-header">
-        <button class="hamburger" onclick="toggleMobileSidebar()" aria-label="Toggle menu">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
-        <div style="display: flex; align-items: center; gap: 8px;">
-        </div>
-        <div style="width: 40px;"></div> <!-- Spacer for center alignment -->
-    </div>
-    
-    <div class="container">
-        <h1 style="margin-bottom: 8px;">Reports</h1>
-        <p class="subtitle" style="margin-bottom: 32px;">Transaction analytics and insights</p>
-        
-        <div class="nav-tabs" role="tablist" aria-label="Report sections">
-            <button class="nav-tab active" onclick="showTab('overview')" role="tab" aria-selected="true" aria-controls="tab-overview">Overview</button>
-            <button class="nav-tab" onclick="showTab('by-account')" role="tab" aria-selected="false" aria-controls="tab-by-account">By Account</button>
-            <button class="nav-tab" onclick="showTab('refunds')" role="tab" aria-selected="false" aria-controls="tab-refunds">Refunds</button>
-            <button class="nav-tab" onclick="showTab('disputes')" role="tab" aria-selected="false" aria-controls="tab-disputes">Disputes</button>
-        </div>
-        
-        <div class="alert alert-error" id="alert"></div>
-        
-        <!-- Filters -->
-        <div class="card">
-            <div class="card-content">
-                <div class="filters">
-                    <div class="form-group">
-                        <label for="dateRange">Date Range</label>
-                        <div class="custom-dropdown">
-                            <div class="custom-dropdown-trigger placeholder" id="dateRangeTrigger">
-                                Last 30 Days
+                
+                <div class="alert alert-error" id="alert"></div>
+                
+                <!-- Filters -->
+                <div class="card">
+                    <div class="card-content">
+                        <div class="filters">
+                            <div class="form-group">
+                                <label>Date Range</label>
+                                <div class="custom-dropdown">
+                                    <div class="custom-dropdown-trigger" id="dateRangeTrigger">Last 30 Days</div>
+                                    <div class="custom-dropdown-menu" id="dateRangeMenu"></div>
+                                </div>
+                                <input type="hidden" id="dateRange" value="30">
+                                
+                                <div class="custom-date-range-container" id="customDateContainer">
+                                    <div class="date-range-row">
+                                        <div class="date-range-field">
+                                            <label>Start Date</label>
+                                            <input type="date" id="startDateValue">
+                                        </div>
+                                        <div class="date-range-field">
+                                            <label>End Date</label>
+                                            <input type="date" id="endDateValue">
+                                        </div>
+                                    </div>
+                                    <div class="date-range-actions">
+                                        <button class="date-range-btn" onclick="cancelCustomDate()">Cancel</button>
+                                        <button class="date-range-btn primary" onclick="applyCustomDate()">Apply</button>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="custom-dropdown-menu" id="dateRangeMenu"></div>
-                        </div>
-                        <input type="hidden" id="dateRange" value="30">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="accountFilter">Account</label>
-                        <div class="custom-dropdown">
-                            <div class="custom-dropdown-trigger placeholder" id="accountFilterTrigger">
-                                All Accounts
+                            
+                            <div class="form-group">
+                                <label>Account</label>
+                                <div class="custom-dropdown">
+                                    <div class="custom-dropdown-trigger" id="accountFilterTrigger">All Accounts</div>
+                                    <div class="custom-dropdown-menu" id="accountFilterMenu"></div>
+                                </div>
+                                <input type="hidden" id="accountFilter" value="">
                             </div>
-                            <div class="custom-dropdown-menu" id="accountFilterMenu"></div>
                         </div>
-                        <input type="hidden" id="accountFilter">
+                        
+                        <button class="btn btn-primary" onclick="loadReports()" style="width: 160px; height: 42px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; margin-top: 16px;">Generate Report</button>
                     </div>
                 </div>
                 
-                <!-- Custom Date Range with Calendar Pickers -->
-                <div class="custom-date-range-container" id="customDateRangeContainer">
-                    <div class="date-range-row">
-                        <div class="date-range-field">
-                            <label for="startDate">Start Date</label>
-                            <div class="custom-date-picker">
-                                <input class="form-input" type="text" id="startDate" readonly placeholder="Select start date" style="cursor: pointer; width: 100%;">
-                                <input type="hidden" id="startDateValue">
-                                <div class="date-picker-popup" id="startDatePicker">
-                                    <div class="date-picker-header">
-                                        <div class="date-picker-month-year" id="startMonthYear"></div>
-                                        <div class="date-picker-nav">
-                                            <button class="date-picker-nav-btn" id="startPrevMonth" type="button">ÃƒÂ¢Ã¢â‚¬â€Ã¢â€šÂ¬</button>
-                                            <button class="date-picker-nav-btn" id="startNextMonth" type="button">ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â¶</button>
-                                        </div>
-                                    </div>
-                                    <div class="date-picker-weekdays">
-                                        <div class="date-picker-weekday">Su</div>
-                                        <div class="date-picker-weekday">Mo</div>
-                                        <div class="date-picker-weekday">Tu</div>
-                                        <div class="date-picker-weekday">We</div>
-                                        <div class="date-picker-weekday">Th</div>
-                                        <div class="date-picker-weekday">Fr</div>
-                                        <div class="date-picker-weekday">Sa</div>
-                                    </div>
-                                    <div class="date-picker-grid" id="startDateDays"></div>
+                <!-- Overview Tab -->
+                <div id="tab-overview" class="tab-content">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Charges</div>
+                            <div class="stat-value" id="totalCharges">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Revenue</div>
+                            <div class="stat-value" id="totalRevenue">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Refunds</div>
+                            <div class="stat-value" id="totalRefunds">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Refund Rate</div>
+                            <div class="stat-value" id="refundRate">-</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-content">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                <div>
+                                    <div class="chart-title">Transaction Volume</div>
+                                    <div style="font-size: 12px; color: var(--color-text-tertiary); margin-top: 4px;">Click bars to view details</div>
+                                </div>
+                                <div class="chart-toggle">
+                                    <button class="chart-toggle-btn active" data-view="daily" onclick="switchChartView('daily')">Daily</button>
+                                    <button class="chart-toggle-btn" data-view="monthly" onclick="switchChartView('monthly')">Monthly</button>
                                 </div>
                             </div>
-                        </div>
-                        <div class="date-range-field">
-                            <label for="endDate">End Date</label>
-                            <div class="custom-date-picker">
-                                <input class="form-input" type="text" id="endDate" readonly placeholder="Select end date" style="cursor: pointer; width: 100%;">
-                                <input type="hidden" id="endDateValue">
-                                <div class="date-picker-popup" id="endDatePicker">
-                                    <div class="date-picker-header">
-                                        <div class="date-picker-month-year" id="endMonthYear"></div>
-                                        <div class="date-picker-nav">
-                                            <button class="date-picker-nav-btn" id="endPrevMonth" type="button">ÃƒÂ¢Ã¢â‚¬â€Ã¢â€šÂ¬</button>
-                                            <button class="date-picker-nav-btn" id="endNextMonth" type="button">ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â¶</button>
-                                        </div>
-                                    </div>
-                                    <div class="date-picker-weekdays">
-                                        <div class="date-picker-weekday">Su</div>
-                                        <div class="date-picker-weekday">Mo</div>
-                                        <div class="date-picker-weekday">Tu</div>
-                                        <div class="date-picker-weekday">We</div>
-                                        <div class="date-picker-weekday">Th</div>
-                                        <div class="date-picker-weekday">Fr</div>
-                                        <div class="date-picker-weekday">Sa</div>
-                                    </div>
-                                    <div class="date-picker-grid" id="endDateDays"></div>
+                            <div id="dailyChart" style="min-height: 200px;"></div>
+                            
+                            <div id="transactionDetails" class="hidden" style="margin-top: 32px; border-top: 1px solid var(--color-border); padding-top: 24px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                                    <h3 id="transactionDetailsTitle" style="font-size: 16px; font-weight: 600;"></h3>
+                                    <button onclick="closeTransactionDetails()" style="background: transparent; border: none; cursor: pointer; font-size: 20px; color: var(--color-text-secondary);">&times;</button>
+                                </div>
+                                <div class="table-wrapper">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Time</th>
+                                                <th>Amount</th>
+                                                <th>Account</th>
+                                                <th>Customer Name</th>
+                                                <th>Customer Email</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="transactionDetailsBody"></tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="date-range-actions">
-                        <button type="button" class="date-range-btn" onclick="cancelCustomDateRange()">Cancel</button>
-                        <button type="button" class="date-range-btn primary" onclick="applyCustomDateRange()">Apply</button>
-                    </div>
                 </div>
                 
-                <button class="btn btn-primary" onclick="loadReports()" style="width: 160px; height: 42px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; margin-top: 16px;">Generate Report</button>
-            </div>
-        </div>
-        
-        <!-- Overview Tab -->
-        <div id="tab-overview" class="tab-content" style="min-height: 1000px;">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Total Charges</div>
-                    <div class="stat-value" id="totalCharges">-</div>
-                    <div class="stat-change" id="chargesChange"></div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-label">Total Revenue</div>
-                    <div class="stat-value" id="totalRevenue">-</div>
-                    <div class="stat-change" id="revenueChange"></div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-label">Total Refunds</div>
-                    <div class="stat-value" id="totalRefunds">-</div>
-                    <div class="stat-change" id="refundsChange"></div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-label">Refund Rate</div>
-                    <div class="stat-value" id="refundRate">-</div>
-                    <div class="stat-change" id="refundRateChange"></div>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-content">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <div>
-                            <div class="chart-title">Transaction Volume</div>
-                            <div style="font-size: 12px; color: var(--color-text-tertiary); margin-top: 4px;">Last 30 days</div>
-                        </div>
-                        <div class="chart-toggle" role="group" aria-label="Chart view type">
-                            <button class="chart-toggle-btn active" data-view="daily" onclick="switchChartView('daily')" aria-label="View daily transactions">
-                                Daily
-                            </button>
-                            <button class="chart-toggle-btn" data-view="monthly" onclick="switchChartView('monthly')" aria-label="View monthly transactions">
-                                Monthly
-                            </button>
-                        </div>
-                    </div>
-                    <div id="dailyChart" style="min-height: 200px;"></div>
-                    
-                    <!-- Transaction Details Section -->
-                    <div id="transactionDetails" class="hidden" style="margin-top: 32px; border-top: 1px solid var(--color-border); padding-top: 24px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                            <h3 id="transactionDetailsTitle" style="font-size: 16px; font-weight: 600; color: var(--color-text);"></h3>
-                            <button onclick="closeTransactionDetails()" style="background: transparent; border: none; color: var(--color-text-secondary); cursor: pointer; font-size: 20px; padding: 4px 8px;">&times;</button>
-                        </div>
+                <!-- By Account Tab -->
+                <div id="tab-by-account" class="tab-content hidden">
+                    <div class="card">
                         <div class="table-wrapper">
                             <table>
                                 <thead>
                                     <tr>
-                                        <th>Time</th>
-                                        <th>Amount</th>
                                         <th>Account</th>
-                                        <th>Customer Name</th>
-                                        <th>Customer Email</th>
-                                        <th>Status</th>
+                                        <th>Charges</th>
+                                        <th>Revenue</th>
+                                        <th>Refunds</th>
+                                        <th>Refund Rate</th>
+                                        <th>Avg Transaction</th>
                                     </tr>
                                 </thead>
-                                <tbody id="transactionDetailsBody"></tbody>
+                                <tbody id="accountsTable">
+                                    <tr><td colspan="6"><div class="loading"><div class="spinner"></div><div>Loading data...</div></div></td></tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        
-        <!-- By Account Tab -->
-        <div id="tab-by-account" class="tab-content hidden" style="min-height: 1000px;">
-            <div class="card">
-                <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Account</th>
-                            <th>Charges</th>
-                            <th>Revenue</th>
-                            <th>Refunds</th>
-                            <th>Refund Rate</th>
-                            <th>Avg Transaction</th>
-                        </tr>
-                    </thead>
-                    <tbody id="accountsTable">
-                        <tr>
-                            <td colspan="6">
-                                <div class="loading">
-                                    <div class="spinner"></div>
-                                    <div>Loading data...</div>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Refunds Tab -->
-        <div id="tab-refunds" class="tab-content hidden" style="min-height: 1000px;">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Refunds Issued</div>
-                    <div class="stat-value" id="refundsIssued">-</div>
+                
+                <!-- Refunds Tab -->
+                <div id="tab-refunds" class="tab-content hidden">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Refunds Issued</div>
+                            <div class="stat-value" id="refundsIssued">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Refund Amount</div>
+                            <div class="stat-value" id="refundAmount">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Avg Refund</div>
+                            <div class="stat-value" id="avgRefund">-</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Refund ID</th>
+                                        <th>Account</th>
+                                        <th>Amount</th>
+                                        <th>Reason</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="refundsTable">
+                                    <tr><td colspan="5"><div class="loading"><div class="spinner"></div><div>Loading refunds...</div></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="stat-card">
-                    <div class="stat-label">Refund Amount</div>
-                    <div class="stat-value" id="refundAmount">-</div>
+                <!-- Disputes Tab -->
+                <div id="tab-disputes" class="tab-content hidden">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Disputes</div>
+                            <div class="stat-value" id="totalDisputes">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Dispute Amount</div>
+                            <div class="stat-value" id="disputeAmount">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Volume</div>
+                            <div class="stat-value" id="disputeTotalVolume">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Dispute Rate</div>
+                            <div class="stat-value" id="disputeRate">-</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Dispute ID</th>
+                                        <th>Account</th>
+                                        <th>Amount</th>
+                                        <th>Reason</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="disputesTable">
+                                    <tr><td colspan="6"><div class="loading"><div class="spinner"></div><div>Loading disputes...</div></div></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="stat-card">
-                    <div class="stat-label">Avg Refund</div>
-                    <div class="stat-value" id="avgRefund">-</div>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Refund ID</th>
-                            <th>Account</th>
-                            <th>Amount</th>
-                            <th>Reason</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody id="refundsTable">
-                        <tr>
-                            <td colspan="5">
-                                <div class="loading">
-                                    <div class="spinner"></div>
-                                    <div>Loading refunds...</div>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Disputes Tab -->
-        <div id="tab-disputes" class="tab-content hidden" style="min-height: 1000px;">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Total Disputes</div>
-                    <div class="stat-value" id="totalDisputes">-</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-label">Dispute Amount</div>
-                    <div class="stat-value" id="disputeAmount">-</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-label">Total Volume</div>
-                    <div class="stat-value" id="disputeTotalVolume">-</div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-label">Dispute Rate</div>
-                    <div class="stat-value" id="disputeRate">-</div>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Dispute ID</th>
-                            <th>Account</th>
-                            <th>Amount</th>
-                            <th>Reason</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody id="disputesTable">
-                        <tr>
-                            <td colspan="6">
-                                <div class="loading">
-                                    <div class="spinner"></div>
-                                    <div>Loading disputes...</div>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                </div>
             </div>
         </div>
     </div>
 
     <script type="module">
-        // Updated: 2024-12-24 - Fixed status emoji encoding
         // ========================================
         // CONFIGURATION
         // ========================================
@@ -1613,51 +835,188 @@
         
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        // Check auth and initialize
+        // Global variables
+        let currentChartData = { charges: [] };
+        let currentChartView = 'daily';
+        let accountMap = {};
+        
+        // ========================================
+        // INITIALIZATION
+        // ========================================
         window.addEventListener('DOMContentLoaded', async () => {
             const { data: { session } } = await supabase.auth.getSession();
             
             if (!session) {
-                // No session - redirect to login page
                 window.location.href = 'login.html?redirect=reports.html';
                 return;
             }
             
-            // Has session - show authenticated content
+            // Initialize shared sidebar
+            SidebarComponent.init({
+                supabase: supabase
+            });
+            
+            // Update user info in sidebar
+            updateSidebarUser(session.user.email);
+            
+            // Show authenticated content
             document.getElementById('authenticatedContent').classList.remove('hidden');
             
-            updateSidebarUser(session.user.email);
+            // Initialize dropdowns
+            initReportsDropdowns();
+            initDatePickers();
+            
+            // Load data
             await loadAccounts();
             await loadReports();
+        });
+        
+        // ========================================
+        // TOAST NOTIFICATIONS
+        // ========================================
+        function showToast(title, message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
             
-            // Setup keyboard navigation for tabs
-            const tabs = document.querySelectorAll('.nav-tab');
-            tabs.forEach((tab, index) => {
-                tab.addEventListener('keydown', (e) => {
-                    let newIndex;
+            const icons = {
+                success: '✓',
+                error: '✕',
+                info: 'ℹ',
+                warning: '⚠'
+            };
+            
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type] || icons.info}</div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    ${message ? `<div class="toast-message">${message}</div>` : ''}
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+            `;
+            
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        }
+        
+        // ========================================
+        // DROPDOWN FUNCTIONS
+        // ========================================
+        function populateCustomDropdown(triggerId, menuId, inputId, options, onChange) {
+            const trigger = document.getElementById(triggerId);
+            const menu = document.getElementById(menuId);
+            const input = document.getElementById(inputId);
+            
+            menu.innerHTML = options.map(opt => 
+                `<div class="custom-dropdown-option${opt.value === input.value ? ' selected' : ''}" data-value="${opt.value}">${opt.label}</div>`
+            ).join('');
+            
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.custom-dropdown-menu').forEach(m => {
+                    if (m !== menu) m.classList.remove('active');
+                });
+                menu.classList.toggle('active');
+            });
+            
+            menu.querySelectorAll('.custom-dropdown-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    const value = option.dataset.value;
+                    const label = option.textContent;
                     
-                    if (e.key === 'ArrowLeft') {
-                        e.preventDefault();
-                        newIndex = index > 0 ? index - 1 : tabs.length - 1;
-                    } else if (e.key === 'ArrowRight') {
-                        e.preventDefault();
-                        newIndex = index < tabs.length - 1 ? index + 1 : 0;
-                    } else if (e.key === 'Home') {
-                        e.preventDefault();
-                        newIndex = 0;
-                    } else if (e.key === 'End') {
-                        e.preventDefault();
-                        newIndex = tabs.length - 1;
-                    }
+                    input.value = value;
+                    trigger.textContent = label;
                     
-                    if (newIndex !== undefined) {
-                        tabs[newIndex].focus();
-                        tabs[newIndex].click();
+                    menu.querySelectorAll('.custom-dropdown-option').forEach(o => o.classList.remove('selected'));
+                    option.classList.add('selected');
+                    menu.classList.remove('active');
+                    
+                    // Handle custom date range
+                    if (inputId === 'dateRange') {
+                        const customContainer = document.getElementById('customDateContainer');
+                        if (value === 'custom') {
+                            customContainer.classList.add('active');
+                        } else {
+                            customContainer.classList.remove('active');
+                            if (onChange) onChange();
+                        }
+                    } else {
+                        if (onChange) onChange();
                     }
                 });
             });
+        }
+        
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.custom-dropdown-menu').forEach(m => m.classList.remove('active'));
         });
         
+        function initReportsDropdowns() {
+            const dateOptions = [
+                { value: '7', label: 'Last 7 Days' },
+                { value: '30', label: 'Last 30 Days' },
+                { value: '90', label: 'Last 90 Days' },
+                { value: '365', label: 'Last Year' },
+                { value: 'all', label: 'All Time' },
+                { value: 'custom', label: 'Custom Range' }
+            ];
+            
+            populateCustomDropdown('dateRangeTrigger', 'dateRangeMenu', 'dateRange', dateOptions, loadReports);
+        }
+        
+        function initDatePickers() {
+            const today = new Date().toISOString().split('T')[0];
+            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            
+            document.getElementById('startDateValue').value = thirtyDaysAgo;
+            document.getElementById('endDateValue').value = today;
+            document.getElementById('startDateValue').max = today;
+            document.getElementById('endDateValue').max = today;
+        }
+        
+        window.cancelCustomDate = function() {
+            document.getElementById('customDateContainer').classList.remove('active');
+            document.getElementById('dateRange').value = '30';
+            document.getElementById('dateRangeTrigger').textContent = 'Last 30 Days';
+        };
+        
+        window.applyCustomDate = function() {
+            loadReports();
+        };
+        
+        function populateAccountFilter(accounts) {
+            const options = [
+                { value: '', label: 'All Accounts' },
+                ...accounts.map(acc => {
+                    const providerBadge = acc.payment_provider === 'airwallex' ? ' [Airwallex]' : ' [Stripe]';
+                    return { 
+                        value: acc.account_id, 
+                        label: (acc.account_name || acc.account_id) + providerBadge
+                    };
+                })
+            ];
+            
+            populateCustomDropdown('accountFilterTrigger', 'accountFilterMenu', 'accountFilter', options, loadReports);
+        }
+        
+        // ========================================
+        // TAB FUNCTIONS
+        // ========================================
+        window.showTab = function(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+                tab.setAttribute('aria-selected', 'false');
+            });
+            
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            event.target.classList.add('active');
+            event.target.setAttribute('aria-selected', 'true');
+        };
+        
+        // ========================================
+        // LOAD ACCOUNTS
+        // ========================================
         async function loadAccounts() {
             try {
                 const { data: accounts } = await supabase
@@ -1666,14 +1025,10 @@
                     .eq('is_active', true)
                     .order('payment_provider, account_name');
                 
-                // Build account map for later use
                 if (accounts) {
                     accounts.forEach(account => {
                         accountMap[account.account_id] = account.account_name || account.account_id;
                     });
-                }
-                
-                if (accounts && accounts.length > 0) {
                     populateAccountFilter(accounts);
                 }
             } catch (error) {
@@ -1681,47 +1036,19 @@
             }
         }
         
-        // Show tab function with keyboard navigation and accessibility
-        window.showTab = function(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.add('hidden');
-            });
-            
-            // Remove active from all nav tabs and update aria-selected
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-                tab.setAttribute('aria-selected', 'false');
-            });
-            
-            // Show selected tab
-            const selectedTab = document.getElementById(`tab-${tabName}`);
-            if (selectedTab) {
-                selectedTab.classList.remove('hidden');
-            }
-            
-            // Set active nav tab and aria-selected
-            const activeNavTab = Array.from(document.querySelectorAll('.nav-tab')).find(
-                tab => tab.getAttribute('aria-controls') === `tab-${tabName}`
-            );
-            if (activeNavTab) {
-                activeNavTab.classList.add('active');
-                activeNavTab.setAttribute('aria-selected', 'true');
-            }
-        };
-        
+        // ========================================
+        // LOAD REPORTS
+        // ========================================
         window.loadReports = async function() {
             const dateRange = document.getElementById('dateRange').value;
             const accountFilter = document.getElementById('accountFilter').value;
             
-            // Show loading state on Generate Report button
             const generateBtn = document.querySelector('.btn-primary');
             if (generateBtn) {
                 generateBtn.classList.add('loading');
                 generateBtn.disabled = true;
             }
             
-            // Calculate date range
             let startDate, endDate = new Date();
             
             if (dateRange === 'custom') {
@@ -1737,14 +1064,12 @@
                     return;
                 }
                 
-                // Parse dates as local time, not UTC
                 const [startYear, startMonth, startDay] = startDateValue.split('-').map(Number);
                 const [endYear, endMonth, endDay] = endDateValue.split('-').map(Number);
                 
                 startDate = new Date(startYear, startMonth - 1, startDay, 0, 0, 0, 0);
                 endDate = new Date(endYear, endMonth - 1, endDay, 23, 59, 59, 999);
             } else if (dateRange === 'all') {
-                // All time - start from Unix epoch (January 1, 1970)
                 startDate = new Date(0);
             } else {
                 startDate = new Date();
@@ -1766,9 +1091,8 @@
                 showToast('Success', 'Reports loaded successfully', 'success');
             } catch (error) {
                 console.error('Error loading reports:', error);
-                showToast('Error Loading Reports', error.message || 'Failed to load report data', 'error');
+                showToast('Error', error.message || 'Failed to load reports', 'error');
             } finally {
-                // Remove loading state
                 if (generateBtn) {
                     generateBtn.classList.remove('loading');
                     generateBtn.disabled = false;
@@ -1776,6 +1100,9 @@
             }
         };
         
+        // ========================================
+        // LOAD OVERVIEW
+        // ========================================
         async function loadOverview(startTs, endTs, accountFilter) {
             let query = supabase
                 .from('stripe_charges')
@@ -1785,41 +1112,34 @@
             
             if (accountFilter) {
                 query = query.eq('stripe_account_id', accountFilter);
-                // When filtering by account, also get the payment provider for that account
-                // The account filter will automatically limit to the correct provider
             }
             
             const { data: charges, error } = await query;
             
             if (error) {
                 console.error('Error loading charges:', error);
-            }
-            
-            if (!charges) {
-                console.log('No charges returned');
                 return;
             }
             
-            console.log('Charges loaded:', charges.length);
+            if (!charges) return;
             
-            // Calculate stats (for full date range)
-            // Only include succeeded transactions for revenue calculation
             const successfulCharges = charges.filter(c => c.status === 'succeeded');
             const totalCharges = successfulCharges.length;
             const totalRevenue = successfulCharges.reduce((sum, c) => sum + c.amount, 0) / 100;
             const totalRefunded = successfulCharges.reduce((sum, c) => sum + c.amount_refunded, 0) / 100;
             const refundRate = totalRevenue > 0 ? (totalRefunded / totalRevenue * 100) : 0;
             
-            // Update UI
             document.getElementById('totalCharges').textContent = totalCharges.toLocaleString();
             document.getElementById('totalRevenue').textContent = formatCurrency(totalRevenue);
             document.getElementById('totalRefunds').textContent = formatCurrency(totalRefunded);
             document.getElementById('refundRate').textContent = refundRate.toFixed(1) + '%';
             
-            // Render chart with all charges (chart will filter based on view)
             renderSimpleChart(charges);
         }
         
+        // ========================================
+        // LOAD ACCOUNT BREAKDOWN
+        // ========================================
         async function loadAccountBreakdown(startTs, endTs) {
             const { data: charges } = await supabase
                 .from('stripe_charges')
@@ -1829,28 +1149,19 @@
             
             if (!charges) return;
             
-            // Group by account
             const byAccount = {};
             charges.forEach(charge => {
-                // Only include succeeded transactions
-                if (charge.status !== 'succeeded') {
-                    return;
-                }
+                if (charge.status !== 'succeeded') return;
                 
                 const acc = charge.stripe_account_id;
                 if (!byAccount[acc]) {
-                    byAccount[acc] = {
-                        charges: 0,
-                        revenue: 0,
-                        refunded: 0
-                    };
+                    byAccount[acc] = { charges: 0, revenue: 0, refunded: 0 };
                 }
                 byAccount[acc].charges++;
                 byAccount[acc].revenue += charge.amount;
                 byAccount[acc].refunded += charge.amount_refunded;
             });
             
-            // Render table
             const tbody = document.getElementById('accountsTable');
             tbody.innerHTML = Object.entries(byAccount).map(([account, stats]) => {
                 const revenue = stats.revenue / 100;
@@ -1860,7 +1171,7 @@
                 
                 return `
                     <tr>
-                        <td style="font-weight: 500;">${account}</td>
+                        <td style="font-weight: 500;">${accountMap[account] || account}</td>
                         <td>${stats.charges.toLocaleString()}</td>
                         <td>${formatCurrency(revenue)}</td>
                         <td>${formatCurrency(refunded)}</td>
@@ -1868,9 +1179,12 @@
                         <td>${formatCurrency(avgTx)}</td>
                     </tr>
                 `;
-            }).join('') || '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">&#x2696;&#xFE0F;</div><div class="empty-text">No data available</div></div></td></tr>';
+            }).join('') || '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📊</div><div class="empty-text">No data available</div></div></td></tr>';
         }
         
+        // ========================================
+        // LOAD REFUNDS
+        // ========================================
         async function loadRefunds(startTs, endTs, accountFilter) {
             let query = supabase
                 .from('stripe_refunds')
@@ -1888,7 +1202,6 @@
             
             if (!refunds) return;
             
-            // Stats
             const totalRefunds = refunds.length;
             const totalAmount = refunds.reduce((sum, r) => sum + r.amount, 0) / 100;
             const avgRefund = totalRefunds > 0 ? totalAmount / totalRefunds : 0;
@@ -1897,34 +1210,87 @@
             document.getElementById('refundAmount').textContent = formatCurrency(totalAmount);
             document.getElementById('avgRefund').textContent = formatCurrency(avgRefund);
             
-            // Table
             const tbody = document.getElementById('refundsTable');
             tbody.innerHTML = refunds.map(refund => `
                 <tr>
                     <td style="font-family: monospace; font-size: 12px;">${refund.id}</td>
-                    <td>${refund.stripe_account_id}</td>
+                    <td>${accountMap[refund.stripe_account_id] || refund.stripe_account_id}</td>
                     <td style="font-weight: 500;">${formatCurrency(refund.amount / 100, refund.currency)}</td>
                     <td>${refund.reason || 'N/A'}</td>
                     <td>${formatDate(refund.created)}</td>
                 </tr>
-            `).join('') || '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">&#x1F4B8;</div><div class="empty-text">No refunds found</div></div></td></tr>';
+            `).join('') || '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">💸</div><div class="empty-text">No refunds found</div></div></td></tr>';
         }
         
-        function groupByDay(charges) {
-            const byDay = {};
-            charges.forEach(charge => {
-                const date = new Date(charge.created * 1000).toISOString().split('T')[0];
-                if (!byDay[date]) byDay[date] = 0;
-                byDay[date]++;
-            });
-            return byDay;
+        // ========================================
+        // LOAD DISPUTES
+        // ========================================
+        async function loadDisputes(startTs, endTs, accountFilter) {
+            let disputesQuery = supabase
+                .from('stripe_disputes')
+                .select('id, stripe_account_id, amount, currency, reason, status, created')
+                .gte('created', startTs)
+                .lte('created', endTs)
+                .order('created', { ascending: false })
+                .limit(50);
+            
+            if (accountFilter) {
+                disputesQuery = disputesQuery.eq('stripe_account_id', accountFilter);
+            }
+            
+            const { data: disputes } = await disputesQuery;
+            
+            let chargesQuery = supabase
+                .from('stripe_charges')
+                .select('amount')
+                .eq('status', 'succeeded')
+                .gte('created', startTs)
+                .lte('created', endTs);
+            
+            if (accountFilter) {
+                chargesQuery = chargesQuery.eq('stripe_account_id', accountFilter);
+            }
+            
+            const { data: charges } = await chargesQuery;
+            
+            const totalDisputes = disputes?.length || 0;
+            const totalDisputeAmount = disputes ? disputes.reduce((sum, d) => sum + d.amount, 0) / 100 : 0;
+            const totalVolume = charges ? charges.reduce((sum, c) => sum + c.amount, 0) / 100 : 0;
+            const disputeRate = totalVolume > 0 ? (totalDisputeAmount / totalVolume * 100) : 0;
+            
+            document.getElementById('totalDisputes').textContent = totalDisputes.toLocaleString();
+            document.getElementById('disputeAmount').textContent = formatCurrency(totalDisputeAmount);
+            document.getElementById('disputeTotalVolume').textContent = formatCurrency(totalVolume);
+            document.getElementById('disputeRate').textContent = disputeRate.toFixed(2) + '%';
+            
+            const getStatusBadge = (status) => {
+                const colors = {
+                    'won': 'background: rgba(16, 185, 129, 0.15); color: var(--color-success);',
+                    'lost': 'background: rgba(239, 68, 68, 0.15); color: var(--color-error);',
+                    'needs_response': 'background: rgba(255, 153, 31, 0.15); color: #ff991f;',
+                    'under_review': 'background: rgba(124, 58, 237, 0.15); color: var(--color-primary);'
+                };
+                const style = colors[status] || 'background: rgba(156, 169, 179, 0.15); color: var(--color-text-secondary);';
+                const label = status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                return `<span style="padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; ${style}">${label}</span>`;
+            };
+            
+            const tbody = document.getElementById('disputesTable');
+            tbody.innerHTML = disputes?.map(dispute => `
+                <tr>
+                    <td style="font-family: monospace; font-size: 12px;">${dispute.id}</td>
+                    <td>${accountMap[dispute.stripe_account_id] || dispute.stripe_account_id}</td>
+                    <td style="font-weight: 500;">${formatCurrency(dispute.amount / 100, dispute.currency)}</td>
+                    <td>${dispute.reason || 'N/A'}</td>
+                    <td>${getStatusBadge(dispute.status)}</td>
+                    <td>${formatDate(dispute.created)}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⚖️</div><div class="empty-text">No disputes found</div></div></td></tr>';
         }
         
-        // Global chart data storage
-        let currentChartData = { charges: [] };
-        let currentChartView = 'daily';
-        let accountMap = {}; // Map of account_id to account_name
-        
+        // ========================================
+        // CHART FUNCTIONS
+        // ========================================
         function renderSimpleChart(charges) {
             // Store charges for view switching
             currentChartData.charges = charges || [];
@@ -2036,6 +1402,7 @@
             }
             
             // Get values for scaling
+            // Get values for scaling
             const values = entries.map(([_, data]) => data[valueKey]);
             const max = Math.max(...values);
             const displayMax = max > 0 ? max : 1;
@@ -2106,933 +1473,120 @@
             `;
         }
         
-        // Switch chart view function
         window.switchChartView = function(view) {
             currentChartView = view;
-            
-            // Update button states
             document.querySelectorAll('.chart-toggle-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.view === view);
             });
-            
-            // Re-render chart with current data
             renderSimpleChart(currentChartData.charges);
         };
         
-        // Show transaction details for a specific date/month
         window.showTransactionDetails = async function(dateStr) {
-            console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â  Loading transaction details for:', dateStr);
-            
             const charges = currentChartData.charges || [];
-            let dayStartTs, dayEndTs;
-            let title;
+            let dayStartTs, dayEndTs, title;
             
             if (currentChartView === 'monthly') {
-                // Monthly view - filter by month
                 const [year, month] = dateStr.split('-');
                 const monthStart = new Date(parseInt(year), parseInt(month) - 1, 1);
                 const monthEnd = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59);
                 dayStartTs = Math.floor(monthStart.getTime() / 1000);
                 dayEndTs = Math.floor(monthEnd.getTime() / 1000);
-                
-                const monthName = monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-                title = `Transactions for ${monthName}`;
+                title = `Transactions for ${monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`;
             } else {
-                // Daily view - filter by date
                 const [year, month, day] = dateStr.split('-');
                 const dayStart = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 0, 0, 0);
                 const dayEnd = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 23, 59, 59);
                 dayStartTs = Math.floor(dayStart.getTime() / 1000);
                 dayEndTs = Math.floor(dayEnd.getTime() / 1000);
-                
-                const formattedDate = dayStart.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-                title = `Transactions for ${formattedDate}`;
+                title = `Transactions for ${dayStart.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
             }
             
-            // Try to fetch detailed transaction data with customer info
+            // Fetch detailed transaction data with customer info from database
             let detailedCharges;
             try {
-                console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â Fetching transactions between:', dayStartTs, 'and', dayEndTs);
-                
-                // Get charges with customer field and refund info
-                const { data, error } = await supabase
+                const accountFilter = document.getElementById('accountFilter').value;
+                let query = supabase
                     .from('stripe_charges')
-                    .select('created, amount, amount_refunded, stripe_account_id, status, customer, payment_provider')
-                    
+                    .select('*, stripe_customers(name, email)')
                     .gte('created', dayStartTs)
-                    .lte('created', dayEndTs);
+                    .lte('created', dayEndTs)
+                    .eq('status', 'succeeded')
+                    .order('created', { ascending: false });
                 
-                console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ Raw charges data:', data);
-                console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Error (if any):', error);
-                
-                if (error) {
-                    console.error('Error loading charges:', error);
-                    detailedCharges = charges.filter(c => c.created >= dayStartTs && c.created <= dayEndTs);
-                } else if (data && data.length > 0) {
-                    // Extract unique customer IDs
-                    const customerIds = [...new Set(data.map(c => c.customer).filter(Boolean))];
-                    console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¹Ã…â€œÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¥ Customer IDs found:', customerIds);
-                    
-                    if (customerIds.length > 0) {
-                        // First, test if we can access stripe_customers at all
-                        const { data: testCustomers, error: testError } = await supabase
-                            .from('stripe_customers')
-                            .select('*')
-                            .limit(5);
-                        
-                        console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âª Test query - Can we read stripe_customers?', testCustomers?.length || 0, 'rows');
-                        console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âª Test error:', testError);
-                        console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âª Sample customer record:', testCustomers?.[0]);
-                        
-                        // Get unique stripe_account_ids from the charges
-                        const accountIds = [...new Set(data.map(c => c.stripe_account_id).filter(Boolean))];
-                        console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ Account IDs in charges:', accountIds);
-                        
-                        // Check user's account access
-                        const { data: userAccounts } = await supabase
-                            .from('user_stripe_accounts')
-                            .select('stripe_account_id, payment_provider')
-                            .eq('user_id', (await supabase.auth.getUser()).data.user.id);
-                        
-                        console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¹Ã…â€œÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¤ User has access to accounts:', userAccounts);
-                        
-                        // Try to get ANY customers for these accounts (not filtered by customer ID)
-                        const { data: anyCustomers } = await supabase
-                            .from('stripe_customers')
-                            .select('id, name, email, stripe_account_id')
-                            .in('stripe_account_id', accountIds)
-                            .limit(10);
-                        
-                        console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¹ ANY customers in these accounts:', anyCustomers?.length || 0);
-                        console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â¹ Sample:', anyCustomers?.[0]);
-                        
-                        // Fetch customers filtered by both customer ID AND account ID (for RLS)
-                        let customers = null;
-                        let custError = null;
-                        
-                        // Query with account filter to satisfy RLS policy
-                        if (accountIds.length > 0) {
-                            const result = await supabase
-                                .from('stripe_customers')
-                                .select('id, name, email, stripe_account_id')
-                                .in('id', customerIds)
-                                .in('stripe_account_id', accountIds);
-                            
-                            customers = result.data;
-                            custError = result.error;
-                            
-                            console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¹Ã…â€œÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¤ Customers fetched by id + account:', customers);
-                            console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Customer error (if any):', custError);
-                        } else {
-                            console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â No account IDs found, skipping customer fetch');
-                        }
-                        
-                        // Create customer lookup map
-                        const customerMap = {};
-                        if (customers) {
-                            customers.forEach(c => {
-                                customerMap[c.id] = { name: c.name, email: c.email };
-                            });
-                        }
-                        
-                        console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚ÂºÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â Customer map:', customerMap);
-                        
-                        // Attach customer data to charges
-                        detailedCharges = data.map(charge => ({
-                            ...charge,
-                            stripe_customers: customerMap[charge.customer] || null
-                        }));
-                        
-                        console.log('&#x2705; Final charges with customer data:', detailedCharges[0]);
-                    } else {
-                        console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â No customer IDs found in charges');
-                        detailedCharges = data;
-                    }
-                } else {
-                    console.log('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¯ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â No charges found for this date');
-                    detailedCharges = [];
+                if (accountFilter) {
+                    query = query.eq('stripe_account_id', accountFilter);
                 }
+                
+                const { data, error } = await query;
+                if (error) throw error;
+                detailedCharges = data || [];
             } catch (err) {
-                console.error('ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¸ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¥ Exception loading transaction details:', err);
-                // Fall back to using cached charges data
-                detailedCharges = charges.filter(c => c.created >= dayStartTs && c.created <= dayEndTs);
+                console.log('Fetching from cache:', err);
+                // Fall back to cached data
+                detailedCharges = charges.filter(c => c.created >= dayStartTs && c.created <= dayEndTs && c.status === 'succeeded');
             }
             
-            const filteredCharges = detailedCharges;
+            detailedCharges.sort((a, b) => b.created - a.created);
             
-            // Sort by time descending (newest first)
-            filteredCharges.sort((a, b) => b.created - a.created);
+            document.getElementById('transactionDetailsTitle').textContent = `${title} (${detailedCharges.length})`;
             
-            console.log('&#x2705; Found transactions:', filteredCharges.length);
-            
-            // Update title
-            document.getElementById('transactionDetailsTitle').textContent = title + ` (${filteredCharges.length})`;
-            
-            // Render transactions table
             const tbody = document.getElementById('transactionDetailsBody');
-            if (filteredCharges.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 24px; color: var(--color-text-secondary);">No transactions found</td></tr>';
+            if (detailedCharges.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 24px;">No transactions found</td></tr>';
             } else {
-                tbody.innerHTML = filteredCharges.map(charge => {
+                tbody.innerHTML = detailedCharges.map(charge => {
                     const time = new Date(charge.created * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
                     const amount = formatCurrency(charge.amount / 100);
                     const accountName = accountMap[charge.stripe_account_id] || charge.stripe_account_id || '-';
                     
-                    // If we have customer details from join, use them. Otherwise show customer ID
-                    const customerName = charge.stripe_customers?.name || charge.customer || '-';
-                    const customerEmail = charge.stripe_customers?.email || '-';
+                    // Get customer info from join or direct fields
+                    const customerName = charge.stripe_customers?.name || charge.customer_name || '-';
+                    const customerEmail = charge.stripe_customers?.email || charge.customer_email || '-';
                     
-                    // Determine status - check for refunds first
-                    let status;
-                    const amountRefunded = charge.amount_refunded || 0;
-                    
-                    if (amountRefunded > 0) {
-                        if (amountRefunded >= charge.amount) {
-                            // Fully refunded
-                            status = '<span style="color: var(--color-error);">&#x27F2; Refunded</span>';
-                        } else {
-                            // Partially refunded
-                            const refundedAmount = formatCurrency(amountRefunded / 100);
-                            status = `<span style="color: var(--color-warning);">&#x27F2; Partial Refund (${refundedAmount})</span>`;
-                        }
-                    } else if (charge.status === 'succeeded') {
-                        status = '<span style="color: var(--color-success);">&#x2713; Succeeded</span>';
-                    } else {
-                        status = `<span style="color: var(--color-text-secondary);">${charge.status || 'Unknown'}</span>`;
-                    }
+                    const statusStyle = charge.status === 'succeeded' 
+                        ? 'color: var(--color-success); font-weight: 500;' 
+                        : '';
+                    const statusText = charge.status === 'succeeded' ? '✓ Succeeded' : charge.status;
                     
                     return `
                         <tr>
                             <td>${time}</td>
                             <td style="font-weight: 500;">${amount}</td>
                             <td>${accountName}</td>
-                            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${customerName}">${customerName}</td>
-                            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${customerEmail}">${customerEmail}</td>
-                            <td>${status}</td>
+                            <td>${customerName}</td>
+                            <td>${customerEmail}</td>
+                            <td style="${statusStyle}">${statusText}</td>
                         </tr>
                     `;
                 }).join('');
             }
             
-            // Show the section
             document.getElementById('transactionDetails').classList.remove('hidden');
-            
-            // Scroll to the details section
             document.getElementById('transactionDetails').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         };
         
-        // Close transaction details
         window.closeTransactionDetails = function() {
             document.getElementById('transactionDetails').classList.add('hidden');
         };
         
-        window.showTab = function(tabName) {
-            // Update tab buttons
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            // Update tab content
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.add('hidden');
-            });
-            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-        };
-        
-        // Handle custom date range
-        document.getElementById('dateRange').addEventListener('change', (e) => {
-            const isCustom = e.target.value === 'custom';
-            document.getElementById('customDateRange').classList.toggle('hidden', !isCustom);
-            document.getElementById('customDateRangeEnd').classList.toggle('hidden', !isCustom);
-        });
-        
-        async function loadDisputes(startTs, endTs, accountFilter) {
-            // Fetch disputes
-            let disputesQuery = supabase
-                .from('stripe_disputes')
-                .select('id, stripe_account_id, amount, currency, reason, status, created')
-                .gte('created', startTs)
-                .lte('created', endTs)
-                .order('created', { ascending: false })
-                .limit(50);
-            
-            if (accountFilter) {
-                disputesQuery = disputesQuery.eq('stripe_account_id', accountFilter);
-            }
-            
-            // Fetch total charges for dispute rate calculation (only succeeded)
-            let chargesQuery = supabase
-                .from('stripe_charges')
-                .select('amount')
-                .gte('created', startTs)
-                .lte('created', endTs)
-                .eq('status', 'succeeded');
-            
-            if (accountFilter) {
-                chargesQuery = chargesQuery.eq('stripe_account_id', accountFilter);
-            }
-            
-            const [{ data: disputes }, { data: charges }] = await Promise.all([
-                disputesQuery,
-                chargesQuery
-            ]);
-            
-            if (!disputes || disputes.length === 0) {
-                // Set defaults if no data
-                document.getElementById('totalDisputes').textContent = '0';
-                document.getElementById('disputeAmount').textContent = '$0.00';
-                document.getElementById('disputeTotalVolume').textContent = '$0.00';
-                document.getElementById('disputeRate').textContent = '0%';
-                
-                const tbody = document.getElementById('disputesTable');
-                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">&#x2696;&#xFE0F;</div><div class="empty-text">No disputes found</div></div></td></tr>';
-                return;
-            }
-            
-            // Calculate stats
-            const totalDisputes = disputes.length;
-            const totalDisputeAmount = disputes.reduce((sum, d) => sum + d.amount, 0) / 100;
-            const totalVolume = charges ? charges.reduce((sum, c) => sum + c.amount, 0) / 100 : 0;
-            const disputeRate = totalVolume > 0 ? (totalDisputeAmount / totalVolume * 100) : 0;
-            
-            document.getElementById('totalDisputes').textContent = totalDisputes.toLocaleString();
-            document.getElementById('disputeAmount').textContent = formatCurrency(totalDisputeAmount);
-            document.getElementById('disputeTotalVolume').textContent = formatCurrency(totalVolume);
-            document.getElementById('disputeRate').textContent = disputeRate.toFixed(2) + '%';
-            
-            // Status badge helper - theme-aware colors
-            const getStatusBadge = (status) => {
-                const colors = {
-                    'won': 'background: rgba(16, 185, 129, 0.15); color: var(--color-success);',
-                    'lost': 'background: rgba(239, 68, 68, 0.15); color: var(--color-error);',
-                    'warning_needs_response': 'background: rgba(255, 153, 31, 0.15); color: #ff991f;',
-                    'warning_under_review': 'background: rgba(255, 153, 31, 0.15); color: #ff991f;',
-                    'needs_response': 'background: rgba(255, 153, 31, 0.15); color: #ff991f;',
-                    'under_review': 'background: rgba(124, 58, 237, 0.15); color: var(--color-primary);',
-                    'charge_refunded': 'background: rgba(156, 169, 179, 0.15); color: var(--color-text-secondary);'
-                };
-                const style = colors[status] || 'background: rgba(156, 169, 179, 0.15); color: var(--color-text-secondary);';
-                const label = status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                return `<span style="padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; ${style}">${label}</span>`;
-            };
-            
-            // Table
-            const tbody = document.getElementById('disputesTable');
-            tbody.innerHTML = disputes.map(dispute => `
-                <tr>
-                    <td style="font-family: monospace; font-size: 12px;">${dispute.id}</td>
-                    <td>${dispute.stripe_account_id}</td>
-                    <td style="font-weight: 500;">${formatCurrency(dispute.amount / 100, dispute.currency)}</td>
-                    <td>${dispute.reason || 'N/A'}</td>
-                    <td>${getStatusBadge(dispute.status)}</td>
-                    <td>${formatDate(dispute.created)}</td>
-                </tr>
-            `).join('') || '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">&#x2696;&#xFE0F;</div><div class="empty-text">No disputes found</div></div></td></tr>';
-        }
-        
+        // ========================================
+        // UTILITY FUNCTIONS
+        // ========================================
         function formatCurrency(amount, currency = 'USD') {
             return new Intl.NumberFormat('en-US', {
                 style: 'currency',
-                currency: currency.toUpperCase()
+                currency: currency.toUpperCase(),
+                minimumFractionDigits: 2
             }).format(amount);
         }
         
         function formatDate(timestamp) {
-            return new Intl.DateTimeFormat('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-            }).format(new Date(timestamp * 1000));
-        }
-        
-        function showAlert(message) {
-            const alert = document.getElementById('alert');
-            alert.textContent = message;
-            alert.classList.add('show');
-            setTimeout(() => alert.classList.remove('show'), 5000);
-        }
-        
-        // Toast notification system
-        function showToast(title, message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            
-            const icons = {
-                success: '&#x2713;',
-                error: '&#x2717;',
-                warning: '&#x26A0;',
-                info: '&#x2139;'
-            };
-            
-            toast.innerHTML = `
-                <div class="toast-icon">${icons[type] || icons.info}</div>
-                <div class="toast-content">
-                    <div class="toast-title">${title}</div>
-                    ${message ? `<div class="toast-message">${message}</div>` : ''}
-                </div>
-                <button class="toast-close" onclick="this.parentElement.remove()" aria-label="Close notification">&times;</button>
-            `;
-            
-            container.appendChild(toast);
-            
-            // Auto-remove after 5 seconds
-            setTimeout(() => {
-                toast.classList.add('hiding');
-                setTimeout(() => toast.remove(), 300);
-            }, 5000);
-        }
-        
-        // Enhanced error handling
-        window.addEventListener('unhandledrejection', (event) => {
-            console.error('Unhandled error:', event.reason);
-            showToast('Error', event.reason?.message || 'An unexpected error occurred', 'error');
-        });
-        
-        // Update sidebar user info
-        function updateSidebarUser(email) {
-            const avatar = document.getElementById('sidebarUserAvatar');
-            const name = document.getElementById('sidebarUserName');
-            
-            if (avatar && email) {
-                avatar.textContent = email.charAt(0).toUpperCase();
-            }
-            if (name && email) {
-                name.textContent = email.split('@')[0];
-            }
-        }
-        
-        // Handle logout
-        window.handleLogout = async function() {
-            await supabase.auth.signOut();
-            window.location.href = 'login.html';
-        };
-        
-        // Handle login
-        window.handleLogin = async function(event) {
-            event.preventDefault();
-            
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            const submitBtn = event.target.querySelector('button[type="submit"]');
-            
-            // Show loading state
-            submitBtn.classList.add('loading');
-            submitBtn.disabled = true;
-            
-            try {
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email: email,
-                    password: password
-                });
-                
-                if (error) throw error;
-                
-                // Hide login screen and show authenticated content
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('authenticatedContent').classList.remove('hidden');
-                
-                // Update user info
-                updateSidebarUser(data.user.email);
-                
-                // Load data
-                await loadAccounts();
-                await loadReports();
-                
-                showToast('Success', 'Signed in successfully', 'success');
-            } catch (error) {
-                console.error('Login error:', error);
-                showToast('Login Failed', error.message || 'Invalid email or password', 'error');
-            } finally {
-                submitBtn.classList.remove('loading');
-                submitBtn.disabled = false;
-            }
-        };
-        
-        // Mobile sidebar functions
-        window.toggleMobileSidebar = function() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('mobileOverlay');
-            sidebar.classList.toggle('mobile-open');
-            overlay.classList.toggle('active');
-        };
-        
-        window.closeMobileSidebar = function() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('mobileOverlay');
-            sidebar.classList.remove('mobile-open');
-            overlay.classList.remove('active');
-        };
-        
-        // Close sidebar when clicking nav items on mobile
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', function() {
-                if (window.innerWidth <= 768) {
-                    closeMobileSidebar();
-                }
-            });
-        });
-        
-        // Smooth page transitions
-        document.querySelectorAll('.nav-item').forEach(link => {
-            link.addEventListener('click', function(e) {
-                const href = this.getAttribute('href');
-                if (href && href !== 'reports.html' && !href.startsWith('#')) {
-                    e.preventDefault();
-                    const mainWrapper = document.querySelector('.main-wrapper');
-                    if (mainWrapper) {
-                        mainWrapper.style.animation = 'fadeOut 0.2s ease-out';
-                        mainWrapper.style.opacity = '0';
-                    }
-                    setTimeout(() => {
-                        window.location.href = href;
-                    }, 200);
-                }
-            });
-        });
-        
-        // Add fadeOut animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes fadeOut {
-                from { opacity: 1; }
-                to { opacity: 0; }
-            }
-        `;
-        document.head.appendChild(style);
-    
-
-        // Custom Dropdown Functions (if not already defined)
-        function initCustomDropdown(triggerId, menuId, hiddenSelectId) {
-                const trigger = document.getElementById(triggerId);
-                const menu = document.getElementById(menuId);
-                
-                if (!trigger || !menu) return;
-                
-                trigger.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    menu.classList.toggle('active');
-                    trigger.classList.toggle('active');
-                });
-                
-                document.addEventListener('click', (e) => {
-                    if (!menu.contains(e.target) && e.target !== trigger) {
-                        menu.classList.remove('active');
-                        trigger.classList.remove('active');
-                    }
-                });
-            }
-            
-        function populateCustomDropdown(triggerId, menuId, hiddenSelectId, items, onChangeCallback) {
-                const menu = document.getElementById(menuId);
-                const trigger = document.getElementById(triggerId);
-                const hiddenSelect = document.getElementById(hiddenSelectId);
-                
-                if (!menu || !trigger) return;
-                
-                menu.innerHTML = '';
-                
-                items.forEach(item => {
-                    const option = document.createElement('div');
-                    option.className = 'custom-dropdown-option';
-                    option.textContent = item.label;
-                    option.dataset.value = item.value;
-                    
-                    option.addEventListener('click', () => {
-                        trigger.textContent = item.label;
-                        trigger.classList.remove('placeholder');
-                        
-                        if (hiddenSelect) {
-                            hiddenSelect.value = item.value;
-                        }
-                        
-                        menu.querySelectorAll('.custom-dropdown-option').forEach(opt => {
-                            opt.classList.remove('selected');
-                        });
-                        option.classList.add('selected');
-                        
-                        menu.classList.remove('active');
-                        trigger.classList.remove('active');
-                        
-                        if (onChangeCallback) {
-                            onChangeCallback();
-                        }
-                    });
-                    
-                    menu.appendChild(option);
-                });
-                console.log('Dropdown populated with', menu.children.length, 'options');
-            }
-        
-        // Initialize Reports Page Dropdowns
-        function initReportsDropdowns() {
-            // Date Range dropdown
-            const dateRangeOptions = [
-                { value: '7', label: 'Last 7 Days' },
-                { value: '30', label: 'Last 30 Days' },
-                { value: '90', label: 'Last 90 Days' },
-                { value: 'all', label: 'All Time' },
-                { value: 'custom', label: 'Custom Range' }
-            ];
-            
-            initCustomDropdown('dateRangeTrigger', 'dateRangeMenu', 'dateRange');
-            populateCustomDropdown('dateRangeTrigger', 'dateRangeMenu', 'dateRange', dateRangeOptions, handleDateRangeChange);
-            
-            // Set default to 30 days
-            document.getElementById('dateRangeTrigger').textContent = 'Last 30 Days';
-            document.getElementById('dateRangeTrigger').classList.remove('placeholder');
-            
-            // Account filter dropdown initialization
-            initCustomDropdown('accountFilterTrigger', 'accountFilterMenu', 'accountFilter');
-        }
-        
-        // Handle date range changes
-        function handleDateRangeChange() {
-            const dateRange = document.getElementById('dateRange').value;
-            const customContainer = document.getElementById('customDateRangeContainer');
-            
-            if (dateRange === 'custom') {
-                customContainer.classList.add('active');
-            } else {
-                customContainer.classList.remove('active');
-                loadReports();
-            }
-        }
-        
-        // Custom Calendar Date Picker Implementation (from warmup-compliance)
-        let startCurrentDate = new Date();
-        let startSelectedDate = null;
-        let endCurrentDate = new Date();
-        let endSelectedDate = null;
-        
-        function initDatePickers() {
-            // Start Date Picker
-            const startInput = document.getElementById('startDate');
-            const startPopup = document.getElementById('startDatePicker');
-            const startPrev = document.getElementById('startPrevMonth');
-            const startNext = document.getElementById('startNextMonth');
-            
-            if (startInput && startPopup) {
-                startInput.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    startPopup.classList.toggle('active');
-                    document.getElementById('endDatePicker').classList.remove('active');
-                    if (startPopup.classList.contains('active')) {
-                        renderStartCalendar();
-                    }
-                });
-                
-                startPrev.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    startCurrentDate.setMonth(startCurrentDate.getMonth() - 1);
-                    renderStartCalendar();
-                });
-                
-                startNext.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    startCurrentDate.setMonth(startCurrentDate.getMonth() + 1);
-                    renderStartCalendar();
-                });
-            }
-            
-            // End Date Picker
-            const endInput = document.getElementById('endDate');
-            const endPopup = document.getElementById('endDatePicker');
-            const endPrev = document.getElementById('endPrevMonth');
-            const endNext = document.getElementById('endNextMonth');
-            
-            if (endInput && endPopup) {
-                endInput.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    endPopup.classList.toggle('active');
-                    document.getElementById('startDatePicker').classList.remove('active');
-                    if (endPopup.classList.contains('active')) {
-                        renderEndCalendar();
-                    }
-                });
-                
-                endPrev.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    endCurrentDate.setMonth(endCurrentDate.getMonth() - 1);
-                    renderEndCalendar();
-                });
-                
-                endNext.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    endCurrentDate.setMonth(endCurrentDate.getMonth() + 1);
-                    renderEndCalendar();
-                });
-            }
-            
-            // Close popups when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!startPopup.contains(e.target) && e.target !== startInput) {
-                    startPopup.classList.remove('active');
-                }
-                if (!endPopup.contains(e.target) && e.target !== endInput) {
-                    endPopup.classList.remove('active');
-                }
-            });
-        }
-        
-        function renderStartCalendar() {
-            const monthYear = document.getElementById('startMonthYear');
-            const daysContainer = document.getElementById('startDateDays');
-            
-            const year = startCurrentDate.getFullYear();
-            const month = startCurrentDate.getMonth();
-            
-            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-                'July', 'August', 'September', 'October', 'November', 'December'];
-            monthYear.textContent = `${monthNames[month]} ${year}`;
-            
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const daysInPrevMonth = new Date(year, month, 0).getDate();
-            
-            daysContainer.innerHTML = '';
-            
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            // Previous month's trailing days
-            for (let i = firstDay - 1; i >= 0; i--) {
-                const day = daysInPrevMonth - i;
-                const btn = createStartDayButton(day, true, year, month - 1);
-                daysContainer.appendChild(btn);
-            }
-            
-            // Current month's days
-            for (let day = 1; day <= daysInMonth; day++) {
-                const btn = createStartDayButton(day, false, year, month);
-                const btnDate = new Date(year, month, day);
-                btnDate.setHours(0, 0, 0, 0);
-                
-                if (btnDate.getTime() === today.getTime()) {
-                    btn.classList.add('today');
-                }
-                
-                if (startSelectedDate && btnDate.getTime() === startSelectedDate.getTime()) {
-                    btn.classList.add('selected');
-                }
-                
-                daysContainer.appendChild(btn);
-            }
-            
-            // Next month's leading days
-            const totalCells = firstDay + daysInMonth;
-            const remainingCells = 7 - (totalCells % 7);
-            if (remainingCells < 7) {
-                for (let day = 1; day <= remainingCells; day++) {
-                    const btn = createStartDayButton(day, true, year, month + 1);
-                    daysContainer.appendChild(btn);
-                }
-            }
-        }
-        
-        function renderEndCalendar() {
-            const monthYear = document.getElementById('endMonthYear');
-            const daysContainer = document.getElementById('endDateDays');
-            
-            const year = endCurrentDate.getFullYear();
-            const month = endCurrentDate.getMonth();
-            
-            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-                'July', 'August', 'September', 'October', 'November', 'December'];
-            monthYear.textContent = `${monthNames[month]} ${year}`;
-            
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const daysInPrevMonth = new Date(year, month, 0).getDate();
-            
-            daysContainer.innerHTML = '';
-            
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            // Previous month's trailing days
-            for (let i = firstDay - 1; i >= 0; i--) {
-                const day = daysInPrevMonth - i;
-                const btn = createEndDayButton(day, true, year, month - 1);
-                daysContainer.appendChild(btn);
-            }
-            
-            // Current month's days
-            for (let day = 1; day <= daysInMonth; day++) {
-                const btn = createEndDayButton(day, false, year, month);
-                const btnDate = new Date(year, month, day);
-                btnDate.setHours(0, 0, 0, 0);
-                
-                if (btnDate.getTime() === today.getTime()) {
-                    btn.classList.add('today');
-                }
-                
-                if (endSelectedDate && btnDate.getTime() === endSelectedDate.getTime()) {
-                    btn.classList.add('selected');
-                }
-                
-                daysContainer.appendChild(btn);
-            }
-            
-            // Next month's leading days
-            const totalCells = firstDay + daysInMonth;
-            const remainingCells = 7 - (totalCells % 7);
-            if (remainingCells < 7) {
-                for (let day = 1; day <= remainingCells; day++) {
-                    const btn = createEndDayButton(day, true, year, month + 1);
-                    daysContainer.appendChild(btn);
-                }
-            }
-        }
-        
-        function createStartDayButton(day, isOtherMonth, year, month) {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'date-picker-day';
-            btn.textContent = day;
-            
-            if (isOtherMonth) {
-                btn.classList.add('other-month');
-            }
-            
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                selectStartDate(year, month, day);
-            });
-            
-            return btn;
-        }
-        
-        function createEndDayButton(day, isOtherMonth, year, month) {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'date-picker-day';
-            btn.textContent = day;
-            
-            if (isOtherMonth) {
-                btn.classList.add('other-month');
-            }
-            
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                selectEndDate(year, month, day);
-            });
-            
-            return btn;
-        }
-        
-        function selectStartDate(year, month, day) {
-            startSelectedDate = new Date(year, month, day);
-            startSelectedDate.setHours(0, 0, 0, 0);
-            
-            const dateInput = document.getElementById('startDate');
-            const dateValue = document.getElementById('startDateValue');
-            const popup = document.getElementById('startDatePicker');
-            
-            const formatted = startSelectedDate.toLocaleDateString('en-US', {
+            return new Date(timestamp * 1000).toLocaleDateString('en-US', {
                 month: 'short',
                 day: 'numeric',
                 year: 'numeric'
             });
-            dateInput.value = formatted;
-            dateValue.value = startSelectedDate.toISOString().split('T')[0];
-            
-            popup.classList.remove('active');
-            renderStartCalendar();
         }
-        
-        function selectEndDate(year, month, day) {
-            endSelectedDate = new Date(year, month, day);
-            endSelectedDate.setHours(0, 0, 0, 0);
-            
-            const dateInput = document.getElementById('endDate');
-            const dateValue = document.getElementById('endDateValue');
-            const popup = document.getElementById('endDatePicker');
-            
-            const formatted = endSelectedDate.toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-            });
-            dateInput.value = formatted;
-            dateValue.value = endSelectedDate.toISOString().split('T')[0];
-            
-            popup.classList.remove('active');
-            renderEndCalendar();
-        }
-        
-        // Apply custom date range
-        window.applyCustomDateRange = function() {
-            const startDateValue = document.getElementById('startDateValue').value;
-            const endDateValue = document.getElementById('endDateValue').value;
-            
-            if (!startDateValue || !endDateValue) {
-                showToast('Error', 'Please select both start and end dates', 'error');
-                return;
-            }
-            
-            if (new Date(startDateValue) > new Date(endDateValue)) {
-                showToast('Error', 'Start date must be before end date', 'error');
-                return;
-            }
-            
-            // Don't hide the container - keep it visible while "Custom Range" is selected
-            // document.getElementById('customDateRangeContainer').classList.remove('active');
-            loadReports();
-        };
-        
-        // Cancel custom date range
-        window.cancelCustomDateRange = function() {
-            document.getElementById('customDateRangeContainer').classList.remove('active');
-            // Reset to last 30 days
-            document.getElementById('dateRange').value = '30';
-            document.getElementById('dateRangeTrigger').textContent = 'Last 30 Days';
-            
-            // Clear selections
-            startSelectedDate = null;
-            endSelectedDate = null;
-            document.getElementById('startDate').value = '';
-            document.getElementById('endDate').value = '';
-            document.getElementById('startDateValue').value = '';
-            document.getElementById('endDateValue').value = '';
-        };
-        
-        // Global function to populate account filter (called after accounts load)
-        window.populateAccountFilter = function(accounts) {
-            const options = [
-                { value: '', label: 'All Accounts' },
-                ...accounts.map(acc => {
-                    const provider = acc.payment_provider || 'stripe';
-                    const providerBadge = provider === 'airwallex' ? ' [Airwallex]' : ' [Stripe]';
-                    return { 
-                        value: acc.account_id, 
-                        label: (acc.account_name || acc.account_id) + providerBadge
-                    };
-                })
-            ];
-            
-            populateCustomDropdown('accountFilterTrigger', 'accountFilterMenu', 'accountFilter', options, loadReports);
-        };
-        
-        // Initialize dropdowns when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                setTimeout(() => {
-                    initReportsDropdowns();
-                    initDatePickers();
-                }, 100);
-            });
-        } else {
-            setTimeout(() => {
-                initReportsDropdowns();
-                initDatePickers();
-            }, 100);
-        }
-
     </script>
-    </div> <!-- Close container -->
-    </div> <!-- Close main-wrapper -->
-    </div> <!-- Close authenticatedContent -->
 </body>
 </html>

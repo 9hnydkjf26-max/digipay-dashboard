@@ -9,6 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Shared Sidebar Component -->
+    <link rel="stylesheet" href="sidebar.css">
+    <script src="sidebar.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -64,25 +69,6 @@
             padding: 0;
         }
         
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-        
-        /* Login Screen */
-        .login-screen {
-            width: 100%;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
         .hidden {
             display: none !important;
         }
@@ -98,140 +84,7 @@
             display: none;
         }
         
-        /* Sidebar */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: var(--color-white);
-            border-right: 1px solid var(--color-border);
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            height: 100vh;
-            left: 0;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .sidebar-header {
-            padding: 24px 20px;
-            border-bottom: 1px solid var(--color-border);
-        }
-        
-        .sidebar-logo {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--color-text);
-            letter-spacing: -0.02em;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .sidebar-subtitle {
-            font-size: 12px;
-            color: var(--color-text-tertiary);
-            margin-top: 4px;
-        }
-        
-        .sidebar-nav {
-            flex: 1;
-            padding: 16px 12px;
-            overflow-y: auto;
-        }
-        
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            margin-bottom: 4px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--color-text-secondary);
-            text-decoration: none;
-            transition: all 0.15s;
-            cursor: pointer;
-        }
-        
-        .nav-item:hover {
-            background: var(--color-bg);
-            color: var(--color-text);
-        }
-        
-        .nav-item.active {
-            background: rgba(99, 91, 255, 0.1);
-            color: var(--color-primary);
-        }
-        
-        .nav-item-icon {
-            font-size: 18px;
-            width: 20px;
-            text-align: center;
-        }
-        
-        .sidebar-footer {
-            padding: 16px 12px;
-            border-top: 1px solid var(--color-border);
-        }
-        
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 12px;
-            background: var(--color-bg);
-            border-radius: 6px;
-            margin-bottom: 8px;
-        }
-        
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--color-primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
-        .user-info-sidebar {
-            flex: 1;
-            min-width: 0;
-            min-height: 36px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        
-        .user-name {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--color-text);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .user-role {
-            font-size: 11px;
-            color: var(--color-text-tertiary);
-        }
-        
         /* Main Content */
-        .main-wrapper {
-            margin-left: var(--sidebar-width);
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-x: hidden;
-            max-width: calc(100vw - var(--sidebar-width));
-            animation: fadeIn 0.3s ease-in;
-        }
-        
         .container {
             max-width: 1200px;
             width: 100%;
@@ -256,27 +109,6 @@
         .subtitle {
             font-size: 14px;
             color: var(--color-text-tertiary);
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 13px;
-            color: var(--color-text-secondary);
-        }
-        
-        .card {
-            background: var(--color-card);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
-            overflow: visible;
-            margin-bottom: 16px;
-        }
-        
-        .card-content {
-            padding: 24px;
         }
         
         .btn {
@@ -333,19 +165,6 @@
             font-weight: 600;
             color: var(--color-text);
             letter-spacing: -0.02em;
-        }
-        
-        .stat-change {
-            font-size: 13px;
-            margin-top: 8px;
-        }
-        
-        .stat-change.positive {
-            color: var(--color-success);
-        }
-        
-        .stat-change.negative {
-            color: var(--color-error);
         }
         
         .loading {
@@ -594,12 +413,11 @@
         }
         
         .input-hint {
-            margin-top: 4px;
             font-size: 12px;
             color: var(--color-text-tertiary);
+            margin-top: 6px;
         }
         
-        /* Contact Management Styles */
         .contact-selector {
             display: flex;
             gap: 12px;
@@ -682,70 +500,8 @@
             cursor: pointer;
         }
         
-        /* Mobile Responsive Styles */
+        /* Mobile adjustments */
         @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-            }
-            
-            .sidebar.mobile-open {
-                transform: translateX(0);
-            }
-            
-            .mobile-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 99;
-            }
-            
-            .mobile-overlay.active {
-                display: block;
-            }
-            
-            .main-wrapper {
-                margin-left: 0;
-                max-width: 100vw;
-            }
-            
-            .mobile-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 16px 20px;
-                background: var(--color-white);
-                border-bottom: 1px solid var(--color-border);
-                position: sticky;
-                top: 0;
-                z-index: 50;
-            }
-            
-            .hamburger {
-                width: 40px;
-                height: 40px;
-                background: none;
-                border: none;
-                cursor: pointer;
-                padding: 8px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                gap: 4px;
-            }
-            
-            .hamburger span {
-                width: 24px;
-                height: 2px;
-                background: var(--color-text);
-                border-radius: 2px;
-                transition: all 0.3s;
-            }
-            
             .container {
                 padding: 20px 16px;
             }
@@ -762,77 +518,11 @@
                 grid-template-columns: 1fr;
             }
         }
-        
-        @media (min-width: 769px) {
-            .mobile-header {
-                display: none;
-            }
-            
-            .mobile-overlay {
-                display: none;
-            }
-        }
     </style>
 </head>
 <body>
     <div id="authenticatedContent" class="hidden">
-        <!-- Sidebar -->
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-logo">Dashboard</div>
-                <div class="sidebar-subtitle">Payments Portal</div>
-            </div>
-            
-            <nav class="sidebar-nav">
-                <a href="stripe-refund-interface-secure.html" class="nav-item">
-                    <span class="nav-item-icon">💸</span>
-                    Refunds
-                </a>
-                <a href="reports.html" class="nav-item">
-                    <span class="nav-item-icon">📊</span>
-                    Reports
-                </a>
-                <a href="warmup-compliance.html" class="nav-item">
-                    <span class="nav-item-icon">🔥</span>
-                    Warmup Compliance
-                </a>
-                <a href="balance-checker.html" class="nav-item active">
-                    <span class="nav-item-icon">💰</span>
-                    Balances
-                </a>
-                <a href="api-secrets-manager.html" class="nav-item">
-                    <span class="nav-item-icon">🔐</span>
-                    API Secrets
-                </a>
-            </nav>
-            
-            <div class="sidebar-footer">
-                <div class="user-profile">
-                    <div class="user-avatar" id="sidebarUserAvatar"></div>
-                    <div class="user-info-sidebar">
-                        <div class="user-name" id="sidebarUserName"></div>
-                        <div class="user-role">Admin</div>
-                    </div>
-                </div>
-                <button class="btn btn-secondary" style="width: 100%;" onclick="handleLogout()">
-                    Sign out
-                </button>
-            </div>
-        </div>
-
-        <!-- Mobile Overlay -->
-        <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileSidebar()"></div>
-
-        <!-- Mobile Header -->
-        <div class="mobile-header">
-            <button class="hamburger" onclick="toggleMobileSidebar()">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-            <div class="sidebar-logo">Dashboard</div>
-            <div style="width: 40px;"></div>
-        </div>
+        <!-- Sidebar is inserted automatically by sidebar.js -->
 
         <!-- Main Content -->
         <div class="main-wrapper">
@@ -883,6 +573,11 @@
                         <label>From Account</label>
                         <input type="text" id="fromAccount" disabled style="background: var(--color-bg);">
                     </div>
+                    
+                    <div class="form-group">
+                        <label>Available Balance</label>
+                        <div id="availableBalance" style="font-size: 18px; font-weight: 600; color: var(--color-success);"></div>
+                    </div>
 
                     <!-- Contact Selection -->
                     <div class="form-group">
@@ -907,82 +602,52 @@
                             </div>
                             <div id="contactsList" class="contacts-list" style="display: none;"></div>
                             <div id="noContactsMessage" style="display: none; padding: 20px; text-align: center; color: var(--color-text-secondary); font-size: 14px;">
-                                No saved contacts found.
+                                No saved contacts found. Use "New Recipient" to add one.
                             </div>
                         </div>
                     </div>
 
-                    <!-- New Recipient Section -->
+                    <!-- New Recipient Fields -->
                     <div id="newRecipientSection">
                         <div class="form-group">
-                            <label for="recipientEmail">Recipient Email *</label>
-                            <input 
-                                type="email" 
-                                id="recipientEmail" 
-                                placeholder="recipient@example.com"
-                            >
+                            <label>Recipient Email</label>
+                            <input type="email" id="recipientEmail" placeholder="recipient@example.com" required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="recipientName">Recipient Name</label>
-                            <input 
-                                type="text" 
-                                id="recipientName" 
-                                placeholder="Optional"
-                            >
+                            <label>Recipient Name (Optional)</label>
+                            <input type="text" id="recipientName" placeholder="John Doe">
                         </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Amount (CAD)</label>
+                        <input type="number" id="amount" step="0.01" min="0.01" max="3000" required placeholder="0.00">
+                        <div class="input-hint">Maximum: $3,000 per transfer</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Security Question</label>
+                        <input type="text" id="securityQuestion" required placeholder="What is your favorite color?">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Security Answer</label>
+                        <input type="text" id="securityAnswer" required placeholder="Blue">
+                        <div class="input-hint">Recipient will need this answer to deposit the funds</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Message (Optional)</label>
+                        <textarea id="message" rows="2" placeholder="Thanks for your help!"></textarea>
+                    </div>
 
-                        <!-- Save as contact checkbox -->
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="saveAsContact">
-                            <label for="saveAsContact">💾 Save as contact in Airwallex</label>
-                        </div>
+                    <div class="checkbox-group" id="saveContactCheckbox">
+                        <input type="checkbox" id="saveAsContact">
+                        <label for="saveAsContact">Save as contact for future transfers</label>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="amount">Amount (CAD) *</label>
-                        <input 
-                            type="number" 
-                            id="amount" 
-                            placeholder="0.00"
-                            step="0.01"
-                            min="0.01"
-                            required
-                        >
-                        <div class="input-hint">Available balance: <span id="availableBalance">$0.00</span></div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="securityQuestion">Security Question *</label>
-                        <input 
-                            type="text" 
-                            id="securityQuestion" 
-                            placeholder="What is your favorite color?"
-                            required
-                        >
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="securityAnswer">Security Answer *</label>
-                        <input 
-                            type="text" 
-                            id="securityAnswer" 
-                            placeholder="Answer to security question"
-                            required
-                        >
-                        <div class="input-hint">Recipient will need this to deposit the transfer</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="message">Message (Optional)</label>
-                        <textarea 
-                            id="message" 
-                            placeholder="Message to recipient"
-                            rows="3"
-                        ></textarea>
-                    </div>
-                    
-                    <div style="display: flex; gap: 12px;">
+                    <div style="display: flex; gap: 12px; margin-top: 24px;">
                         <button type="button" class="btn btn-secondary btn-full" onclick="closeEtransferModal()">
                             Cancel
                         </button>
@@ -996,6 +661,9 @@
     </div>
 
     <script>
+        // ========================================
+        // CONFIGURATION
+        // ========================================
         const SUPABASE_URL = window.SUPABASE_CONFIG?.url || '';
         const SUPABASE_ANON_KEY = window.SUPABASE_CONFIG?.anonKey || '';
         
@@ -1012,6 +680,9 @@
         let selectedContact = null;
         let currentContactType = 'new';
 
+        // ========================================
+        // AUTHENTICATION
+        // ========================================
         async function checkAuth() {
             const { data: { session } } = await mySupabase.auth.getSession();
             
@@ -1020,22 +691,22 @@
                 return;
             }
 
-            const userEmail = session.user.email || 'User';
-            const initials = userEmail.substring(0, 2).toUpperCase();
+            // Initialize shared sidebar component
+            SidebarComponent.init({
+                supabase: mySupabase
+            });
             
-            document.getElementById('sidebarUserAvatar').textContent = initials;
-            document.getElementById('sidebarUserName').textContent = userEmail;
+            // Update user info in sidebar
+            updateSidebarUser(session.user.email);
 
             document.getElementById('authenticatedContent').classList.remove('hidden');
 
             loadBalances();
         }
 
-        async function handleLogout() {
-            await mySupabase.auth.signOut();
-            window.location.href = 'login.html';
-        }
-
+        // ========================================
+        // ALERTS
+        // ========================================
         function showAlert(message, type = 'success') {
             const container = document.getElementById('alertContainer');
             const alert = document.createElement('div');
@@ -1045,6 +716,9 @@
             setTimeout(() => alert.remove(), 5000);
         }
 
+        // ========================================
+        // LOAD BALANCES
+        // ========================================
         async function loadBalances() {
             const loadingState = document.getElementById('loadingState');
             const balancesGrid = document.getElementById('balancesGrid');
@@ -1123,16 +797,15 @@
                     <div class="balance-amount">$${formatNumber(balance.available_balance)}</div>
                     <div class="balance-label">Available Balance (${balance.primary_currency})</div>
                     
-                    ${balance.balances_by_currency && balance.balances_by_currency.length > 0 ? `
-                        <div class="currency-list">
+                    ${balance.balances_by_currency && balance.balances_by_currency.length > 0 ?
+                        `<div class="currency-list">
                             ${balance.balances_by_currency.filter(curr => curr.available > 0).slice(0, 5).map(curr => `
                                 <div class="currency-item">
                                     <span class="currency-code">${escapeHtml(curr.currency)}</span>
                                     <span class="currency-amount">${formatNumber(curr.available)}</span>
                                 </div>
                             `).join('')}
-                        </div>
-                    ` : ''}
+                        </div>` : ''}
                     
                     <div class="balance-actions">
                         <button class="btn btn-primary btn-sm btn-full" onclick="openEtransferModal(${index})">
@@ -1143,6 +816,9 @@
             `).join('');
         }
 
+        // ========================================
+        // CONTACT MANAGEMENT
+        // ========================================
         window.selectContactType = function(type) {
             currentContactType = type;
             selectedContact = null;
@@ -1152,6 +828,7 @@
 
             document.getElementById('newRecipientSection').style.display = type === 'new' ? 'block' : 'none';
             document.getElementById('existingContactsSection').style.display = type === 'existing' ? 'block' : 'none';
+            document.getElementById('saveContactCheckbox').style.display = type === 'new' ? 'flex' : 'none';
 
             if (type === 'new') {
                 document.getElementById('recipientEmail').setAttribute('required', 'required');
@@ -1169,8 +846,6 @@
                 return;
             }
 
-            console.log('Loading contacts for account:', selectedAccount.account_id);
-
             document.getElementById('contactsLoadingState').style.display = 'block';
             document.getElementById('contactsList').style.display = 'none';
             document.getElementById('noContactsMessage').style.display = 'none';
@@ -1178,7 +853,6 @@
             try {
                 const { data: { session } } = await mySupabase.auth.getSession();
                 
-                console.log('Making request to airwallex-beneficiaries...');
                 const response = await fetch(`${SUPABASE_URL}/functions/v1/airwallex-beneficiaries`, {
                     method: 'POST',
                     headers: {
@@ -1191,16 +865,13 @@
                     })
                 });
 
-                console.log('Response status:', response.status);
                 const result = await response.json();
-                console.log('Response data:', result);
 
                 if (!response.ok || !result.success) {
                     throw new Error(result.error || 'Failed to load contacts');
                 }
 
                 availableContacts = result.beneficiaries || [];
-                console.log(`Loaded ${availableContacts.length} contacts:`, availableContacts);
                 displayContacts(availableContacts);
 
             } catch (error) {
@@ -1255,6 +926,9 @@
             event.target.closest('.contact-item').classList.add('selected');
         };
 
+        // ========================================
+        // E-TRANSFER MODAL
+        // ========================================
         window.openEtransferModal = function(accountIndex) {
             selectedAccount = currentBalances[accountIndex];
             availableContacts = [];
@@ -1271,6 +945,7 @@
             document.getElementById('existingContactOption').classList.remove('active');
             document.getElementById('newRecipientSection').style.display = 'block';
             document.getElementById('existingContactsSection').style.display = 'none';
+            document.getElementById('saveContactCheckbox').style.display = 'flex';
             document.getElementById('recipientEmail').setAttribute('required', 'required');
             
             document.getElementById('etransferModal').classList.add('show');
@@ -1376,6 +1051,9 @@
             }
         };
 
+        // ========================================
+        // UTILITY FUNCTIONS
+        // ========================================
         function refreshBalances() {
             loadBalances();
         }
@@ -1393,15 +1071,12 @@
             return div.innerHTML;
         }
 
-        function toggleMobileSidebar() {
-            document.getElementById('sidebar').classList.toggle('mobile-open');
-            document.getElementById('mobileOverlay').classList.toggle('active');
-        }
-
-        function closeMobileSidebar() {
-            document.getElementById('sidebar').classList.remove('mobile-open');
-            document.getElementById('mobileOverlay').classList.remove('active');
-        }
+        // Close modal when clicking outside
+        document.getElementById('etransferModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEtransferModal();
+            }
+        });
 
         // Initialize
         checkAuth();
