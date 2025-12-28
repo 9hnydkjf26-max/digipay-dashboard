@@ -163,7 +163,7 @@
         }
         
         // Normalize URL
-        const fullUrl = new URL(url, location.origin).href;
+        const fullUrl = new URL(url, location.href).href;
         
         // Don't navigate to current page
         if (fullUrl === location.href) {
