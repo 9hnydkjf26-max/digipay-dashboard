@@ -28,7 +28,7 @@
     const config = {
         contentSelector: '.main-wrapper',
         transitionDuration: 100,  // Faster transitions
-        cacheEnabled: true,
+        cacheEnabled: false,
         preloadEnabled: true,
         debug: false
     };
