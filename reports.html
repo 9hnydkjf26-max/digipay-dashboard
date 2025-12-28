@@ -1002,6 +1002,27 @@
             currentChartView = window.currentChartView = 'daily';
             accountMap = window.accountMap = {};
             
+            // Reset UI state to defaults
+            var customDateContainer = document.getElementById('customDateContainer');
+            if (customDateContainer) customDateContainer.classList.remove('active');
+            
+            var dateRange = document.getElementById('dateRange');
+            if (dateRange) dateRange.value = '30';
+            
+            var dateRangeTrigger = document.getElementById('dateRangeTrigger');
+            if (dateRangeTrigger) dateRangeTrigger.textContent = 'Last 30 Days';
+            
+            var accountFilter = document.getElementById('accountFilter');
+            if (accountFilter) accountFilter.value = '';
+            
+            var accountFilterTrigger = document.getElementById('accountFilterTrigger');
+            if (accountFilterTrigger) accountFilterTrigger.textContent = 'All Accounts';
+            
+            // Close any open dropdown menus
+            document.querySelectorAll('.custom-dropdown-menu').forEach(function(m) {
+                m.classList.remove('active');
+            });
+            
             initReportsDropdowns();
             initDatePickers();
             await loadAccounts();
