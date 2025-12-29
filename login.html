@@ -26,6 +26,7 @@
             --color-primary-hover: #5851ec;
             --color-border: #e5e7eb;
             --color-error: #dc2626;
+            --color-success: #16a34a;
             --radius: 8px;
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
@@ -41,6 +42,7 @@
                 --color-primary-hover: #6d28d9;
                 --color-border: #2d3748;
                 --color-error: #ef4444;
+                --color-success: #22c55e;
             }
         }
 
@@ -96,6 +98,13 @@
             margin-bottom: 16px;
         }
 
+        .logo-container h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            color: var(--color-text);
+        }
+
         .logo-container p {
             font-size: 15px;
             color: var(--color-text-secondary);
@@ -130,6 +139,17 @@
             outline: none;
             border-color: var(--color-primary);
             box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
+        }
+
+        .form-group input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .password-hint {
+            font-size: 12px;
+            color: var(--color-text-tertiary);
+            margin-top: 6px;
         }
 
         .btn {
@@ -175,8 +195,30 @@
             border: 1px solid rgba(220, 38, 38, 0.2);
         }
 
+        .alert-success {
+            background: rgba(22, 163, 74, 0.1);
+            color: var(--color-success);
+            border: 1px solid rgba(22, 163, 74, 0.2);
+        }
+
         .hidden {
-            display: none;
+            display: none !important;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         @media (max-width: 480px) {
@@ -200,11 +242,13 @@
             <div class="card-content">
                 <div class="logo-container">
                     <img src="digipaylogo.svg" alt="DigiPay Logo">
-                    <p>Sign in to access your dashboard</p>
+                    <h2 id="formTitle">Sign In</h2>
+                    <p id="formSubtitle">Sign in to access your dashboard</p>
                 </div>
 
-                <div class="alert alert-error hidden" id="loginAlert"></div>
+                <div class="alert hidden" id="alertBox"></div>
 
+                <!-- Login Form -->
                 <form id="loginForm" method="POST" action="javascript:void(0);">
                     <div class="form-group">
                         <label for="loginEmail">Email Address</label>
@@ -232,6 +276,47 @@
                     
                     <button type="submit" class="btn btn-primary" id="signInBtn">Sign In</button>
                 </form>
+
+                <!-- Set Password Form (for invited users) -->
+                <form id="setPasswordForm" class="hidden" method="POST" action="javascript:void(0);">
+                    <div class="form-group">
+                        <label for="userEmail">Email Address</label>
+                        <input 
+                            type="email" 
+                            id="userEmail" 
+                            disabled
+                            aria-label="Email address">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="newPassword">Create Password</label>
+                        <input 
+                            type="password" 
+                            id="newPassword" 
+                            name="newPassword"
+                            required 
+                            placeholder="Create a password"
+                            aria-label="New password"
+                            autocomplete="new-password"
+                            minlength="6">
+                        <p class="password-hint">Must be at least 6 characters</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input 
+                            type="password" 
+                            id="confirmPassword" 
+                            name="confirmPassword"
+                            required 
+                            placeholder="Confirm your password"
+                            aria-label="Confirm password"
+                            autocomplete="new-password"
+                            minlength="6">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="setPasswordBtn">Set Password & Continue</button>
+                </form>
             </div>
         </div>
     </div>
@@ -243,100 +328,256 @@
         
         console.log('Initializing Supabase...');
         const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('Supabase client created:', mySupabase);
+        console.log('Supabase client created');
 
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded');
+        // DOM Elements
+        const loginForm = document.getElementById('loginForm');
+        const setPasswordForm = document.getElementById('setPasswordForm');
+        const alertBox = document.getElementById('alertBox');
+        const formTitle = document.getElementById('formTitle');
+        const formSubtitle = document.getElementById('formSubtitle');
+
+        // Show alert message
+        function showAlert(message, type = 'error') {
+            alertBox.textContent = message;
+            alertBox.className = `alert alert-${type}`;
+            alertBox.classList.remove('hidden');
+        }
+
+        // Hide alert
+        function hideAlert() {
+            alertBox.classList.add('hidden');
+        }
+
+        // Show login form
+        function showLoginForm() {
+            loginForm.classList.remove('hidden');
+            setPasswordForm.classList.add('hidden');
+            formTitle.textContent = 'Sign In';
+            formSubtitle.textContent = 'Sign in to access your dashboard';
+        }
+
+        // Show set password form
+        function showSetPasswordForm(email) {
+            loginForm.classList.add('hidden');
+            setPasswordForm.classList.remove('hidden');
+            formTitle.textContent = 'Welcome!';
+            formSubtitle.textContent = 'Create a password to complete your account setup';
             
-            const loginForm = document.getElementById('loginForm');
-            const loginAlert = document.getElementById('loginAlert');
-            const signInBtn = document.getElementById('signInBtn');
-
-            console.log('Form found:', !!loginForm);
-            console.log('Button found:', !!signInBtn);
-
-            // Check if already logged in
-            async function checkSession() {
-                console.log('Checking session...');
-                const { data: { session } } = await mySupabase.auth.getSession();
-                if (session) {
-                    console.log('Session found, redirecting...');
-                    const redirectTo = new URLSearchParams(window.location.search).get('redirect') || 'reports.html';
-                    window.location.href = redirectTo;
-                } else {
-                    console.log('No session found');
-                }
+            if (email) {
+                document.getElementById('userEmail').value = email;
             }
+        }
 
-            // Handle login
-            async function handleLogin(event) {
-                console.log('handleLogin called');
-                event.preventDefault();
-                event.stopPropagation();
-                
-                const email = document.getElementById('loginEmail').value;
-                const password = document.getElementById('loginPassword').value;
-                
-                console.log('Attempting login for:', email);
-                
-                // Hide previous errors
-                loginAlert.classList.add('hidden');
-                loginAlert.textContent = '';
-                
-                // Disable button and show loading
-                signInBtn.disabled = true;
-                signInBtn.textContent = 'Signing in...';
-                
-                try {
-                    console.log('Calling signInWithPassword...');
-                    const { data, error } = await mySupabase.auth.signInWithPassword({
-                        email: email,
-                        password: password,
-                    });
-                    
-                    console.log('Response:', { data, error });
-                    
-                    if (error) {
-                        throw error;
-                    }
-                    
-                    console.log('Login successful, redirecting...');
-                    // Successful login - redirect
-                    const redirectTo = new URLSearchParams(window.location.search).get('redirect') || 'reports.html';
-                    window.location.href = redirectTo;
-                    
-                } catch (error) {
-                    console.error('Login error:', error);
-                    loginAlert.textContent = error.message || 'Invalid email or password';
-                    loginAlert.classList.remove('hidden');
-                    
-                    // Re-enable button
-                    signInBtn.disabled = false;
-                    signInBtn.textContent = 'Sign In';
-                }
-                
+        // Handle invite/recovery tokens in URL
+        async function handleAuthTokens() {
+            // Check for tokens in URL hash (Supabase PKCE flow)
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            const queryParams = new URLSearchParams(window.location.search);
+            
+            // Check for error in URL
+            const error = hashParams.get('error') || queryParams.get('error');
+            const errorDescription = hashParams.get('error_description') || queryParams.get('error_description');
+            
+            if (error) {
+                showAlert(errorDescription || error, 'error');
                 return false;
             }
 
-            // Attach event listener to form
-            if (loginForm) {
-                console.log('Attaching form submit listener');
-                loginForm.addEventListener('submit', handleLogin);
-            }
+            // Check for access_token (indicates successful token exchange)
+            const accessToken = hashParams.get('access_token');
+            const refreshToken = hashParams.get('refresh_token');
+            const type = hashParams.get('type');
             
-            // Also attach to button click as backup
-            if (signInBtn) {
-                console.log('Attaching button click listener');
-                signInBtn.addEventListener('click', function(e) {
-                    console.log('Button clicked');
-                    if (loginForm) {
-                        handleLogin(e);
+            // Also check for token_hash (older flow)
+            const tokenHash = queryParams.get('token_hash');
+            const tokenType = queryParams.get('type');
+
+            console.log('Auth check:', { accessToken: !!accessToken, type, tokenHash: !!tokenHash, tokenType });
+
+            // If we have access_token in hash (PKCE flow completed)
+            if (accessToken && refreshToken) {
+                try {
+                    // Set the session manually
+                    const { data, error } = await mySupabase.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: refreshToken
+                    });
+
+                    if (error) throw error;
+
+                    if (data.session) {
+                        // Check if this is an invite or recovery - show password form
+                        if (type === 'invite' || type === 'recovery' || type === 'signup') {
+                            showSetPasswordForm(data.session.user.email);
+                            // Clean up URL
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                            return true;
+                        }
                     }
-                });
+                } catch (err) {
+                    console.error('Error setting session:', err);
+                    showAlert('Error processing invite link. Please try again or contact support.', 'error');
+                }
             }
 
-            // Check session on page load
-            checkSession();
+            // If we have token_hash in query params (older flow)
+            if (tokenHash && tokenType) {
+                try {
+                    const { data, error } = await mySupabase.auth.verifyOtp({
+                        token_hash: tokenHash,
+                        type: tokenType
+                    });
+
+                    if (error) throw error;
+
+                    if (data.session) {
+                        showSetPasswordForm(data.session.user.email);
+                        // Clean up URL
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        return true;
+                    }
+                } catch (err) {
+                    console.error('Error verifying token:', err);
+                    showAlert('Invalid or expired invite link. Please request a new invitation.', 'error');
+                }
+            }
+
+            return false;
+        }
+
+        // Check existing session
+        async function checkSession() {
+            const { data: { session } } = await mySupabase.auth.getSession();
+            
+            if (session) {
+                // Check if user needs to set password (invited but no password set)
+                // This is indicated by identities array being empty or missing
+                const needsPassword = !session.user.user_metadata?.password_set && 
+                                     session.user.app_metadata?.provider === 'email';
+                
+                if (needsPassword) {
+                    showSetPasswordForm(session.user.email);
+                    return;
+                }
+                
+                // Already logged in with password set - redirect
+                console.log('Session found, redirecting...');
+                const redirectTo = new URLSearchParams(window.location.search).get('redirect') || 'reports.html';
+                window.location.href = redirectTo;
+            }
+        }
+
+        // Handle regular login
+        async function handleLogin(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const signInBtn = document.getElementById('signInBtn');
+            
+            hideAlert();
+            signInBtn.disabled = true;
+            signInBtn.innerHTML = '<span class="loading-spinner"></span>Signing in...';
+            
+            try {
+                const { data, error } = await mySupabase.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+                
+                if (error) throw error;
+                
+                console.log('Login successful, redirecting...');
+                const redirectTo = new URLSearchParams(window.location.search).get('redirect') || 'reports.html';
+                window.location.href = redirectTo;
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                showAlert(error.message || 'Invalid email or password', 'error');
+                signInBtn.disabled = false;
+                signInBtn.textContent = 'Sign In';
+            }
+        }
+
+        // Handle set password
+        async function handleSetPassword(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const setPasswordBtn = document.getElementById('setPasswordBtn');
+            
+            hideAlert();
+
+            // Validate passwords match
+            if (newPassword !== confirmPassword) {
+                showAlert('Passwords do not match', 'error');
+                return;
+            }
+
+            // Validate password length
+            if (newPassword.length < 6) {
+                showAlert('Password must be at least 6 characters', 'error');
+                return;
+            }
+            
+            setPasswordBtn.disabled = true;
+            setPasswordBtn.innerHTML = '<span class="loading-spinner"></span>Setting password...';
+            
+            try {
+                // Update the user's password
+                const { data, error } = await mySupabase.auth.updateUser({
+                    password: newPassword
+                });
+                
+                if (error) throw error;
+                
+                showAlert('Password set successfully! Redirecting...', 'success');
+                
+                // Redirect after short delay
+                setTimeout(() => {
+                    const redirectTo = new URLSearchParams(window.location.search).get('redirect') || 'reports.html';
+                    window.location.href = redirectTo;
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Set password error:', error);
+                showAlert(error.message || 'Error setting password. Please try again.', 'error');
+                setPasswordBtn.disabled = false;
+                setPasswordBtn.textContent = 'Set Password & Continue';
+            }
+        }
+
+        // Initialize on DOM load
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('DOM loaded, checking for auth tokens...');
+            
+            // First, handle any auth tokens in URL
+            const hasTokens = await handleAuthTokens();
+            
+            // If no tokens were processed, check for existing session
+            if (!hasTokens) {
+                await checkSession();
+            }
+
+            // Attach form handlers
+            loginForm.addEventListener('submit', handleLogin);
+            setPasswordForm.addEventListener('submit', handleSetPassword);
+        });
+
+        // Listen for auth state changes
+        mySupabase.auth.onAuthStateChange(async (event, session) => {
+            console.log('Auth state changed:', event);
+            
+            if (event === 'SIGNED_IN' && session) {
+                // Don't auto-redirect if we're showing the password form
+                if (!setPasswordForm.classList.contains('hidden')) {
+                    return;
+                }
+            }
         });
     </script>
 </body>
