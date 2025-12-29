@@ -248,8 +248,19 @@
             border-radius: 4px;
             font-size: 11px;
             font-weight: 500;
-            background: rgba(0, 217, 36, 0.1);
-            color: var(--color-success);
+            background: var(--color-bg);
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+        }
+        
+        .provider-badge:has(img) {
+            background: #ffffff;
+        }
+        
+        .provider-badge img {
+            height: 24px;
+            width: auto;
+            display: block;
         }
         
         .balance-amount {
@@ -257,6 +268,18 @@
             font-weight: 700;
             color: var(--color-text);
             margin-bottom: 8px;
+        }
+        
+        .balance-amount.balance-loading {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--color-text-tertiary);
+        }
+        
+        .stat-value.balance-loading {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--color-text-tertiary);
         }
         
         .balance-label {
@@ -569,6 +592,8 @@
                 .balance-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
                 .account-name { font-weight: 600; font-size: 16px; }
                 .provider-badge { font-size: 11px; background: var(--color-bg); padding: 4px 8px; border-radius: 4px; text-transform: uppercase; color: var(--color-text-secondary); }
+                .provider-badge:has(img) { background: #ffffff; }
+                .provider-badge img { height: 24px; width: auto; display: block; }
                 .balance-amount { font-size: 28px; font-weight: 600; color: var(--color-text); margin-bottom: 4px; }
                 .balance-label { font-size: 13px; color: var(--color-text-tertiary); margin-bottom: 16px; }
                 .currency-list { border-top: 1px solid var(--color-border); padding-top: 16px; margin-bottom: 16px; }
@@ -628,6 +653,8 @@
                     .balance-grid { grid-template-columns: 1fr; }
                     .header { flex-direction: column; align-items: flex-start; gap: 16px; }
                 }
+                
+
             </style>
             
             <div class="container">
@@ -761,6 +788,8 @@
             </div>
         </div>
     </div>
+
+
         </div>
     </div>
 
@@ -782,7 +811,7 @@
         var availableContacts = [];
         var selectedContact = null;
         var currentContactType = 'new';
-
+        
         // ========================================
         // INITIALIZATION (runs on direct page load)
         // ========================================
@@ -822,7 +851,12 @@
             availableContacts = [];
             selectedContact = null;
             currentContactType = 'new';
-            await loadBalances();
+            
+            // Step 1: Load accounts from local DB first (fast)
+            await loadAccountsFromDB();
+            
+            // Step 2: Fetch balances from API (async, don't wait)
+            fetchBalancesFromAPI();
         }
         
         // Make initPage available to router
@@ -840,6 +874,133 @@
             alertEl.textContent = message;
             container.appendChild(alertEl);
             setTimeout(function() { alertEl.remove(); }, 5000);
+        }
+
+        // ========================================
+        // LOAD ACCOUNTS FROM LOCAL DB (FAST)
+        // ========================================
+        var accountsData = [];
+        
+        async function loadAccountsFromDB() {
+            var loadingState = document.getElementById('loadingState');
+            var balancesGrid = document.getElementById('balancesGrid');
+            var emptyState = document.getElementById('emptyState');
+            var statsRow = document.getElementById('statsRow');
+
+            try {
+                var supabase = getSupabase();
+                
+                // Query local payment_accounts table - this is FAST
+                var result = await supabase
+                    .from('payment_accounts')
+                    .select('account_id, account_name')
+                    .eq('payment_provider', 'airwallex')
+                    .eq('is_active', true);
+
+                if (result.error) throw result.error;
+
+                accountsData = result.data || [];
+
+                if (accountsData.length === 0) {
+                    if (loadingState) loadingState.classList.add('hidden');
+                    if (emptyState) emptyState.classList.remove('hidden');
+                    if (balancesGrid) balancesGrid.classList.add('hidden');
+                    if (statsRow) statsRow.classList.add('hidden');
+                } else {
+                    // Render placeholder cards immediately
+                    renderPlaceholderCards(accountsData);
+                    if (loadingState) loadingState.classList.add('hidden');
+                    if (balancesGrid) balancesGrid.classList.remove('hidden');
+                    if (statsRow) statsRow.classList.remove('hidden');
+                    
+                    // Show placeholder stats
+                    statsRow.innerHTML = 
+                        '<div class="stat-card">' +
+                            '<div class="stat-label">Total Accounts</div>' +
+                            '<div class="stat-value">' + accountsData.length + '</div>' +
+                        '</div>' +
+                        '<div class="stat-card">' +
+                            '<div class="stat-label">Total CAD Balance</div>' +
+                            '<div class="stat-value balance-loading">Loading...</div>' +
+                        '</div>';
+                }
+            } catch (error) {
+                console.error('Error loading accounts from DB:', error);
+                // Fall back to showing loading state
+                if (loadingState) loadingState.classList.remove('hidden');
+            }
+        }
+
+        function renderPlaceholderCards(accounts) {
+            var grid = document.getElementById('balancesGrid');
+            
+            grid.innerHTML = accounts.map(function(account, index) {
+                return '<div class="balance-card" data-account-id="' + escapeHtml(account.account_id) + '">' +
+                    '<div class="balance-header">' +
+                        '<div class="account-name">' + escapeHtml(account.account_name || account.account_id) + '</div>' +
+                        '<div class="provider-badge"><img src="images/airwallex.svg" alt="Airwallex"></div>' +
+                    '</div>' +
+                    '<div class="balance-amount balance-loading">Loading...</div>' +
+                    '<div class="balance-label">Available Balance</div>' +
+                    '<div class="currency-list">' +
+                        '<div class="currency-item">' +
+                            '<span class="currency-code" style="color: var(--color-text-tertiary);">Fetching currencies...</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="balance-actions">' +
+                        '<button class="btn btn-primary btn-sm btn-full" disabled>Send e-Transfer</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        // ========================================
+        // FETCH BALANCES FROM API (ASYNC)
+        // ========================================
+        async function fetchBalancesFromAPI() {
+            try {
+                var supabase = getSupabase();
+                var session = (await supabase.auth.getSession()).data.session;
+                
+                var response = await fetch(SUPABASE_URL + '/functions/v1/airwallex-balance-checker', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + session.access_token,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                });
+
+                var result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to load balances');
+                }
+
+                currentBalances = result.balances || [];
+
+                if (currentBalances.length === 0) {
+                    document.getElementById('emptyState').classList.remove('hidden');
+                    document.getElementById('balancesGrid').classList.add('hidden');
+                } else {
+                    // Update each card with real balance data
+                    renderBalances(currentBalances);
+                    renderStats(currentBalances);
+                }
+            } catch (error) {
+                console.error('Error fetching balances from API:', error);
+                showAlert('Failed to load balances: ' + error.message, 'error');
+                
+                // Update cards to show error state
+                var cards = document.querySelectorAll('.balance-card');
+                cards.forEach(function(card) {
+                    var amountEl = card.querySelector('.balance-amount');
+                    if (amountEl) {
+                        amountEl.textContent = 'Error';
+                        amountEl.style.color = 'var(--color-error)';
+                    }
+                });
+            }
         }
 
         // ========================================
@@ -932,7 +1093,11 @@
                 return '<div class="balance-card">' +
                     '<div class="balance-header">' +
                         '<div class="account-name">' + escapeHtml(balance.account_name || balance.account_id) + '</div>' +
-                        '<div class="provider-badge">' + escapeHtml(balance.payment_provider) + '</div>' +
+                        '<div class="provider-badge">' + 
+                            (balance.payment_provider === 'airwallex' 
+                                ? '<img src="images/airwallex.svg" alt="Airwallex">' 
+                                : escapeHtml(balance.payment_provider)) + 
+                        '</div>' +
                     '</div>' +
                     '<div class="balance-amount">$' + formatNumber(balance.available_balance) + '</div>' +
                     '<div class="balance-label">Available Balance (' + balance.primary_currency + ')</div>' +
@@ -1185,7 +1350,31 @@
         // UTILITY FUNCTIONS
         // ========================================
         function refreshBalances() {
-            loadBalances();
+            // Reset cards to loading state
+            var cards = document.querySelectorAll('.balance-card');
+            cards.forEach(function(card) {
+                var amountEl = card.querySelector('.balance-amount');
+                if (amountEl) {
+                    amountEl.textContent = 'Loading...';
+                    amountEl.classList.add('balance-loading');
+                    amountEl.style.color = '';
+                }
+                var btn = card.querySelector('.btn-primary');
+                if (btn) btn.disabled = true;
+            });
+            
+            // Reset stats
+            var statsRow = document.getElementById('statsRow');
+            if (statsRow) {
+                var statValues = statsRow.querySelectorAll('.stat-value');
+                if (statValues.length > 1) {
+                    statValues[1].textContent = 'Loading...';
+                    statValues[1].classList.add('balance-loading');
+                }
+            }
+            
+            // Fetch fresh data
+            fetchBalancesFromAPI();
         }
 
         function formatNumber(num) {
