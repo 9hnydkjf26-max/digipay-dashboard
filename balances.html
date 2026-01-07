@@ -1200,7 +1200,8 @@
                    (contact.payment_methods && contact.payment_methods[0] && contact.payment_methods[0].email) ||
                    'No email provided';
                 
-                return '<div class="contact-item" onclick="selectContact(\'' + contact.id + '\')">' +
+                var contactIdValue = contact.id || contact.beneficiary_id;
+                return '<div class="contact-item" onclick="selectContact(event, \'' + contactIdValue + '\')">' +
                         '<div class="contact-name">' + displayName + '</div>' +
                         '<div class="contact-email">' + displayEmail + '</div>' +
                     '</div>';
@@ -1210,14 +1211,21 @@
             document.getElementById('contactsList').style.display = 'block';
         }
 
-        window.selectContact = function(contactId) {
-            selectedContact = availableContacts.find(function(c) { return c.id === contactId; });
+        window.selectContact = function(event, contactId) {
+            selectedContact = availableContacts.find(function(c) { 
+                return String(c.id || c.beneficiary_id) === String(contactId); 
+            });
+            console.log('Found contact:', selectedContact);
             
             var contactItems = document.querySelectorAll('.contact-item');
             contactItems.forEach(function(item) {
                 item.classList.remove('selected');
             });
-            event.target.closest('.contact-item').classList.add('selected');
+            
+            var clickedItem = event.target.closest('.contact-item');
+            if (clickedItem) {
+                clickedItem.classList.add('selected');
+            }
         };
 
         // ========================================
@@ -1267,7 +1275,8 @@
                     showAlert('Please select a contact', 'error');
                     return;
                 }
-                beneficiaryId = selectedContact.id;
+                console.log('Selected contact:', selectedContact);
+                beneficiaryId = selectedContact.id || selectedContact.beneficiary_id;
                 recipientEmail = (selectedContact.additional_info && selectedContact.additional_info.personal_email) ||
                 selectedContact.email || 
                 (selectedContact.bank_details && selectedContact.bank_details.email) || 
