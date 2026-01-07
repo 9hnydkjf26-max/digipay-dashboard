@@ -14,6 +14,7 @@
     <script src="sidebar.js"></script>
     <script src="router.js"></script>
     
+    
     <!-- Initialize Supabase globally (in head so it only runs once on initial load) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
@@ -1720,10 +1721,24 @@
                     const customerName = charge.stripe_customers?.name || charge.customer_name || '-';
                     const customerEmail = charge.stripe_customers?.email || charge.customer_email || '-';
                     
-                    const statusStyle = charge.status === 'succeeded' 
-                        ? 'color: var(--color-success); font-weight: 500;' 
-                        : '';
-                    const statusText = charge.status === 'succeeded' ? '✓ Succeeded' : charge.status;
+                    // Determine display status based on refund state
+                    let statusStyle, statusText;
+                    const isFullyRefunded = charge.refunded === true || (charge.amount_refunded && charge.amount_refunded >= charge.amount);
+                    const isPartiallyRefunded = !isFullyRefunded && charge.amount_refunded > 0;
+                    
+                    if (isFullyRefunded) {
+                        statusStyle = 'color: var(--color-error); font-weight: 500;';
+                        statusText = '↩ Refunded';
+                    } else if (isPartiallyRefunded) {
+                        statusStyle = 'color: var(--color-warning); font-weight: 500;';
+                        statusText = '↩ Partial Refund';
+                    } else if (charge.status === 'succeeded') {
+                        statusStyle = 'color: var(--color-success); font-weight: 500;';
+                        statusText = '✓ Succeeded';
+                    } else {
+                        statusStyle = '';
+                        statusText = charge.status;
+                    }
                     
                     return `
                         <tr>
