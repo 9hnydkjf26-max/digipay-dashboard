@@ -873,19 +873,47 @@
                         var webhookHtml = '';
                         if (acc.payment_provider === 'stripe' && acc.secret_key_name) {
                             var webhookSecretName = acc.secret_key_name.replace('STRIPE_ACCOUNT_', 'STRIPE_WEBHOOK_').replace('_KEY', '_SECRET');
-                            var webhookBadgeClass = acc.webhook_configured ? 'badge-live' : 'badge-demo';
-                            var webhookStatus = acc.webhook_configured ? '✓ Webhook configured' : '⚠ Webhook not configured';
-                            var toggleText = acc.webhook_configured ? 'Mark unconfigured' : 'Mark configured';
                             
-                            webhookHtml = '<div class="webhook-status" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--color-border);">' +
-                                '<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">' +
-                                    '<div>' +
-                                        '<span class="badge ' + webhookBadgeClass + '">' + webhookStatus + '</span>' +
-                                        '<div style="font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px; font-family: monospace;">' + webhookSecretName + '</div>' +
+                            if (acc.webhook_configured) {
+                                // Already configured - show status and option to update
+                                webhookHtml = '<div class="webhook-status" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--color-border);">' +
+                                    '<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">' +
+                                        '<div>' +
+                                            '<span class="badge badge-live">✓ Webhook configured</span>' +
+                                            '<div style="font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px; font-family: monospace;">' + webhookSecretName + '</div>' +
+                                        '</div>' +
+                                        '<button class="btn btn-sm btn-secondary" onclick="toggleWebhookForm(\'' + acc.account_id + '\')">Update</button>' +
                                     '</div>' +
-                                    '<button class="btn btn-sm btn-secondary" onclick="toggleWebhook(\'' + acc.account_id + '\', \'' + acc.payment_provider + '\', ' + !acc.webhook_configured + ')">' + toggleText + '</button>' +
-                                '</div>' +
-                            '</div>';
+                                    '<div id="webhook-form-' + acc.account_id + '" style="display: none; margin-top: 12px;">' +
+                                        '<div style="display: flex; gap: 8px;">' +
+                                            '<input type="text" id="webhook-input-' + acc.account_id + '" placeholder="whsec_..." style="flex: 1; font-family: monospace; font-size: 13px;">' +
+                                            '<button class="btn btn-sm btn-primary" onclick="saveWebhookSecret(\'' + acc.account_id + '\', \'' + acc.payment_provider + '\', \'' + webhookSecretName + '\')">Save</button>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>';
+                            } else {
+                                // Not configured - show URL and input form
+                                var webhookUrl = SUPABASE_URL + '/functions/v1/stripe-webhook?account_id=' + acc.account_id;
+                                webhookHtml = '<div class="webhook-status" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--color-border);">' +
+                                    '<div style="margin-bottom: 10px;">' +
+                                        '<span class="badge badge-demo">⚠ Webhook not configured</span>' +
+                                    '</div>' +
+                                    '<div style="margin-bottom: 10px;">' +
+                                        '<div style="font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 4px;">1. Add this webhook URL in Stripe Dashboard:</div>' +
+                                        '<div style="display: flex; gap: 8px; align-items: center;">' +
+                                            '<input type="text" value="' + webhookUrl + '" readonly style="flex: 1; font-family: monospace; font-size: 11px; background: var(--color-bg);">' +
+                                            '<button class="btn btn-sm btn-secondary" onclick="copyToClipboard(\'' + webhookUrl + '\')">Copy</button>' +
+                                        '</div>' +
+                                    '</div>' +
+                                    '<div>' +
+                                        '<div style="font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 4px;">2. Paste the signing secret (' + webhookSecretName + '):</div>' +
+                                        '<div style="display: flex; gap: 8px;">' +
+                                            '<input type="text" id="webhook-input-' + acc.account_id + '" placeholder="whsec_..." style="flex: 1; font-family: monospace; font-size: 13px;">' +
+                                            '<button class="btn btn-sm btn-primary" onclick="saveWebhookSecret(\'' + acc.account_id + '\', \'' + acc.payment_provider + '\', \'' + webhookSecretName + '\')">Save</button>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>';
+                            }
                         }
                         
                         return '<div class="account-item" data-account-id="' + acc.account_id + '">' +
@@ -1053,24 +1081,86 @@
         }
         
         // ========================================
-        // TOGGLE WEBHOOK STATUS
+        // WEBHOOK FUNCTIONS
         // ========================================
-        window.toggleWebhook = async function(accountId, provider, newStatus) {
+        window.copyToClipboard = function(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                showAlert('Copied to clipboard!', 'success');
+            }).catch(function(err) {
+                console.error('Copy failed:', err);
+                showAlert('Failed to copy', 'error');
+            });
+        };
+        
+        window.toggleWebhookForm = function(accountId) {
+            var form = document.getElementById('webhook-form-' + accountId);
+            if (form) {
+                form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            }
+        };
+        
+        window.saveWebhookSecret = async function(accountId, provider, webhookSecretName) {
+            var input = document.getElementById('webhook-input-' + accountId);
+            var secretValue = input.value.trim();
+            
+            if (!secretValue) {
+                showAlert('Please enter the webhook signing secret', 'error');
+                return;
+            }
+            
+            if (!secretValue.startsWith('whsec_')) {
+                showAlert('Webhook secret should start with whsec_', 'error');
+                return;
+            }
+            
+            // Find the save button and disable it
+            var btn = input.nextElementSibling;
+            var originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            
             try {
                 var supabase = getSupabase();
-                var result = await supabase
+                var sessionData = await supabase.auth.getSession();
+                var session = sessionData.data.session;
+                
+                // Create the webhook secret
+                var response = await fetch(SUPABASE_URL + '/functions/v1/manage-secrets', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + session.access_token,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'set',
+                        name: webhookSecretName,
+                        value: secretValue
+                    })
+                });
+                
+                var result = await response.json();
+                
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || 'Failed to create webhook secret');
+                }
+                
+                // Update webhook_configured to true
+                var updateResult = await supabase
                     .from('payment_accounts')
-                    .update({ webhook_configured: newStatus })
+                    .update({ webhook_configured: true })
                     .eq('account_id', accountId)
                     .eq('payment_provider', provider);
                 
-                if (result.error) throw result.error;
+                if (updateResult.error) throw updateResult.error;
                 
-                showAlert('Webhook status updated', 'success');
+                showAlert('Webhook secret saved and configured!', 'success');
                 await loadAccounts();
+                
             } catch (error) {
-                console.error('Error updating webhook status:', error);
+                console.error('Error saving webhook secret:', error);
                 showAlert('Error: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.textContent = originalText;
             }
         };
         
