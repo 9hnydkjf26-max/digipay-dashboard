@@ -567,14 +567,15 @@
                                 </div>
                                 
                                 <div class="form-group">
-                                    <label for="accountId">Account ID *</label>
+                                    <label for="accountId">Account ID (auto-generated)</label>
                                     <input 
                                         type="text" 
                                         id="accountId" 
-                                        placeholder="e.g., acct_1234567890"
+                                        readonly
                                         required
+                                        style="font-family: monospace; background: var(--color-bg);"
                                     >
-                                    <div class="input-hint">The actual account ID from your payment provider</div>
+                                    <div class="input-hint">Random ID generated automatically</div>
                                 </div>
                             </div>
                             
@@ -769,11 +770,26 @@
         }
         
         // ========================================
+        // GENERATE ACCOUNT ID
+        // ========================================
+        function generateAccountId() {
+            var chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            var result = '';
+            var array = new Uint8Array(8);
+            crypto.getRandomValues(array);
+            for (var i = 0; i < 8; i++) {
+                result += chars[array[i] % chars.length];
+            }
+            return result;
+        }
+        
+        // ========================================
         // SECRET NAME PREVIEW
         // ========================================
         function updateSecretNamePreview() {
             var provider = document.getElementById('paymentProvider').value;
             var preview = document.getElementById('secretNamePreview');
+            var accountIdField = document.getElementById('accountId');
             var stripeFields = document.getElementById('stripeSecretFields');
             var airwallexFields = document.getElementById('airwallexSecretFields');
             var secretValue = document.getElementById('secretValue');
@@ -789,7 +805,13 @@
             
             if (!provider) {
                 preview.value = '';
+                accountIdField.value = '';
                 return;
+            }
+            
+            // Generate new account ID if empty
+            if (!accountIdField.value) {
+                accountIdField.value = generateAccountId();
             }
             
             // Calculate next number based on existing accounts
@@ -847,6 +869,25 @@
                         var apiKeyDisplay = acc.secret_key_name || '<span style="color: var(--color-error);">Not configured</span>';
                         var descHtml = acc.description ? '<div class="account-description">' + acc.description + '</div>' : '';
                         
+                        // Webhook status (only for Stripe)
+                        var webhookHtml = '';
+                        if (acc.payment_provider === 'stripe' && acc.secret_key_name) {
+                            var webhookSecretName = acc.secret_key_name.replace('STRIPE_ACCOUNT_', 'STRIPE_WEBHOOK_').replace('_KEY', '_SECRET');
+                            var webhookBadgeClass = acc.webhook_configured ? 'badge-live' : 'badge-demo';
+                            var webhookStatus = acc.webhook_configured ? '✓ Webhook configured' : '⚠ Webhook not configured';
+                            var toggleText = acc.webhook_configured ? 'Mark unconfigured' : 'Mark configured';
+                            
+                            webhookHtml = '<div class="webhook-status" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--color-border);">' +
+                                '<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">' +
+                                    '<div>' +
+                                        '<span class="badge ' + webhookBadgeClass + '">' + webhookStatus + '</span>' +
+                                        '<div style="font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px; font-family: monospace;">' + webhookSecretName + '</div>' +
+                                    '</div>' +
+                                    '<button class="btn btn-sm btn-secondary" onclick="toggleWebhook(\'' + acc.account_id + '\', \'' + acc.payment_provider + '\', ' + !acc.webhook_configured + ')">' + toggleText + '</button>' +
+                                '</div>' +
+                            '</div>';
+                        }
+                        
                         return '<div class="account-item" data-account-id="' + acc.account_id + '">' +
                             '<div class="account-header">' +
                                 '<div class="account-info">' +
@@ -860,6 +901,7 @@
                                         '</span>' +
                                     '</div>' +
                                     descHtml +
+                                    webhookHtml +
                                 '</div>' +
                                 '<button class="btn btn-danger" onclick="deleteAccount(\'' + acc.account_id + '\', \'' + (acc.secret_key_name || '') + '\', \'' + acc.payment_provider + '\')">' +
                                     'Delete' +
@@ -979,6 +1021,7 @@
                 
                 showAlert('Payment account and API secret(s) created successfully!', 'success');
                 document.getElementById('accountForm').reset();
+                document.getElementById('accountId').value = ''; // Clear so new ID is generated
                 updateSecretNamePreview();
                 await loadAccounts();
             } catch (error) {
@@ -1008,6 +1051,28 @@
                 throw new Error('Failed to create payment account: ' + result.error.message);
             }
         }
+        
+        // ========================================
+        // TOGGLE WEBHOOK STATUS
+        // ========================================
+        window.toggleWebhook = async function(accountId, provider, newStatus) {
+            try {
+                var supabase = getSupabase();
+                var result = await supabase
+                    .from('payment_accounts')
+                    .update({ webhook_configured: newStatus })
+                    .eq('account_id', accountId)
+                    .eq('payment_provider', provider);
+                
+                if (result.error) throw result.error;
+                
+                showAlert('Webhook status updated', 'success');
+                await loadAccounts();
+            } catch (error) {
+                console.error('Error updating webhook status:', error);
+                showAlert('Error: ' + error.message, 'error');
+            }
+        };
         
         // ========================================
         // DELETE ACCOUNT
