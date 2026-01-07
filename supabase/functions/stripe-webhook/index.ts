@@ -1,6 +1,8 @@
-// Edge Function: stripe-webhook (AUTO-DISCOVERY VERSION)
-// Automatically handles webhooks for multiple Stripe accounts
-// Just add STRIPE_ACCOUNT_N_KEY + STRIPE_ACCOUNT_N_ID + STRIPE_WEBHOOK_N_SECRET
+// Edge Function: stripe-webhook (DIRECT ROUTING VERSION)
+// Uses ?account_id= query parameter for O(1) account lookup
+// 
+// Webhook URL format in Stripe Dashboard:
+// https://[project].supabase.co/functions/v1/stripe-webhook?account_id=acct_xxxxx
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import Stripe from "https://esm.sh/stripe@14.10.0?target=deno";
@@ -15,25 +17,59 @@ serve(async (req)=>{
     });
   }
   try {
+    // Get account_id from query parameter
+    const url = new URL(req.url);
+    const accountId = url.searchParams.get('account_id');
+    if (!accountId) {
+      throw new Error('Missing account_id query parameter. URL should be: /stripe-webhook?account_id=acct_xxxxx');
+    }
     const signature = req.headers.get('stripe-signature');
     if (!signature) {
-      throw new Error('No signature provided');
+      throw new Error('No Stripe signature provided');
     }
     const body = await req.text();
-    // Try to match webhook to the correct Stripe account
-    const { event, accountId, stripe } = await verifyWebhookForAnyAccount(body, signature);
-    if (!event) {
-      throw new Error('Could not verify webhook signature with any configured account');
-    }
-    console.log(`Webhook received for account ${accountId}:`, event.type, event.id);
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Look up the specific account
+    const { data: account, error: accountError } = await supabase.from('payment_accounts').select('account_id, account_name, secret_key_name').eq('account_id', accountId).eq('payment_provider', 'stripe').eq('is_active', true).single();
+    if (accountError || !account) {
+      throw new Error(`Account not found or inactive: ${accountId}`);
+    }
+    if (!account.secret_key_name) {
+      throw new Error(`Account ${accountId} has no secret_key_name configured`);
+    }
+    // Derive secret names from secret_key_name
+    // STRIPE_ACCOUNT_N_KEY → STRIPE_WEBHOOK_N_SECRET
+    const match = account.secret_key_name.match(/^STRIPE_ACCOUNT_(\d+)_KEY$/);
+    if (!match) {
+      throw new Error(`Invalid secret_key_name format: ${account.secret_key_name}`);
+    }
+    const accountNumber = match[1];
+    const apiKeySecretName = account.secret_key_name;
+    const webhookSecretName = `STRIPE_WEBHOOK_${accountNumber}_SECRET`;
+    const apiKey = Deno.env.get(apiKeySecretName);
+    const webhookSecret = Deno.env.get(webhookSecretName);
+    if (!apiKey) {
+      throw new Error(`API key secret not found: ${apiKeySecretName}`);
+    }
+    if (!webhookSecret) {
+      throw new Error(`Webhook secret not found: ${webhookSecretName}`);
+    }
+    // Verify webhook signature
+    const stripe = new Stripe(apiKey, {
+      apiVersion: '2023-10-16',
+      httpClient: Stripe.createFetchHttpClient()
+    });
+    const event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret, undefined, Stripe.createSubtleCryptoProvider());
+    console.log(`✅ Webhook verified for ${accountId}:`, event.type, event.id);
     // Handle the event
     await handleStripeEvent(supabase, event, accountId);
     return new Response(JSON.stringify({
       received: true,
       event_type: event.type,
+      event_id: event.id,
       account_id: accountId
     }), {
       headers: {
@@ -43,7 +79,7 @@ serve(async (req)=>{
       status: 200
     });
   } catch (error) {
-    console.error('Webhook error:', error);
+    console.error('Webhook error:', error.message);
     return new Response(JSON.stringify({
       error: error.message
     }), {
@@ -55,76 +91,6 @@ serve(async (req)=>{
     });
   }
 });
-/**
- * Try to verify webhook signature with all configured accounts
- * Returns the first account that successfully verifies
- */ async function verifyWebhookForAnyAccount(body, signature) {
-  // Get all configured accounts
-  const accounts = discoverStripeAccounts();
-  // Try each account until we find one that verifies
-  for (const account of accounts){
-    if (!account.webhookSecret) {
-      console.log(`Skipping account ${account.id} - no webhook secret configured`);
-      continue;
-    }
-    try {
-      const stripe = new Stripe(account.apiKey, {
-        apiVersion: '2023-10-16',
-        httpClient: Stripe.createFetchHttpClient()
-      });
-      const event = await stripe.webhooks.constructEventAsync(body, signature, account.webhookSecret, undefined, Stripe.createSubtleCryptoProvider());
-      // Success! This is the right account
-      console.log(`Webhook verified for account: ${account.id}`);
-      return {
-        event,
-        accountId: account.id,
-        stripe
-      };
-    } catch (error) {
-      // This account didn't match, try next one
-      console.log(`Account ${account.id} signature verification failed:`, error.message);
-      continue;
-    }
-  }
-  // No account matched
-  return {
-    event: null,
-    accountId: null,
-    stripe: null
-  };
-}
-/**
- * Auto-discover Stripe accounts from environment
- * Now also discovers webhook secrets
- */ function discoverStripeAccounts() {
-  const accounts = [];
-  // Legacy single account
-  const legacyKey = Deno.env.get('STRIPE_SECRET_KEY');
-  const legacyWebhook = Deno.env.get('STRIPE_WEBHOOK_SECRET');
-  if (legacyKey) {
-    accounts.push({
-      apiKey: legacyKey,
-      id: 'default',
-      webhookSecret: legacyWebhook
-    });
-  }
-  // Numbered accounts
-  for(let i = 1; i <= 100; i++){
-    const key = Deno.env.get(`STRIPE_ACCOUNT_${i}_KEY`);
-    const id = Deno.env.get(`STRIPE_ACCOUNT_${i}_ID`);
-    const webhookSecret = Deno.env.get(`STRIPE_WEBHOOK_${i}_SECRET`);
-    if (key && id) {
-      accounts.push({
-        apiKey: key,
-        id: id,
-        webhookSecret: webhookSecret
-      });
-    } else if (i > 1 && accounts.length > 0 && !key) {
-      break;
-    }
-  }
-  return accounts;
-}
 /**
  * Handle Stripe webhook events
  */ async function handleStripeEvent(supabase, event, accountId) {
@@ -182,6 +148,8 @@ serve(async (req)=>{
       await handleInvoice(supabase, event.data.object, accountId);
       break;
     // Refund events
+    case 'refund.created':
+    case 'refund.updated':
     case 'charge.refund.updated':
       await handleRefund(supabase, event.data.object, accountId);
       break;
@@ -195,11 +163,12 @@ serve(async (req)=>{
       console.log('Unhandled event type:', event.type);
   }
 }
-// Handler functions (with accountId added)
+// Handler functions
 async function handleCustomer(supabase, customer, accountId) {
-  await supabase.from('stripe_customers').upsert({
+  const { error } = await supabase.from('stripe_customers').upsert({
     id: customer.id,
     stripe_account_id: accountId,
+    payment_provider: 'stripe',
     email: customer.email,
     name: customer.name,
     description: customer.description,
@@ -215,17 +184,20 @@ async function handleCustomer(supabase, customer, accountId) {
     deleted: false,
     synced_at: new Date().toISOString()
   });
+  if (error) console.error('Error upserting customer:', error);
 }
 async function handleCustomerDeleted(supabase, customer, accountId) {
-  await supabase.from('stripe_customers').update({
+  const { error } = await supabase.from('stripe_customers').update({
     deleted: true,
     synced_at: new Date().toISOString()
-  }).eq('id', customer.id).eq('stripe_account_id', accountId);
+  }).eq('id', customer.id).eq('stripe_account_id', accountId).eq('payment_provider', 'stripe');
+  if (error) console.error('Error deleting customer:', error);
 }
 async function handleProduct(supabase, product, accountId) {
-  await supabase.from('stripe_products').upsert({
+  const { error } = await supabase.from('stripe_products').upsert({
     id: product.id,
     stripe_account_id: accountId,
+    payment_provider: 'stripe',
     name: product.name,
     description: product.description,
     active: product.active,
@@ -238,17 +210,20 @@ async function handleProduct(supabase, product, accountId) {
     deleted: false,
     synced_at: new Date().toISOString()
   });
+  if (error) console.error('Error upserting product:', error);
 }
 async function handleProductDeleted(supabase, product, accountId) {
-  await supabase.from('stripe_products').update({
+  const { error } = await supabase.from('stripe_products').update({
     deleted: true,
     synced_at: new Date().toISOString()
-  }).eq('id', product.id).eq('stripe_account_id', accountId);
+  }).eq('id', product.id).eq('stripe_account_id', accountId).eq('payment_provider', 'stripe');
+  if (error) console.error('Error deleting product:', error);
 }
 async function handlePrice(supabase, price, accountId) {
-  await supabase.from('stripe_prices').upsert({
+  const { error } = await supabase.from('stripe_prices').upsert({
     id: price.id,
     stripe_account_id: accountId,
+    payment_provider: 'stripe',
     product: typeof price.product === 'string' ? price.product : price.product?.id,
     active: price.active,
     currency: price.currency,
@@ -264,17 +239,20 @@ async function handlePrice(supabase, price, accountId) {
     deleted: false,
     synced_at: new Date().toISOString()
   });
+  if (error) console.error('Error upserting price:', error);
 }
 async function handlePriceDeleted(supabase, price, accountId) {
-  await supabase.from('stripe_prices').update({
+  const { error } = await supabase.from('stripe_prices').update({
     deleted: true,
     synced_at: new Date().toISOString()
-  }).eq('id', price.id).eq('stripe_account_id', accountId);
+  }).eq('id', price.id).eq('stripe_account_id', accountId).eq('payment_provider', 'stripe');
+  if (error) console.error('Error deleting price:', error);
 }
 async function handleSubscription(supabase, subscription, accountId) {
-  await supabase.from('stripe_subscriptions').upsert({
+  const { error } = await supabase.from('stripe_subscriptions').upsert({
     id: subscription.id,
     stripe_account_id: accountId,
+    payment_provider: 'stripe',
     customer: typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id,
     status: subscription.status,
     current_period_start: subscription.current_period_start,
@@ -294,11 +272,13 @@ async function handleSubscription(supabase, subscription, accountId) {
     deleted: subscription.status === 'canceled',
     synced_at: new Date().toISOString()
   });
+  if (error) console.error('Error upserting subscription:', error);
 }
 async function handlePaymentIntent(supabase, pi, accountId) {
-  await supabase.from('stripe_payment_intents').upsert({
+  const { error } = await supabase.from('stripe_payment_intents').upsert({
     id: pi.id,
     stripe_account_id: accountId,
+    payment_provider: 'stripe',
     customer: typeof pi.customer === 'string' ? pi.customer : pi.customer?.id,
     amount: pi.amount,
     amount_received: pi.amount_received,
@@ -315,11 +295,22 @@ async function handlePaymentIntent(supabase, pi, accountId) {
     updated: Math.floor(Date.now() / 1000),
     synced_at: new Date().toISOString()
   });
+  if (error) console.error('Error upserting payment intent:', error);
 }
 async function handleCharge(supabase, charge, accountId) {
-  await supabase.from('stripe_charges').upsert({
+  // Check if charge already exists under a different account (for migrated accounts)
+  let resolvedAccountId = accountId;
+  const { data: existingCharge } = await supabase.from('stripe_charges').select('stripe_account_id').eq('id', charge.id).single();
+  if (existingCharge) {
+    resolvedAccountId = existingCharge.stripe_account_id;
+    if (resolvedAccountId !== accountId) {
+      console.log(`Charge ${charge.id}: using existing account ${resolvedAccountId} instead of ${accountId}`);
+    }
+  }
+  const { error } = await supabase.from('stripe_charges').upsert({
     id: charge.id,
-    stripe_account_id: accountId,
+    stripe_account_id: resolvedAccountId,
+    payment_provider: 'stripe',
     customer: typeof charge.customer === 'string' ? charge.customer : charge.customer?.id,
     payment_intent: typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent?.id,
     amount: charge.amount,
@@ -341,11 +332,13 @@ async function handleCharge(supabase, charge, accountId) {
     updated: Math.floor(Date.now() / 1000),
     synced_at: new Date().toISOString()
   });
+  if (error) console.error('Error upserting charge:', error);
 }
 async function handleInvoice(supabase, invoice, accountId) {
-  await supabase.from('stripe_invoices').upsert({
+  const { error } = await supabase.from('stripe_invoices').upsert({
     id: invoice.id,
     stripe_account_id: accountId,
+    payment_provider: 'stripe',
     customer: typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id,
     subscription: typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id,
     number: invoice.number,
@@ -367,13 +360,26 @@ async function handleInvoice(supabase, invoice, accountId) {
     updated: Math.floor(Date.now() / 1000),
     synced_at: new Date().toISOString()
   });
+  if (error) console.error('Error upserting invoice:', error);
 }
 async function handleRefund(supabase, refund, accountId) {
-  await supabase.from('stripe_refunds').upsert({
+  const chargeId = typeof refund.charge === 'string' ? refund.charge : refund.charge?.id;
+  const paymentIntentId = typeof refund.payment_intent === 'string' ? refund.payment_intent : refund.payment_intent?.id;
+  // Look up which account the charge belongs to (for migrated accounts)
+  let resolvedAccountId = accountId;
+  if (chargeId) {
+    const { data: charge } = await supabase.from('stripe_charges').select('stripe_account_id').eq('id', chargeId).single();
+    if (charge) {
+      resolvedAccountId = charge.stripe_account_id;
+      console.log(`Refund ${refund.id}: resolved account from charge ${chargeId} → ${resolvedAccountId}`);
+    }
+  }
+  const { error } = await supabase.from('stripe_refunds').upsert({
     id: refund.id,
-    stripe_account_id: accountId,
-    charge: typeof refund.charge === 'string' ? refund.charge : refund.charge?.id,
-    payment_intent: typeof refund.payment_intent === 'string' ? refund.payment_intent : refund.payment_intent?.id,
+    stripe_account_id: resolvedAccountId,
+    payment_provider: 'stripe',
+    charge: chargeId,
+    payment_intent: paymentIntentId,
     amount: refund.amount,
     currency: refund.currency,
     status: refund.status,
@@ -384,23 +390,37 @@ async function handleRefund(supabase, refund, accountId) {
     updated: Math.floor(Date.now() / 1000),
     synced_at: new Date().toISOString()
   });
+  if (error) console.error('Error upserting refund:', error);
 }
 async function handleDispute(supabase, dispute, accountId) {
-  await supabase.from('stripe_disputes').upsert({
+  const chargeId = typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id;
+  const paymentIntentId = typeof dispute.payment_intent === 'string' ? dispute.payment_intent : dispute.payment_intent?.id;
+  // Look up which account the charge belongs to (for migrated accounts)
+  let resolvedAccountId = accountId;
+  if (chargeId) {
+    const { data: charge } = await supabase.from('stripe_charges').select('stripe_account_id').eq('id', chargeId).single();
+    if (charge) {
+      resolvedAccountId = charge.stripe_account_id;
+      console.log(`Dispute ${dispute.id}: resolved account from charge ${chargeId} → ${resolvedAccountId}`);
+    }
+  }
+  const { error } = await supabase.from('stripe_disputes').upsert({
     id: dispute.id,
-    stripe_account_id: accountId,
-    charge: typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id,
-    payment_intent: typeof dispute.payment_intent === 'string' ? dispute.payment_intent : dispute.payment_intent?.id,
+    stripe_account_id: resolvedAccountId,
+    payment_provider: 'stripe',
+    charge: chargeId,
+    payment_intent: paymentIntentId,
     amount: dispute.amount,
     currency: dispute.currency,
     status: dispute.status,
     reason: dispute.reason,
     evidence: dispute.evidence,
     evidence_details: dispute.evidence_details,
-    metadata: dispute.metadata,
     is_charge_refundable: dispute.is_charge_refundable,
+    metadata: dispute.metadata,
     created: dispute.created,
     updated: Math.floor(Date.now() / 1000),
     synced_at: new Date().toISOString()
   });
+  if (error) console.error('Error upserting dispute:', error);
 }

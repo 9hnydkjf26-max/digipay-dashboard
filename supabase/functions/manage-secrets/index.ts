@@ -51,7 +51,7 @@ Deno.serve(async (req)=>{
     if (action !== 'list' && name) {
       const hasValidPrefix = name.startsWith('STRIPE_') || name.startsWith('AIRWALLEX_');
       if (!hasValidPrefix) {
-        throw new Error('Secret name must start with STRIPE_ or AIRWALLEX_ (e.g., STRIPE_SECRET_KEY, AIRWALLEX_API_KEY)');
+        throw new Error('Secret name must start with STRIPE_ or AIRWALLEX_');
       }
     }
     // Get Supabase Management API credentials
@@ -96,10 +96,23 @@ Deno.serve(async (req)=>{
           if (!name || !value) {
             throw new Error('Missing required fields: name and value');
           }
-          // Validate secret name format (PROCESSOR_ACCOUNT_N_KEY or PROCESSOR_ACCOUNT_N_SECRET format)
-          // Updated regex to support both _KEY and _SECRET suffixes for Airwallex accounts
-          if (!/^(STRIPE|AIRWALLEX)_ACCOUNT_[0-9]+_(KEY|SECRET)$/.test(name)) {
-            throw new Error('Secret name must follow format: PROCESSOR_ACCOUNT_N_KEY or PROCESSOR_ACCOUNT_N_SECRET (e.g., STRIPE_ACCOUNT_1_KEY, AIRWALLEX_ACCOUNT_1_SECRET)');
+          // Validate secret name format
+          // Allowed formats:
+          // - STRIPE_ACCOUNT_N_KEY (API keys)
+          // - STRIPE_ACCOUNT_N_SECRET (for future use)
+          // - STRIPE_WEBHOOK_N_SECRET (webhook signing secrets)
+          // - AIRWALLEX_ACCOUNT_N_KEY (client ID)
+          // - AIRWALLEX_ACCOUNT_N_SECRET (API key)
+          const validPatterns = [
+            /^STRIPE_ACCOUNT_[0-9]+_KEY$/,
+            /^STRIPE_ACCOUNT_[0-9]+_SECRET$/,
+            /^STRIPE_WEBHOOK_[0-9]+_SECRET$/,
+            /^AIRWALLEX_ACCOUNT_[0-9]+_KEY$/,
+            /^AIRWALLEX_ACCOUNT_[0-9]+_SECRET$/
+          ];
+          const isValidName = validPatterns.some((pattern)=>pattern.test(name));
+          if (!isValidName) {
+            throw new Error('Secret name must follow format: PROCESSOR_ACCOUNT_N_KEY, PROCESSOR_ACCOUNT_N_SECRET, or STRIPE_WEBHOOK_N_SECRET');
           }
           // Set/update secret
           const response = await fetch(managementApiUrl, {

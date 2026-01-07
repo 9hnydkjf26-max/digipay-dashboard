@@ -1,3 +1,5 @@
+// Edge Function: airwallex-etransfer
+// Clean version following Airwallex API documentation exactly
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,8 +32,7 @@ Deno.serve(async (req)=>{
     }
     console.log(`Admin ${user.email} initiating Interac e-Transfer`);
     // Parse request body
-    const { account_id, recipient_email, amount, recipient_name, security_question, security_answer, message, currency = 'CAD', beneficiary_id, save_as_contact = false // Whether to save as new beneficiary
-     } = await req.json();
+    const { account_id, recipient_email, amount, recipient_name, security_question, security_answer, message, currency = 'CAD', beneficiary_id, save_as_contact = false } = await req.json();
     // Validate required fields
     if (!account_id || !amount) {
       throw new Error('Missing required fields: account_id and amount');
@@ -80,6 +81,25 @@ Deno.serve(async (req)=>{
     const token = authData.token;
     let beneficiaryIdToUse = beneficiary_id;
     let createdNewBeneficiary = false;
+    let beneficiaryDetails = null;
+    // If using an existing beneficiary, fetch its details first to understand its structure
+    if (beneficiary_id) {
+      console.log(`Fetching beneficiary details for: ${beneficiary_id}`);
+      const beneficiaryResponse = await fetch(`https://api.airwallex.com/api/v1/beneficiaries/${beneficiary_id}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (beneficiaryResponse.ok) {
+        beneficiaryDetails = await beneficiaryResponse.json();
+        console.log('Beneficiary details:', JSON.stringify(beneficiaryDetails, null, 2));
+      } else {
+        const errorText = await beneficiaryResponse.text();
+        console.warn(`Failed to fetch beneficiary details: ${errorText}`);
+      }
+    }
     // If save_as_contact is true and no beneficiary_id provided, create a new beneficiary
     if (save_as_contact && !beneficiary_id && recipient_email) {
       console.log(`Creating new beneficiary: ${recipient_email}`);
@@ -118,21 +138,33 @@ Deno.serve(async (req)=>{
       }
     }
     // Create transfer via Airwallex Transfers API
-    console.log(`Creating transfer with currency: ${currency}, amount: ${amount}`);
+    const currencyUpper = currency.toUpperCase();
+    console.log(`Creating transfer with currency: ${currencyUpper}, amount: ${amount}`);
+    const amountFloat = parseFloat(amount);
+    // Build transfer payload - clean version per Airwallex documentation
     const transferPayload = {
       request_id: `etransfer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      source_currency: currency.toUpperCase(),
-      transfer_currency: currency.toUpperCase(),
+      source_currency: currencyUpper,
+      transfer_currency: currencyUpper,
       transfer_method: 'LOCAL',
-      transfer_amount: parseFloat(amount),
+      transfer_amount: String(amountFloat.toFixed(2)),
       reference: message || `e-Transfer from ${account.account_name || account_id}`,
-      reason: message || 'Payment'
+      reason: 'payment'
     };
-    // Use beneficiary_id if available, otherwise use beneficiary details
+    // Use beneficiary_id if available, otherwise provide inline beneficiary
     if (beneficiaryIdToUse) {
       transferPayload.beneficiary_id = beneficiaryIdToUse;
+      // Log beneficiary details for debugging
+      if (beneficiaryDetails) {
+        console.log('Using existing beneficiary:', beneficiaryIdToUse);
+        console.log('Beneficiary payment_methods:', beneficiaryDetails.payment_methods);
+        const beneficiary = beneficiaryDetails.beneficiary || {};
+        const bankDetails = beneficiary.bank_details || {};
+        console.log('Beneficiary email:', beneficiary.additional_info?.personal_email);
+        console.log('Beneficiary bank_details:', JSON.stringify(bankDetails, null, 2));
+      }
     } else {
-      // For inline beneficiary without ID - simplified structure
+      // For new recipient without saved beneficiary - provide inline beneficiary
       transferPayload.beneficiary = {
         email: recipient_email,
         first_name: recipient_name ? recipient_name.split(' ')[0] : 'Recipient',
@@ -140,11 +172,17 @@ Deno.serve(async (req)=>{
         entity_type: 'PERSONAL',
         address: {
           country_code: 'CA'
+        },
+        bank_details: {
+          local_clearing_system: 'INTERAC',
+          account_routing_type1: 'email',
+          account_routing_value1: recipient_email
         }
       };
     }
     console.log('Creating Airwallex transfer:', JSON.stringify(transferPayload, null, 2));
-    // Airwallex Transfers API endpoint (correct endpoint for Interac e-Transfers)
+    console.log('Calling endpoint: https://api.airwallex.com/api/v1/transfers/create');
+    // Call Airwallex Transfers API
     const transferResponse = await fetch('https://api.airwallex.com/api/v1/transfers/create', {
       method: 'POST',
       headers: {
@@ -159,7 +197,6 @@ Deno.serve(async (req)=>{
       console.error('  Status:', transferResponse.status);
       console.error('  Status Text:', transferResponse.statusText);
       console.error('  Response:', errorText);
-      console.error('  Request URL:', 'https://api.airwallex.com/api/v1/transfers/create');
       // Try to parse as JSON for better error message
       let errorDetails;
       try {

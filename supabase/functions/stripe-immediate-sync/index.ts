@@ -1,6 +1,13 @@
-// Edge Function: stripe-sync-immediate
+// Edge Function: stripe-immediate-sync
 // Syncs all Stripe accounts WITHOUT delays - for manual testing
-// Use stripe-scheduled-sync-staggered for automated cron jobs
+// Use stripe-scheduled-sync for automated cron jobs
+//
+// ACCOUNT DISCOVERY:
+// Reads from `payment_accounts` table where payment_provider = 'stripe'
+// Uses the `secret_key_name` field to look up the API key from environment
+// Uses the `account_id` field from the database record
+//
+// This matches how admin.html adds new accounts!
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import Stripe from "https://esm.sh/stripe@14.10.0?target=deno";
@@ -16,15 +23,15 @@ serve(async (req)=>{
   }
   try {
     console.log('=== Starting Immediate Multi-Account Stripe Sync (NO DELAYS) ===');
-    // Auto-discover all Stripe accounts
-    const accounts = discoverStripeAccounts();
-    console.log(`Discovered ${accounts.length} Stripe account(s):`, accounts.map((a)=>a.id).join(', '));
-    if (accounts.length === 0) {
-      throw new Error('No Stripe accounts configured');
-    }
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Discover accounts from database
+    const accounts = await discoverStripeAccounts(supabase);
+    console.log(`Discovered ${accounts.length} Stripe account(s):`, accounts.map((a)=>a.id).join(', '));
+    if (accounts.length === 0) {
+      throw new Error('No Stripe accounts configured. Add accounts via the Admin page.');
+    }
     // Sync window: last 7 days
     const sevenDaysAgo = Math.floor((Date.now() - 7 * 24 * 60 * 60 * 1000) / 1000);
     const allResults = [];
@@ -34,15 +41,10 @@ serve(async (req)=>{
       const account = accounts[i];
       console.log(`\n=== Syncing Account ${i + 1}/${accounts.length}: ${account.id} ===`);
       try {
-        // Register account in payment_accounts table if not exists
-        await supabase.from('payment_accounts').upsert({
-          account_id: account.id,
-          account_name: account.id,
-          payment_provider: 'stripe',
-          environment: account.id.includes('test') || account.apiKey.includes('_test_') ? 'test' : 'live',
-          is_active: true,
+        // Update last sync attempt
+        await supabase.from('payment_accounts').update({
           updated_at: new Date().toISOString()
-        });
+        }).eq('account_id', account.id);
         const stripe = new Stripe(account.apiKey, {
           apiVersion: '2023-10-16',
           httpClient: Stripe.createFetchHttpClient()
@@ -52,6 +54,7 @@ serve(async (req)=>{
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
         allResults.push({
           account_id: account.id,
+          account_name: account.name,
           success: true,
           results,
           sync_duration_seconds: duration
@@ -61,6 +64,7 @@ serve(async (req)=>{
         console.error(`✗ Account ${account.id} failed:`, error);
         allResults.push({
           account_id: account.id,
+          account_name: account.name,
           success: false,
           error: error.message
         });
@@ -85,7 +89,7 @@ serve(async (req)=>{
       status: 200
     });
   } catch (error) {
-    console.error('Scheduled sync error:', error);
+    console.error('Sync error:', error);
     return new Response(JSON.stringify({
       success: false,
       error: error?.message || String(error)
@@ -99,31 +103,53 @@ serve(async (req)=>{
   }
 });
 /**
- * Auto-discover Stripe accounts
- */ function discoverStripeAccounts() {
+ * Discover Stripe accounts from the payment_accounts database table
+ * 
+ * This matches how admin.html adds accounts:
+ * - account_id: stored in DB
+ * - secret_key_name: name of the environment secret (e.g., "STRIPE_ACCOUNT_1_KEY")
+ * - API key: looked up from environment using secret_key_name
+ */ async function discoverStripeAccounts(supabase) {
   const accounts = [];
-  // Legacy single account
-  const legacyKey = Deno.env.get('STRIPE_SECRET_KEY');
-  if (legacyKey) {
-    console.log('Found legacy STRIPE_SECRET_KEY');
-    accounts.push({
-      apiKey: legacyKey,
-      id: 'default'
-    });
+  // Query payment_accounts table for active Stripe accounts
+  const { data: dbAccounts, error } = await supabase.from('payment_accounts').select('account_id, account_name, secret_key_name, is_active').eq('payment_provider', 'stripe').eq('is_active', true);
+  if (error) {
+    console.error('Error querying payment_accounts:', error);
+    throw new Error(`Failed to query payment_accounts: ${error.message}`);
   }
-  // Numbered accounts (1-100)
-  for(let i = 1; i <= 100; i++){
-    const key = Deno.env.get(`STRIPE_ACCOUNT_${i}_KEY`);
-    const id = Deno.env.get(`STRIPE_ACCOUNT_${i}_ID`);
-    if (key && id) {
-      console.log(`Found STRIPE_ACCOUNT_${i}_KEY with ID: ${id}`);
+  if (!dbAccounts || dbAccounts.length === 0) {
+    console.log('No Stripe accounts found in payment_accounts table');
+    // Fallback: check for legacy STRIPE_SECRET_KEY
+    const legacyKey = Deno.env.get('STRIPE_SECRET_KEY');
+    if (legacyKey) {
+      console.log('Found legacy STRIPE_SECRET_KEY, using as fallback');
       accounts.push({
-        apiKey: key,
-        id: id
+        apiKey: legacyKey,
+        id: 'default',
+        name: 'Default (Legacy)'
       });
-    } else if (i > 1 && accounts.length > 0 && !key) {
-      break; // Stop at first gap
     }
+    return accounts;
+  }
+  console.log(`Found ${dbAccounts.length} Stripe account(s) in database`);
+  for (const dbAccount of dbAccounts){
+    const { account_id, account_name, secret_key_name } = dbAccount;
+    if (!secret_key_name) {
+      console.warn(`Account ${account_id} has no secret_key_name configured - skipping`);
+      continue;
+    }
+    // Look up the API key from environment using the secret_key_name
+    const apiKey = Deno.env.get(secret_key_name);
+    if (!apiKey) {
+      console.warn(`Secret ${secret_key_name} not found for account ${account_id} - skipping`);
+      continue;
+    }
+    console.log(`✓ Found account: ${account_id} (${account_name}) using secret ${secret_key_name}`);
+    accounts.push({
+      apiKey: apiKey,
+      id: account_id,
+      name: account_name || account_id
+    });
   }
   return accounts;
 }
@@ -141,7 +167,7 @@ serve(async (req)=>{
     refunds: 0,
     disputes: 0
   };
-  // Helper to fetch recent updates
+  // Helper to fetch recent updates with pagination
   async function fetchRecent(objectType, listFunction, params = {}) {
     try {
       console.log(`  Fetching ${objectType}...`);
@@ -168,7 +194,7 @@ serve(async (req)=>{
       console.log(`  ✓ Fetched ${allData.length} ${objectType}`);
       return allData;
     } catch (error) {
-      console.error(`  ✗ Failed to fetch ${objectType}:`, error);
+      console.error(`  ✗ Failed to fetch ${objectType}:`, error.message);
       return [];
     }
   }

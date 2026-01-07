@@ -34,14 +34,26 @@ serve(async (req)=>{
       console.log(`\n=== Syncing Account ${i + 1}/${accounts.length}: ${account.id} ===`);
       try {
         // Register account in payment_accounts table if not exists
-        await supabase.from('payment_accounts').upsert({
-          account_id: account.id,
-          account_name: account.id,
-          payment_provider: 'stripe',
-          environment: account.id.includes('test') || account.apiKey.includes('_test_') ? 'test' : 'live',
-          is_active: true,
-          updated_at: new Date().toISOString()
-        });
+        // FIXED: Check if account exists first to preserve custom account_name
+        const { data: existingAccount } = await supabase.from('payment_accounts').select('account_id').eq('account_id', account.id).eq('payment_provider', 'stripe').single();
+        if (!existingAccount) {
+          // Only set account_name on initial insert
+          await supabase.from('payment_accounts').insert({
+            account_id: account.id,
+            account_name: account.id,
+            payment_provider: 'stripe',
+            environment: account.id.includes('test') || account.apiKey.includes('_test_') ? 'test' : 'live',
+            is_active: true,
+            updated_at: new Date().toISOString()
+          });
+        } else {
+          // Update without touching account_name
+          await supabase.from('payment_accounts').update({
+            environment: account.id.includes('test') || account.apiKey.includes('_test_') ? 'test' : 'live',
+            is_active: true,
+            updated_at: new Date().toISOString()
+          }).eq('account_id', account.id).eq('payment_provider', 'stripe');
+        }
         const stripe = new Stripe(account.apiKey, {
           apiVersion: '2023-10-16',
           httpClient: Stripe.createFetchHttpClient()
@@ -199,6 +211,7 @@ serve(async (req)=>{
     await supabase.from('stripe_customers').upsert({
       id: customer.id,
       stripe_account_id: accountId,
+      payment_provider: 'stripe',
       email: customer.email,
       name: customer.name,
       description: customer.description,
@@ -222,6 +235,7 @@ serve(async (req)=>{
     await supabase.from('stripe_products').upsert({
       id: product.id,
       stripe_account_id: accountId,
+      payment_provider: 'stripe',
       name: product.name,
       description: product.description,
       active: product.active,
@@ -242,6 +256,7 @@ serve(async (req)=>{
     await supabase.from('stripe_prices').upsert({
       id: price.id,
       stripe_account_id: accountId,
+      payment_provider: 'stripe',
       product: typeof price.product === 'string' ? price.product : price.product?.id,
       active: price.active,
       currency: price.currency,
@@ -267,6 +282,7 @@ serve(async (req)=>{
     await supabase.from('stripe_subscriptions').upsert({
       id: subscription.id,
       stripe_account_id: accountId,
+      payment_provider: 'stripe',
       customer: typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id,
       status: subscription.status,
       current_period_start: subscription.current_period_start,
@@ -294,6 +310,7 @@ serve(async (req)=>{
     await supabase.from('stripe_payment_intents').upsert({
       id: pi.id,
       stripe_account_id: accountId,
+      payment_provider: 'stripe',
       customer: typeof pi.customer === 'string' ? pi.customer : pi.customer?.id,
       amount: pi.amount,
       amount_received: pi.amount_received,
@@ -318,6 +335,7 @@ serve(async (req)=>{
     await supabase.from('stripe_charges').upsert({
       id: charge.id,
       stripe_account_id: accountId,
+      payment_provider: 'stripe',
       customer: typeof charge.customer === 'string' ? charge.customer : charge.customer?.id,
       payment_intent: typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent?.id,
       amount: charge.amount,
@@ -347,6 +365,7 @@ serve(async (req)=>{
     await supabase.from('stripe_invoices').upsert({
       id: invoice.id,
       stripe_account_id: accountId,
+      payment_provider: 'stripe',
       customer: typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id,
       subscription: typeof invoice.subscription === 'string' ? invoice.subscription : invoice.subscription?.id,
       number: invoice.number,
@@ -376,6 +395,7 @@ serve(async (req)=>{
     await supabase.from('stripe_refunds').upsert({
       id: refund.id,
       stripe_account_id: accountId,
+      payment_provider: 'stripe',
       charge: typeof refund.charge === 'string' ? refund.charge : refund.charge?.id,
       payment_intent: typeof refund.payment_intent === 'string' ? refund.payment_intent : refund.payment_intent?.id,
       amount: refund.amount,
@@ -396,6 +416,7 @@ serve(async (req)=>{
     await supabase.from('stripe_disputes').upsert({
       id: dispute.id,
       stripe_account_id: accountId,
+      payment_provider: 'stripe',
       charge: typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id,
       payment_intent: typeof dispute.payment_intent === 'string' ? dispute.payment_intent : dispute.payment_intent?.id,
       amount: dispute.amount,
