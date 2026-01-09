@@ -917,18 +917,19 @@
                         <div class="table-wrapper">
                             <table>
                                 <thead>
-                                    <tr>
-                                        <th>Dispute ID</th>
-                                        <th>Account</th>
-                                        <th>Amount</th>
-                                        <th>Reason</th>
-                                        <th>Status</th>
-                                        <th>Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="disputesTable">
-                                    <tr><td colspan="6"><div class="loading"><div class="spinner"></div><div>Loading disputes...</div></div></td></tr>
-                                </tbody>
+    <tr>
+        <th>Dispute ID</th>
+        <th>Account</th>
+        <th>Amount</th>
+        <th>Reason</th>
+        <th>Status</th>
+        <th>Dispute Date</th>
+        <th>Original Transaction</th>
+    </tr>
+</thead>
+<tbody id="disputesTable">
+    <tr><td colspan="7"><div class="loading"><div class="spinner"></div><div>Loading disputes...</div></div></td></tr>
+</tbody>
                             </table>
                         </div>
                     </div>
@@ -1402,69 +1403,115 @@
         // LOAD DISPUTES
         // ========================================
         async function loadDisputes(startTs, endTs, accountFilter) {
-            const supabase = getSupabase();
-            let disputesQuery = supabase
-                .from('stripe_disputes')
-                .select('id, stripe_account_id, amount, currency, reason, status, created')
-                .gte('created', startTs)
-                .lte('created', endTs)
-                .order('created', { ascending: false })
-                .limit(50);
-            
-            if (accountFilter) {
-                disputesQuery = disputesQuery.eq('stripe_account_id', accountFilter);
-            }
-            
-            const { data: disputes } = await disputesQuery;
-            
-            let chargesQuery = supabase
-                .from('stripe_charges')
-                .select('amount')
-                .eq('status', 'succeeded')
-                .gte('created', startTs)
-                .lte('created', endTs);
-            
-            if (accountFilter) {
-                chargesQuery = chargesQuery.eq('stripe_account_id', accountFilter);
-            }
-            
-            const { data: charges } = await chargesQuery;
-            
-            const totalDisputes = disputes?.length || 0;
-            const totalDisputeAmount = disputes ? disputes.reduce((sum, d) => sum + d.amount, 0) / 100 : 0;
-            const totalVolume = charges ? charges.reduce((sum, c) => sum + c.amount, 0) / 100 : 0;
-            const disputeRate = totalVolume > 0 ? (totalDisputeAmount / totalVolume * 100) : 0;
-            
-            document.getElementById('totalDisputes').textContent = totalDisputes.toLocaleString();
-            document.getElementById('disputeAmount').textContent = formatCurrency(totalDisputeAmount);
-            document.getElementById('disputeTotalVolume').textContent = formatCurrency(totalVolume);
-            document.getElementById('disputeRate').textContent = disputeRate.toFixed(2) + '%';
-            
-            const getStatusBadge = (status) => {
-                const colors = {
-                    'won': 'background: rgba(16, 185, 129, 0.15); color: var(--color-success);',
-                    'lost': 'background: rgba(239, 68, 68, 0.15); color: var(--color-error);',
-                    'needs_response': 'background: rgba(255, 153, 31, 0.15); color: #ff991f;',
-                    'under_review': 'background: rgba(124, 58, 237, 0.15); color: var(--color-primary);'
-                };
-                const style = colors[status] || 'background: rgba(156, 169, 179, 0.15); color: var(--color-text-secondary);';
-                const label = status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                return `<span style="padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; ${style}">${label}</span>`;
-            };
-            
-            const tbody = document.getElementById('disputesTable');
-            tbody.innerHTML = disputes?.map(dispute => `
-                <tr>
-                    <td style="font-family: monospace; font-size: 12px;">${dispute.id}</td>
-                    <td>${accountMap[dispute.stripe_account_id] || dispute.stripe_account_id}</td>
-                    <td style="font-weight: 500;">${formatCurrency(dispute.amount / 100, dispute.currency)}</td>
-                    <td>${dispute.reason || 'N/A'}</td>
-                    <td>${getStatusBadge(dispute.status)}</td>
-                    <td>${formatDate(dispute.created)}</td>
-                </tr>
-            `).join('') || '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⚖️</div><div class="empty-text">No disputes found</div></div></td></tr>';
-        }
+    const supabase = getSupabase();
+    
+    // First, get disputes with charge IDs
+    let disputesQuery = supabase
+        .from('stripe_disputes')
+        .select('id, stripe_account_id, amount, currency, reason, status, created, charge')
+        .gte('created', startTs)
+        .lte('created', endTs)
+        .order('created', { ascending: false })
+        .limit(50);
+    
+    if (accountFilter) {
+        disputesQuery = disputesQuery.eq('stripe_account_id', accountFilter);
+    }
+    
+    const { data: disputes } = await disputesQuery;
+    
+    // Get charge details for each dispute
+    const chargeIds = disputes?.map(d => d.charge).filter(Boolean) || [];
+    let chargeDetails = {};
+    
+    if (chargeIds.length > 0) {
+        const { data: charges } = await supabase
+            .from('stripe_charges')
+            .select('id, amount, created, description, receipt_email, customer, payment_method_details')
+            .in('id', chargeIds);
         
+        // Create a map of charge ID to charge details
+        charges?.forEach(charge => {
+            chargeDetails[charge.id] = charge;
+        });
+    }
+    
+    // Get overall stats
+    let chargesQuery = supabase
+        .from('stripe_charges')
+        .select('amount')
+        .eq('status', 'succeeded')
+        .gte('created', startTs)
+        .lte('created', endTs);
+    
+    if (accountFilter) {
+        chargesQuery = chargesQuery.eq('stripe_account_id', accountFilter);
+    }
+    
+    const { data: charges } = await chargesQuery;
+    
+    const totalDisputes = disputes?.length || 0;
+    const totalDisputeAmount = disputes ? disputes.reduce((sum, d) => sum + d.amount, 0) / 100 : 0;
+    const totalVolume = charges ? charges.reduce((sum, c) => sum + c.amount, 0) / 100 : 0;
+    const disputeRate = totalVolume > 0 ? (totalDisputeAmount / totalVolume * 100) : 0;
+    
+    document.getElementById('totalDisputes').textContent = totalDisputes.toLocaleString();
+    document.getElementById('disputeAmount').textContent = formatCurrency(totalDisputeAmount);
+    document.getElementById('disputeTotalVolume').textContent = formatCurrency(totalVolume);
+    document.getElementById('disputeRate').textContent = disputeRate.toFixed(2) + '%';
+    
+    const getStatusBadge = (status) => {
+        const colors = {
+            'won': 'background: rgba(16, 185, 129, 0.15); color: var(--color-success);',
+            'lost': 'background: rgba(239, 68, 68, 0.15); color: var(--color-error);',
+            'needs_response': 'background: rgba(255, 153, 31, 0.15); color: #ff991f;',
+            'under_review': 'background: rgba(124, 58, 237, 0.15); color: var(--color-primary);'
+        };
+        const style = colors[status] || 'background: rgba(156, 169, 179, 0.15); color: var(--color-text-secondary);';
+        const label = status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        return `<span style="padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; ${style}">${label}</span>`;
+    };
+    
+    const getPaymentMethod = (details) => {
+        if (!details) return 'N/A';
+        try {
+            const parsed = typeof details === 'string' ? JSON.parse(details) : details;
+            if (parsed.card) {
+                return `${parsed.card.brand || 'Card'} •••• ${parsed.card.last4 || '****'}`;
+            }
+            return parsed.type || 'N/A';
+        } catch {
+            return 'N/A';
+        }
+    };
+    
+    const tbody = document.getElementById('disputesTable');
+    tbody.innerHTML = disputes?.map(dispute => {
+        const charge = chargeDetails[dispute.charge] || {};
+        return `
+            <tr>
+                <td style="font-family: monospace; font-size: 12px;">${dispute.id}</td>
+                <td>${accountMap[dispute.stripe_account_id] || dispute.stripe_account_id}</td>
+                <td style="font-weight: 500;">${formatCurrency(dispute.amount / 100, dispute.currency)}</td>
+                <td>${dispute.reason || 'N/A'}</td>
+                <td>${getStatusBadge(dispute.status)}</td>
+                <td>${formatDate(dispute.created)}</td>
+                <td>
+                    ${charge.id ? `
+                        <div style="font-size: 12px;">
+                            <div style="font-family: monospace; color: var(--color-text-tertiary); margin-bottom: 4px;">${charge.id}</div>
+                            <div style="color: var(--color-text-secondary);">
+                                ${formatCurrency(charge.amount / 100, dispute.currency)} • ${formatDate(charge.created)}
+                            </div>
+                            ${charge.description ? `<div style="color: var(--color-text-tertiary); margin-top: 2px;">${charge.description}</div>` : ''}
+                            ${charge.payment_method_details ? `<div style="color: var(--color-text-tertiary); margin-top: 2px;">${getPaymentMethod(charge.payment_method_details)}</div>` : ''}
+                        </div>
+                    ` : '<span style="color: var(--color-text-tertiary);">No charge data</span>'}
+                </td>
+            </tr>
+        `;
+    }).join('') || '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⚖️</div><div class="empty-text">No disputes found</div></div></td></tr>';
+}        
         // ========================================
         // CHART FUNCTIONS
         // ========================================
