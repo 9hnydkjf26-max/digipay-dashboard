@@ -1,6 +1,6 @@
 # Supabase Complete Schema Export
 
-**Exported:** 2026-01-07T22:45:13.852Z
+**Exported:** 2026-01-10T17:34:10.529Z
 **Project:** https://hzdybwclwqkcobpwxzoo.supabase.co
 
 ---
@@ -14,12 +14,12 @@
 
 ## 💾 Data Counts
 
-**stripe_customers:** 322 records
+**stripe_customers:** 334 records
 **stripe_products:** 4 records
 **stripe_prices:** 4 records
 **stripe_subscriptions:** 0 records
-**stripe_payment_intents:** 201 records
-**stripe_charges:** 402 records
+**stripe_payment_intents:** 198 records
+**stripe_charges:** 412 records
 **stripe_invoices:** 0 records
 **stripe_refunds:** 6 records
 **stripe_disputes:** 3 records
@@ -28,6 +28,7 @@
 
 - **pg_cron** (v1.6.4) - schema: pg_catalog
 - **pg_graphql** (v1.5.11) - schema: graphql
+- **pg_net** (v0.19.5) - schema: public
 - **pg_stat_statements** (v1.11) - schema: extensions
 - **pgcrypto** (v1.3) - schema: extensions
 - **plpgsql** (v1.0) - schema: pg_catalog
@@ -66,6 +67,134 @@
 | currency | text | YES | - |
 | deleted | bool | YES | - |
 
+### cpt_daily_summary
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|---------|
+| transaction_date | date | YES | - |
+| trans_type | text | YES | - |
+| site_name | text | YES | - |
+| transaction_count | int8 | YES | - |
+| total_amount | numeric | YES | - |
+| avg_amount | numeric | YES | - |
+| min_amount | numeric | YES | - |
+| max_amount | numeric | YES | - |
+| first_synced | timestamptz | YES | - |
+| last_synced | timestamptz | YES | - |
+
+### cpt_data
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|---------|
+| id | text | NO | - |
+| transaction_date | timestamptz | NO | - |
+| cust_session | text | NO | - |
+| cust_name | text | YES | - |
+| cust_email_ad | text | YES | - |
+| cust_amount | numeric | NO | - |
+| currency | text | NO | 'CAD'::text |
+| cust_trans_id | text | YES | - |
+| cust_order_description | text | YES | - |
+| status | text | YES | - |
+| trans_type | text | NO | - |
+| card_type | text | YES | - |
+| site_id | text | YES | - |
+| site_name | text | YES | - |
+| cp_name | text | YES | - |
+| raw_data | jsonb | YES | - |
+| created_at | timestamptz | NO | now() |
+| updated_at | timestamptz | NO | now() |
+| synced_at | timestamptz | NO | now() |
+
+### cpt_recent_completed
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|---------|
+| transaction_date | timestamptz | YES | - |
+| cust_session | text | YES | - |
+| cust_name | text | YES | - |
+| cust_email_ad | text | YES | - |
+| cust_amount | numeric | YES | - |
+| currency | text | YES | - |
+| site_name | text | YES | - |
+| cust_trans_id | text | YES | - |
+| synced_at | timestamptz | YES | - |
+
+### cpt_site_accounts
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|---------|
+| site_id | text | NO | - |
+| site_name | text | NO | - |
+| cp_name | text | YES | - |
+| account_identifier | text | NO | - |
+| is_active | bool | YES | true |
+| created_at | timestamptz | YES | now() |
+| updated_at | timestamptz | YES | now() |
+
+### cpt_sync_log
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|---------|
+| id | int8 | NO | nextval('cpt_sync_log_id_seq'::regclass) |
+| sync_started_at | timestamptz | NO | now() |
+| sync_completed_at | timestamptz | YES | - |
+| status | text | NO | 'running'::text |
+| total_fetched | int4 | YES | 0 |
+| total_processed | int4 | YES | 0 |
+| new_records | int4 | YES | 0 |
+| updated_records | int4 | YES | 0 |
+| duplicate_records | int4 | YES | 0 |
+| failed_records | int4 | YES | 0 |
+| earliest_transaction | timestamptz | YES | - |
+| latest_transaction | timestamptz | YES | - |
+| errors | jsonb | YES | - |
+| error_message | text | YES | - |
+| duration_seconds | numeric | YES | - |
+| created_at | timestamptz | NO | now() |
+| durationseconds | numeric | YES | - |
+| totalfetched | int4 | YES | - |
+| totalprocessed | int4 | YES | - |
+| newrecords | int4 | YES | - |
+| updatedrecords | int4 | YES | - |
+| failedrecords | int4 | YES | - |
+| earliesttransaction | timestamptz | YES | - |
+| latesttransaction | timestamptz | YES | - |
+
+### cpt_sync_performance
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|---------|
+| sync_hour | timestamptz | YES | - |
+| sync_count | int8 | YES | - |
+| avg_fetched | numeric | YES | - |
+| avg_new_records | numeric | YES | - |
+| avg_duplicates | numeric | YES | - |
+| avg_duration_seconds | numeric | YES | - |
+| successful_syncs | int8 | YES | - |
+| failed_syncs | int8 | YES | - |
+
+### cpt_transaction_gaps
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|---------|
+| hour | timestamptz | YES | - |
+| transaction_count | int8 | YES | - |
+| status | text | YES | - |
+
+### cpt_transactions_by_site
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|---------|
+| site_id | text | YES | - |
+| site_name | text | YES | - |
+| account_identifier | text | YES | - |
+| transaction_count | int8 | YES | - |
+| total_revenue | numeric | YES | - |
+| completed_transactions | int8 | YES | - |
+| incomplete_transactions | int8 | YES | - |
+| latest_transaction | timestamptz | YES | - |
+
 ### etransfer_audit_log
 
 | Column | Type | Nullable | Default |
@@ -100,6 +229,8 @@
 | webhook_configured | bool | YES | false |
 | active_from | date | YES | - |
 | active_until | date | YES | - |
+| site_id | text | YES | - |
+| display_name | text | YES | - |
 
 ### recent_refund_activity
 
@@ -431,6 +562,15 @@
 | created_at | timestamptz | NO | now() |
 | updated_at | timestamptz | NO | now() |
 
+### user_cpt_site_access
+
+| Column | Type | Nullable | Default |
+|--------|------|----------|---------|
+| user_id | uuid | NO | - |
+| site_id | text | NO | - |
+| granted_at | timestamptz | YES | now() |
+| granted_by | uuid | YES | - |
+
 ### user_stripe_accounts
 
 | Column | Type | Nullable | Default |
@@ -455,6 +595,52 @@
 
 ## 🔗 Constraints
 
+### cpt_data
+
+- **2200_42304_11_not_null** (CHECK)
+- **2200_42304_17_not_null** (CHECK)
+- **2200_42304_18_not_null** (CHECK)
+- **2200_42304_19_not_null** (CHECK)
+- **2200_42304_1_not_null** (CHECK)
+- **2200_42304_2_not_null** (CHECK)
+- **2200_42304_3_not_null** (CHECK)
+- **2200_42304_6_not_null** (CHECK)
+- **2200_42304_7_not_null** (CHECK)
+- **cpt_data_pkey** (PRIMARY KEY)
+  - Column: cust_session
+  - References: cpt_data(cust_session)
+- **cpt_data_pkey** (PRIMARY KEY)
+  - Column: transaction_date
+  - References: cpt_data(transaction_date)
+- **cpt_data_pkey** (PRIMARY KEY)
+  - Column: transaction_date
+  - References: cpt_data(cust_session)
+- **cpt_data_pkey** (PRIMARY KEY)
+  - Column: cust_session
+  - References: cpt_data(transaction_date)
+
+### cpt_site_accounts
+
+- **2200_42523_1_not_null** (CHECK)
+- **2200_42523_2_not_null** (CHECK)
+- **2200_42523_4_not_null** (CHECK)
+- **cpt_site_accounts_pkey** (PRIMARY KEY)
+  - Column: site_id
+  - References: cpt_site_accounts(site_id)
+- **cpt_site_accounts_account_identifier_key** (UNIQUE)
+  - Column: account_identifier
+  - References: cpt_site_accounts(account_identifier)
+
+### cpt_sync_log
+
+- **2200_42327_16_not_null** (CHECK)
+- **2200_42327_1_not_null** (CHECK)
+- **2200_42327_2_not_null** (CHECK)
+- **2200_42327_4_not_null** (CHECK)
+- **cpt_sync_log_pkey** (PRIMARY KEY)
+  - Column: id
+  - References: cpt_sync_log(id)
+
 ### etransfer_audit_log
 
 - **2200_26593_1_not_null** (CHECK)
@@ -476,17 +662,17 @@
 - **stripe_accounts_environment_check** (CHECK)
   - References: payment_accounts(environment)
 - **payment_accounts_pkey** (PRIMARY KEY)
-  - Column: payment_provider
-  - References: payment_accounts(account_id)
-- **payment_accounts_pkey** (PRIMARY KEY)
-  - Column: account_id
-  - References: payment_accounts(account_id)
-- **payment_accounts_pkey** (PRIMARY KEY)
   - Column: account_id
   - References: payment_accounts(payment_provider)
 - **payment_accounts_pkey** (PRIMARY KEY)
   - Column: payment_provider
   - References: payment_accounts(payment_provider)
+- **payment_accounts_pkey** (PRIMARY KEY)
+  - Column: payment_provider
+  - References: payment_accounts(account_id)
+- **payment_accounts_pkey** (PRIMARY KEY)
+  - Column: account_id
+  - References: payment_accounts(account_id)
 
 ### refund_audit_log
 
@@ -517,17 +703,11 @@
 - **2200_22455_25_not_null** (CHECK)
 - **2200_22455_26_not_null** (CHECK)
 - **stripe_charges_pkey** (PRIMARY KEY)
-  - Column: stripe_account_id
+  - Column: payment_provider
   - References: stripe_charges(payment_provider)
 - **stripe_charges_pkey** (PRIMARY KEY)
   - Column: id
   - References: stripe_charges(id)
-- **stripe_charges_pkey** (PRIMARY KEY)
-  - Column: payment_provider
-  - References: stripe_charges(id)
-- **stripe_charges_pkey** (PRIMARY KEY)
-  - Column: stripe_account_id
-  - References: stripe_charges(stripe_account_id)
 - **stripe_charges_pkey** (PRIMARY KEY)
   - Column: id
   - References: stripe_charges(payment_provider)
@@ -538,11 +718,17 @@
   - Column: stripe_account_id
   - References: stripe_charges(id)
 - **stripe_charges_pkey** (PRIMARY KEY)
-  - Column: payment_provider
+  - Column: stripe_account_id
+  - References: stripe_charges(payment_provider)
+- **stripe_charges_pkey** (PRIMARY KEY)
+  - Column: stripe_account_id
   - References: stripe_charges(stripe_account_id)
 - **stripe_charges_pkey** (PRIMARY KEY)
   - Column: payment_provider
-  - References: stripe_charges(payment_provider)
+  - References: stripe_charges(id)
+- **stripe_charges_pkey** (PRIMARY KEY)
+  - Column: payment_provider
+  - References: stripe_charges(stripe_account_id)
 
 ### stripe_customers
 
@@ -550,10 +736,13 @@
 - **2200_22395_17_not_null** (CHECK)
 - **2200_22395_1_not_null** (CHECK)
 - **stripe_customers_pkey** (PRIMARY KEY)
-  - Column: id
+  - Column: payment_provider
   - References: stripe_customers(stripe_account_id)
 - **stripe_customers_pkey** (PRIMARY KEY)
-  - Column: stripe_account_id
+  - Column: payment_provider
+  - References: stripe_customers(payment_provider)
+- **stripe_customers_pkey** (PRIMARY KEY)
+  - Column: payment_provider
   - References: stripe_customers(id)
 - **stripe_customers_pkey** (PRIMARY KEY)
   - Column: stripe_account_id
@@ -562,20 +751,17 @@
   - Column: stripe_account_id
   - References: stripe_customers(stripe_account_id)
 - **stripe_customers_pkey** (PRIMARY KEY)
-  - Column: payment_provider
+  - Column: id
   - References: stripe_customers(id)
 - **stripe_customers_pkey** (PRIMARY KEY)
-  - Column: payment_provider
-  - References: stripe_customers(payment_provider)
-- **stripe_customers_pkey** (PRIMARY KEY)
-  - Column: payment_provider
+  - Column: id
   - References: stripe_customers(stripe_account_id)
 - **stripe_customers_pkey** (PRIMARY KEY)
-  - Column: id
-  - References: stripe_customers(payment_provider)
+  - Column: stripe_account_id
+  - References: stripe_customers(id)
 - **stripe_customers_pkey** (PRIMARY KEY)
   - Column: id
-  - References: stripe_customers(id)
+  - References: stripe_customers(payment_provider)
 
 ### stripe_disputes
 
@@ -583,20 +769,17 @@
 - **2200_22492_17_not_null** (CHECK)
 - **2200_22492_1_not_null** (CHECK)
 - **stripe_disputes_pkey** (PRIMARY KEY)
-  - Column: stripe_account_id
-  - References: stripe_disputes(payment_provider)
-- **stripe_disputes_pkey** (PRIMARY KEY)
   - Column: id
   - References: stripe_disputes(id)
-- **stripe_disputes_pkey** (PRIMARY KEY)
-  - Column: id
-  - References: stripe_disputes(payment_provider)
 - **stripe_disputes_pkey** (PRIMARY KEY)
   - Column: id
   - References: stripe_disputes(stripe_account_id)
 - **stripe_disputes_pkey** (PRIMARY KEY)
   - Column: stripe_account_id
   - References: stripe_disputes(id)
+- **stripe_disputes_pkey** (PRIMARY KEY)
+  - Column: stripe_account_id
+  - References: stripe_disputes(payment_provider)
 - **stripe_disputes_pkey** (PRIMARY KEY)
   - Column: stripe_account_id
   - References: stripe_disputes(stripe_account_id)
@@ -609,6 +792,9 @@
 - **stripe_disputes_pkey** (PRIMARY KEY)
   - Column: payment_provider
   - References: stripe_disputes(stripe_account_id)
+- **stripe_disputes_pkey** (PRIMARY KEY)
+  - Column: id
+  - References: stripe_disputes(payment_provider)
 
 ### stripe_invoices
 
@@ -616,6 +802,18 @@
 - **2200_22469_23_not_null** (CHECK)
 - **2200_22469_24_not_null** (CHECK)
 - **stripe_invoices_pkey** (PRIMARY KEY)
+  - Column: id
+  - References: stripe_invoices(payment_provider)
+- **stripe_invoices_pkey** (PRIMARY KEY)
+  - Column: id
+  - References: stripe_invoices(stripe_account_id)
+- **stripe_invoices_pkey** (PRIMARY KEY)
+  - Column: stripe_account_id
+  - References: stripe_invoices(id)
+- **stripe_invoices_pkey** (PRIMARY KEY)
+  - Column: stripe_account_id
+  - References: stripe_invoices(payment_provider)
+- **stripe_invoices_pkey** (PRIMARY KEY)
   - Column: stripe_account_id
   - References: stripe_invoices(stripe_account_id)
 - **stripe_invoices_pkey** (PRIMARY KEY)
@@ -629,19 +827,7 @@
   - References: stripe_invoices(stripe_account_id)
 - **stripe_invoices_pkey** (PRIMARY KEY)
   - Column: id
-  - References: stripe_invoices(payment_provider)
-- **stripe_invoices_pkey** (PRIMARY KEY)
-  - Column: id
   - References: stripe_invoices(id)
-- **stripe_invoices_pkey** (PRIMARY KEY)
-  - Column: id
-  - References: stripe_invoices(stripe_account_id)
-- **stripe_invoices_pkey** (PRIMARY KEY)
-  - Column: stripe_account_id
-  - References: stripe_invoices(id)
-- **stripe_invoices_pkey** (PRIMARY KEY)
-  - Column: stripe_account_id
-  - References: stripe_invoices(payment_provider)
 
 ### stripe_payment_intents
 
@@ -649,29 +835,29 @@
 - **2200_22441_19_not_null** (CHECK)
 - **2200_22441_1_not_null** (CHECK)
 - **stripe_payment_intents_pkey** (PRIMARY KEY)
-  - Column: payment_provider
-  - References: stripe_payment_intents(id)
+  - Column: id
+  - References: stripe_payment_intents(stripe_account_id)
 - **stripe_payment_intents_pkey** (PRIMARY KEY)
   - Column: stripe_account_id
-  - References: stripe_payment_intents(stripe_account_id)
+  - References: stripe_payment_intents(id)
 - **stripe_payment_intents_pkey** (PRIMARY KEY)
   - Column: stripe_account_id
   - References: stripe_payment_intents(payment_provider)
 - **stripe_payment_intents_pkey** (PRIMARY KEY)
-  - Column: stripe_account_id
-  - References: stripe_payment_intents(id)
-- **stripe_payment_intents_pkey** (PRIMARY KEY)
-  - Column: id
+  - Column: payment_provider
   - References: stripe_payment_intents(stripe_account_id)
-- **stripe_payment_intents_pkey** (PRIMARY KEY)
-  - Column: id
-  - References: stripe_payment_intents(id)
 - **stripe_payment_intents_pkey** (PRIMARY KEY)
   - Column: payment_provider
   - References: stripe_payment_intents(payment_provider)
 - **stripe_payment_intents_pkey** (PRIMARY KEY)
   - Column: payment_provider
+  - References: stripe_payment_intents(id)
+- **stripe_payment_intents_pkey** (PRIMARY KEY)
+  - Column: stripe_account_id
   - References: stripe_payment_intents(stripe_account_id)
+- **stripe_payment_intents_pkey** (PRIMARY KEY)
+  - Column: id
+  - References: stripe_payment_intents(id)
 - **stripe_payment_intents_pkey** (PRIMARY KEY)
   - Column: id
   - References: stripe_payment_intents(payment_provider)
@@ -683,31 +869,31 @@
 - **2200_22413_1_not_null** (CHECK)
 - **stripe_prices_pkey** (PRIMARY KEY)
   - Column: payment_provider
-  - References: stripe_prices(stripe_account_id)
-- **stripe_prices_pkey** (PRIMARY KEY)
-  - Column: payment_provider
   - References: stripe_prices(payment_provider)
 - **stripe_prices_pkey** (PRIMARY KEY)
   - Column: payment_provider
   - References: stripe_prices(id)
 - **stripe_prices_pkey** (PRIMARY KEY)
-  - Column: stripe_account_id
+  - Column: payment_provider
   - References: stripe_prices(stripe_account_id)
-- **stripe_prices_pkey** (PRIMARY KEY)
-  - Column: stripe_account_id
-  - References: stripe_prices(payment_provider)
-- **stripe_prices_pkey** (PRIMARY KEY)
-  - Column: stripe_account_id
-  - References: stripe_prices(id)
 - **stripe_prices_pkey** (PRIMARY KEY)
   - Column: id
-  - References: stripe_prices(stripe_account_id)
+  - References: stripe_prices(id)
 - **stripe_prices_pkey** (PRIMARY KEY)
   - Column: id
   - References: stripe_prices(payment_provider)
 - **stripe_prices_pkey** (PRIMARY KEY)
   - Column: id
+  - References: stripe_prices(stripe_account_id)
+- **stripe_prices_pkey** (PRIMARY KEY)
+  - Column: stripe_account_id
   - References: stripe_prices(id)
+- **stripe_prices_pkey** (PRIMARY KEY)
+  - Column: stripe_account_id
+  - References: stripe_prices(payment_provider)
+- **stripe_prices_pkey** (PRIMARY KEY)
+  - Column: stripe_account_id
+  - References: stripe_prices(stripe_account_id)
 
 ### stripe_products
 
@@ -715,14 +901,17 @@
 - **2200_22404_14_not_null** (CHECK)
 - **2200_22404_1_not_null** (CHECK)
 - **stripe_products_pkey** (PRIMARY KEY)
-  - Column: id
-  - References: stripe_products(stripe_account_id)
+  - Column: payment_provider
+  - References: stripe_products(id)
 - **stripe_products_pkey** (PRIMARY KEY)
-  - Column: id
+  - Column: stripe_account_id
   - References: stripe_products(payment_provider)
 - **stripe_products_pkey** (PRIMARY KEY)
-  - Column: id
+  - Column: stripe_account_id
   - References: stripe_products(id)
+- **stripe_products_pkey** (PRIMARY KEY)
+  - Column: id
+  - References: stripe_products(stripe_account_id)
 - **stripe_products_pkey** (PRIMARY KEY)
   - Column: payment_provider
   - References: stripe_products(stripe_account_id)
@@ -730,17 +919,14 @@
   - Column: payment_provider
   - References: stripe_products(payment_provider)
 - **stripe_products_pkey** (PRIMARY KEY)
-  - Column: payment_provider
-  - References: stripe_products(id)
-- **stripe_products_pkey** (PRIMARY KEY)
   - Column: stripe_account_id
   - References: stripe_products(stripe_account_id)
 - **stripe_products_pkey** (PRIMARY KEY)
-  - Column: stripe_account_id
-  - References: stripe_products(payment_provider)
-- **stripe_products_pkey** (PRIMARY KEY)
-  - Column: stripe_account_id
+  - Column: id
   - References: stripe_products(id)
+- **stripe_products_pkey** (PRIMARY KEY)
+  - Column: id
+  - References: stripe_products(payment_provider)
 
 ### stripe_refunds
 
@@ -748,13 +934,10 @@
 - **2200_22483_15_not_null** (CHECK)
 - **2200_22483_1_not_null** (CHECK)
 - **stripe_refunds_pkey** (PRIMARY KEY)
-  - Column: stripe_account_id
+  - Column: id
   - References: stripe_refunds(stripe_account_id)
 - **stripe_refunds_pkey** (PRIMARY KEY)
-  - Column: id
-  - References: stripe_refunds(payment_provider)
-- **stripe_refunds_pkey** (PRIMARY KEY)
-  - Column: id
+  - Column: payment_provider
   - References: stripe_refunds(stripe_account_id)
 - **stripe_refunds_pkey** (PRIMARY KEY)
   - Column: payment_provider
@@ -766,14 +949,17 @@
   - Column: id
   - References: stripe_refunds(id)
 - **stripe_refunds_pkey** (PRIMARY KEY)
-  - Column: payment_provider
+  - Column: stripe_account_id
   - References: stripe_refunds(stripe_account_id)
 - **stripe_refunds_pkey** (PRIMARY KEY)
   - Column: stripe_account_id
-  - References: stripe_refunds(id)
+  - References: stripe_refunds(payment_provider)
+- **stripe_refunds_pkey** (PRIMARY KEY)
+  - Column: id
+  - References: stripe_refunds(payment_provider)
 - **stripe_refunds_pkey** (PRIMARY KEY)
   - Column: stripe_account_id
-  - References: stripe_refunds(payment_provider)
+  - References: stripe_refunds(id)
 
 ### stripe_subscriptions
 
@@ -782,30 +968,30 @@
 - **2200_22427_21_not_null** (CHECK)
 - **stripe_subscriptions_pkey** (PRIMARY KEY)
   - Column: stripe_account_id
-  - References: stripe_subscriptions(payment_provider)
-- **stripe_subscriptions_pkey** (PRIMARY KEY)
-  - Column: id
-  - References: stripe_subscriptions(payment_provider)
-- **stripe_subscriptions_pkey** (PRIMARY KEY)
-  - Column: id
   - References: stripe_subscriptions(id)
 - **stripe_subscriptions_pkey** (PRIMARY KEY)
-  - Column: payment_provider
-  - References: stripe_subscriptions(stripe_account_id)
-- **stripe_subscriptions_pkey** (PRIMARY KEY)
-  - Column: payment_provider
+  - Column: stripe_account_id
   - References: stripe_subscriptions(payment_provider)
 - **stripe_subscriptions_pkey** (PRIMARY KEY)
-  - Column: payment_provider
+  - Column: id
+  - References: stripe_subscriptions(stripe_account_id)
+- **stripe_subscriptions_pkey** (PRIMARY KEY)
+  - Column: id
+  - References: stripe_subscriptions(payment_provider)
+- **stripe_subscriptions_pkey** (PRIMARY KEY)
+  - Column: id
   - References: stripe_subscriptions(id)
 - **stripe_subscriptions_pkey** (PRIMARY KEY)
   - Column: stripe_account_id
   - References: stripe_subscriptions(stripe_account_id)
 - **stripe_subscriptions_pkey** (PRIMARY KEY)
-  - Column: stripe_account_id
+  - Column: payment_provider
   - References: stripe_subscriptions(id)
 - **stripe_subscriptions_pkey** (PRIMARY KEY)
-  - Column: id
+  - Column: payment_provider
+  - References: stripe_subscriptions(payment_provider)
+- **stripe_subscriptions_pkey** (PRIMARY KEY)
+  - Column: payment_provider
   - References: stripe_subscriptions(stripe_account_id)
 
 ### stripe_sync_status
@@ -818,28 +1004,28 @@
   - References: stripe_sync_status(stripe_account_id)
 - **stripe_sync_status_pkey** (PRIMARY KEY)
   - Column: object_type
-  - References: stripe_sync_status(stripe_account_id)
+  - References: stripe_sync_status(payment_provider)
 - **stripe_sync_status_pkey** (PRIMARY KEY)
   - Column: object_type
   - References: stripe_sync_status(object_type)
 - **stripe_sync_status_pkey** (PRIMARY KEY)
   - Column: payment_provider
-  - References: stripe_sync_status(object_type)
+  - References: stripe_sync_status(payment_provider)
 - **stripe_sync_status_pkey** (PRIMARY KEY)
   - Column: payment_provider
+  - References: stripe_sync_status(object_type)
+- **stripe_sync_status_pkey** (PRIMARY KEY)
+  - Column: stripe_account_id
   - References: stripe_sync_status(payment_provider)
 - **stripe_sync_status_pkey** (PRIMARY KEY)
   - Column: stripe_account_id
   - References: stripe_sync_status(stripe_account_id)
 - **stripe_sync_status_pkey** (PRIMARY KEY)
-  - Column: object_type
-  - References: stripe_sync_status(payment_provider)
-- **stripe_sync_status_pkey** (PRIMARY KEY)
   - Column: stripe_account_id
   - References: stripe_sync_status(object_type)
 - **stripe_sync_status_pkey** (PRIMARY KEY)
-  - Column: stripe_account_id
-  - References: stripe_sync_status(payment_provider)
+  - Column: object_type
+  - References: stripe_sync_status(stripe_account_id)
 
 ### stripe_warmup_schedule
 
@@ -868,6 +1054,30 @@
   - Column: telegram_chat_id
   - References: telegram_sessions(telegram_chat_id)
 
+### user_cpt_site_access
+
+- **2200_42539_1_not_null** (CHECK)
+- **2200_42539_2_not_null** (CHECK)
+- **user_cpt_site_access_site_id_fkey** (FOREIGN KEY)
+  - Column: site_id
+  - References: cpt_site_accounts(site_id)
+  - On Update: NO ACTION
+  - On Delete: CASCADE
+- **user_cpt_site_access_user_id_fkey** (FOREIGN KEY)
+  - Column: user_id
+- **user_cpt_site_access_pkey** (PRIMARY KEY)
+  - Column: user_id
+  - References: user_cpt_site_access(user_id)
+- **user_cpt_site_access_pkey** (PRIMARY KEY)
+  - Column: user_id
+  - References: user_cpt_site_access(site_id)
+- **user_cpt_site_access_pkey** (PRIMARY KEY)
+  - Column: site_id
+  - References: user_cpt_site_access(site_id)
+- **user_cpt_site_access_pkey** (PRIMARY KEY)
+  - Column: site_id
+  - References: user_cpt_site_access(user_id)
+
 ### user_stripe_accounts
 
 - **2200_22728_1_not_null** (CHECK)
@@ -877,11 +1087,11 @@
   - References: user_stripe_accounts(role)
 - **user_stripe_accounts_account_fkey** (FOREIGN KEY)
   - Column: stripe_account_id
-  - References: payment_accounts(account_id)
+  - References: payment_accounts(payment_provider)
   - On Update: NO ACTION
   - On Delete: NO ACTION
 - **user_stripe_accounts_account_fkey** (FOREIGN KEY)
-  - Column: stripe_account_id
+  - Column: payment_provider
   - References: payment_accounts(payment_provider)
   - On Update: NO ACTION
   - On Delete: NO ACTION
@@ -891,37 +1101,37 @@
   - On Update: NO ACTION
   - On Delete: NO ACTION
 - **user_stripe_accounts_account_fkey** (FOREIGN KEY)
-  - Column: payment_provider
-  - References: payment_accounts(payment_provider)
+  - Column: stripe_account_id
+  - References: payment_accounts(account_id)
   - On Update: NO ACTION
   - On Delete: NO ACTION
 - **user_stripe_accounts_pkey** (PRIMARY KEY)
-  - Column: user_id
+  - Column: stripe_account_id
+  - References: user_stripe_accounts(stripe_account_id)
+- **user_stripe_accounts_pkey** (PRIMARY KEY)
+  - Column: payment_provider
+  - References: user_stripe_accounts(user_id)
+- **user_stripe_accounts_pkey** (PRIMARY KEY)
+  - Column: payment_provider
+  - References: user_stripe_accounts(stripe_account_id)
+- **user_stripe_accounts_pkey** (PRIMARY KEY)
+  - Column: payment_provider
+  - References: user_stripe_accounts(payment_provider)
+- **user_stripe_accounts_pkey** (PRIMARY KEY)
+  - Column: stripe_account_id
   - References: user_stripe_accounts(user_id)
 - **user_stripe_accounts_pkey** (PRIMARY KEY)
   - Column: stripe_account_id
   - References: user_stripe_accounts(payment_provider)
 - **user_stripe_accounts_pkey** (PRIMARY KEY)
   - Column: user_id
+  - References: user_stripe_accounts(user_id)
+- **user_stripe_accounts_pkey** (PRIMARY KEY)
+  - Column: user_id
   - References: user_stripe_accounts(stripe_account_id)
 - **user_stripe_accounts_pkey** (PRIMARY KEY)
   - Column: user_id
   - References: user_stripe_accounts(payment_provider)
-- **user_stripe_accounts_pkey** (PRIMARY KEY)
-  - Column: stripe_account_id
-  - References: user_stripe_accounts(stripe_account_id)
-- **user_stripe_accounts_pkey** (PRIMARY KEY)
-  - Column: stripe_account_id
-  - References: user_stripe_accounts(user_id)
-- **user_stripe_accounts_pkey** (PRIMARY KEY)
-  - Column: payment_provider
-  - References: user_stripe_accounts(payment_provider)
-- **user_stripe_accounts_pkey** (PRIMARY KEY)
-  - Column: payment_provider
-  - References: user_stripe_accounts(stripe_account_id)
-- **user_stripe_accounts_pkey** (PRIMARY KEY)
-  - Column: payment_provider
-  - References: user_stripe_accounts(user_id)
 
 ### user_stripe_keys
 
@@ -936,6 +1146,83 @@
   - References: user_stripe_keys(id)
 
 ## 📇 Indexes
+
+### cpt_data
+
+- **cpt_data_pkey**
+  ```sql
+  CREATE UNIQUE INDEX cpt_data_pkey ON public.cpt_data USING btree (cust_session, transaction_date)
+  ```
+- **idx_cpt_data_email**
+  ```sql
+  CREATE INDEX idx_cpt_data_email ON public.cpt_data USING btree (cust_email_ad) WHERE (cust_email_ad IS NOT NULL)
+  ```
+- **idx_cpt_data_session**
+  ```sql
+  CREATE INDEX idx_cpt_data_session ON public.cpt_data USING btree (cust_session)
+  ```
+- **idx_cpt_data_site**
+  ```sql
+  CREATE INDEX idx_cpt_data_site ON public.cpt_data USING btree (site_id, site_name)
+  ```
+- **idx_cpt_data_site_complete**
+  ```sql
+  CREATE INDEX idx_cpt_data_site_complete ON public.cpt_data USING btree (site_id, trans_type, transaction_date DESC) WHERE (trans_type = 'complete'::text)
+  ```
+- **idx_cpt_data_synced_at**
+  ```sql
+  CREATE INDEX idx_cpt_data_synced_at ON public.cpt_data USING btree (synced_at DESC)
+  ```
+- **idx_cpt_data_trans_id**
+  ```sql
+  CREATE INDEX idx_cpt_data_trans_id ON public.cpt_data USING btree (cust_trans_id) WHERE (cust_trans_id IS NOT NULL)
+  ```
+- **idx_cpt_data_trans_id_unique**
+  ```sql
+  CREATE UNIQUE INDEX idx_cpt_data_trans_id_unique ON public.cpt_data USING btree (cust_trans_id) WHERE ((cust_trans_id IS NOT NULL) AND (cust_trans_id <> ''::text))
+  ```
+- **idx_cpt_data_trans_type**
+  ```sql
+  CREATE INDEX idx_cpt_data_trans_type ON public.cpt_data USING btree (trans_type, transaction_date DESC)
+  ```
+- **idx_cpt_data_transaction_date**
+  ```sql
+  CREATE INDEX idx_cpt_data_transaction_date ON public.cpt_data USING btree (transaction_date DESC)
+  ```
+
+### cpt_site_accounts
+
+- **cpt_site_accounts_account_identifier_key**
+  ```sql
+  CREATE UNIQUE INDEX cpt_site_accounts_account_identifier_key ON public.cpt_site_accounts USING btree (account_identifier)
+  ```
+- **cpt_site_accounts_pkey**
+  ```sql
+  CREATE UNIQUE INDEX cpt_site_accounts_pkey ON public.cpt_site_accounts USING btree (site_id)
+  ```
+- **idx_cpt_site_accounts_active**
+  ```sql
+  CREATE INDEX idx_cpt_site_accounts_active ON public.cpt_site_accounts USING btree (is_active) WHERE (is_active = true)
+  ```
+- **idx_cpt_site_accounts_identifier**
+  ```sql
+  CREATE INDEX idx_cpt_site_accounts_identifier ON public.cpt_site_accounts USING btree (account_identifier)
+  ```
+
+### cpt_sync_log
+
+- **cpt_sync_log_pkey**
+  ```sql
+  CREATE UNIQUE INDEX cpt_sync_log_pkey ON public.cpt_sync_log USING btree (id)
+  ```
+- **idx_cpt_sync_log_started**
+  ```sql
+  CREATE INDEX idx_cpt_sync_log_started ON public.cpt_sync_log USING btree (sync_started_at DESC)
+  ```
+- **idx_cpt_sync_log_status**
+  ```sql
+  CREATE INDEX idx_cpt_sync_log_status ON public.cpt_sync_log USING btree (status, sync_started_at DESC)
+  ```
 
 ### etransfer_audit_log
 
@@ -965,6 +1252,10 @@
 - **idx_payment_accounts_secret_key**
   ```sql
   CREATE INDEX idx_payment_accounts_secret_key ON public.payment_accounts USING btree (secret_key_name)
+  ```
+- **idx_payment_accounts_site_id**
+  ```sql
+  CREATE INDEX idx_payment_accounts_site_id ON public.payment_accounts USING btree (site_id)
   ```
 - **idx_payment_accounts_warmup_date**
   ```sql
@@ -1221,6 +1512,21 @@
   CREATE UNIQUE INDEX telegram_sessions_pkey ON public.telegram_sessions USING btree (telegram_chat_id)
   ```
 
+### user_cpt_site_access
+
+- **idx_user_cpt_site_access_site**
+  ```sql
+  CREATE INDEX idx_user_cpt_site_access_site ON public.user_cpt_site_access USING btree (site_id)
+  ```
+- **idx_user_cpt_site_access_user**
+  ```sql
+  CREATE INDEX idx_user_cpt_site_access_user ON public.user_cpt_site_access USING btree (user_id)
+  ```
+- **user_cpt_site_access_pkey**
+  ```sql
+  CREATE UNIQUE INDEX user_cpt_site_access_pkey ON public.user_cpt_site_access USING btree (user_id, site_id)
+  ```
+
 ### user_stripe_accounts
 
 - **user_stripe_accounts_pkey**
@@ -1240,6 +1546,66 @@
   ```
 
 ## 🔒 Row Level Security Policies
+
+### cpt_data
+
+#### Allow admins full access to cpt_data
+
+- **Command:** ALL
+- **Roles:** authenticated
+- **Type:** PERMISSIVE
+- **USING:** `(EXISTS ( SELECT 1
+   FROM auth.users
+  WHERE ((users.id = auth.uid()) AND (((users.raw_user_meta_data ->> 'role'::text) = 'admin'::text) OR ((users.raw_app_meta_data ->> 'role'::text) = 'admin'::text)))))`
+
+#### Allow authenticated users to read CPT data
+
+- **Command:** SELECT
+- **Roles:** authenticated
+- **Type:** PERMISSIVE
+- **USING:** `true`
+
+#### Allow service role full access to cpt_data
+
+- **Command:** ALL
+- **Roles:** service_role
+- **Type:** PERMISSIVE
+- **USING:** `true`
+
+### cpt_site_accounts
+
+#### Authenticated users can read active accounts
+
+- **Command:** SELECT
+- **Roles:** authenticated
+- **Type:** PERMISSIVE
+- **USING:** `(is_active = true)`
+
+#### Service role full access
+
+- **Command:** ALL
+- **Roles:** service_role
+- **Type:** PERMISSIVE
+- **USING:** `true`
+- **WITH CHECK:** `true`
+
+### cpt_sync_log
+
+#### Allow admins full access to cpt_sync_log
+
+- **Command:** ALL
+- **Roles:** authenticated
+- **Type:** PERMISSIVE
+- **USING:** `(EXISTS ( SELECT 1
+   FROM auth.users
+  WHERE ((users.id = auth.uid()) AND (((users.raw_user_meta_data ->> 'role'::text) = 'admin'::text) OR ((users.raw_app_meta_data ->> 'role'::text) = 'admin'::text)))))`
+
+#### Allow service role full access to cpt_sync_log
+
+- **Command:** ALL
+- **Roles:** service_role
+- **Type:** PERMISSIVE
+- **USING:** `true`
 
 ### etransfer_audit_log
 
@@ -1723,6 +2089,23 @@
 - **USING:** `(auth.uid() = supabase_user_id)`
 - **WITH CHECK:** `(auth.uid() = supabase_user_id)`
 
+### user_cpt_site_access
+
+#### Service role full access
+
+- **Command:** ALL
+- **Roles:** service_role
+- **Type:** PERMISSIVE
+- **USING:** `true`
+- **WITH CHECK:** `true`
+
+#### Users can see their own access
+
+- **Command:** SELECT
+- **Roles:** authenticated
+- **Type:** PERMISSIVE
+- **USING:** `(auth.uid() = user_id)`
+
 ### user_stripe_accounts
 
 #### Service role full access to user accounts
@@ -1757,6 +2140,24 @@
 ## ⚙️ Functions
 
 ### check_duplicates
+
+**Returns:** setof record
+**Language:** plpgsql
+**Arguments:** none
+
+### cpt_check_duplicates
+
+**Returns:** setof record
+**Language:** plpgsql
+**Arguments:** none
+
+### cpt_detect_missing_syncs
+
+**Returns:** setof record
+**Language:** plpgsql
+**Arguments:** none
+
+### cpt_latest_sync_status
 
 **Returns:** setof record
 **Language:** plpgsql
@@ -1798,11 +2199,23 @@
 **Language:** plpgsql
 **Arguments:** none
 
+### get_user_cpt_sites
+
+**Returns:** setof record
+**Language:** sql
+**Arguments:** p_user_id uuid
+
 ### grant_all_account_access_to_user
 
 **Returns:** void
 **Language:** plpgsql
 **Arguments:** user_email text
+
+### grant_user_cpt_site_access
+
+**Returns:** setof record
+**Language:** plpgsql
+**Arguments:** p_user_id uuid, p_site_ids text[]
 
 ### is_admin
 
@@ -1815,6 +2228,12 @@
 **Returns:** setof record
 **Language:** sql
 **Arguments:** year integer, month integer
+
+### update_cpt_data_updated_at
+
+**Returns:** trigger
+**Language:** plpgsql
+**Arguments:** none
 
 ### update_sync_status
 
@@ -1842,8 +2261,8 @@
 
 ## 👁️ Views
 
-- **all_customers** - 322 records
-- **all_charges** - 402 records
+- **all_customers** - 334 records
+- **all_charges** - 412 records
 - **revenue_by_provider** - 8 records
 - **stripe_customers_by_account** - 5 records
 - **stripe_revenue_by_account** - 8 records
@@ -1854,12 +2273,12 @@
 - **airwallex** - 0f2e5c4f (live) - Key: AIRWALLEX_ACCOUNT_1_KEY
 - **airwallex** - adbafa14 (live) - Key: AIRWALLEX_ACCOUNT_2_KEY
 - **airwallex** - 500de8a1 (live) - Key: AIRWALLEX_ACCOUNT_3_KEY
+- **stripe** - 33d86bf1 (live) - Key: STRIPE_ACCOUNT_2_KEY
 - **stripe** - 9ac7b070 (live) - Key: STRIPE_ACCOUNT_4_KEY - Warmup: 2025-12-17
 - **stripe** - 1cb1e27f (live) - Key: STRIPE_ACCOUNT_1_KEY - Warmup: 2025-09-05
-- **stripe** - 0a7ea0c6 (test) - Key: STRIPE_ACCOUNT_3_KEY
 - **stripe** - 343fd961 (live) - Key: STRIPE_ACCOUNT_5_KEY - Warmup: 2025-12-17
-- **stripe** - 33d86bf1 (live) - Key: STRIPE_ACCOUNT_2_KEY
 - **stripe** - b8a82ca9 (live) - Key: STRIPE_ACCOUNT_6_KEY
+- **stripe** - 0a7ea0c6 (test) - Key: STRIPE_ACCOUNT_3_KEY
 
 ## 🔄 Sync Status
 

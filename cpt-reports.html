@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPT Transaction Reports - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Shared styles -->
+    <link rel="stylesheet" href="sidebar.css">
+    <link rel="stylesheet" href="router-transitions.css">
+    
+    <!-- Initialize Supabase globally (MUST be before sidebar.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        if (!window.supabaseClient) {
+            window.supabaseClient = window.supabase.createClient(
+                'https://hzdybwclwqkcobpwxzoo.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6ZHlid2Nsd3FrY29icHd4em9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzU4ODQsImV4cCI6MjA4MTc1MTg4NH0.e0mSI7Qp9sRaclOwP61guBNtwTVHYXc-TtVaUON67QU'
+            );
+        }
+    </script>
+    
+    <!-- Shared Sidebar Component (MUST be after Supabase) -->
+    <script src="sidebar.js"></script>
+    <script src="router.js"></script>
+    
+    <style>
+        /* Page-specific styles only - do not affect sidebar */
+        .filters-section {
+            background: var(--color-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 10px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            background: var(--color-white);
+            color: var(--color-text);
+            transition: all 0.2s;
+        }
+
+        .filter-group input[type="text"] {
+            padding-right: 40px; /* Space for clear button */
+        }
+
+        .search-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .search-clear-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px;
+            display: none;
+            transition: color 0.2s;
+        }
+
+        .search-clear-btn:hover {
+            color: var(--color-text);
+        }
+
+        .search-clear-btn.visible {
+            display: block;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .toggle-btn {
+            padding: 10px 20px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            background: var(--color-white);
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        .toggle-btn.active {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--color-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--color-text);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .export-btn {
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .export-btn:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: var(--radius);
+            border: 1px solid var(--color-border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--color-white);
+        }
+
+        thead {
+            background: var(--color-bg);
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--color-border);
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            color: var(--color-primary);
+        }
+
+        th.sortable::after {
+            content: ' ↕';
+            opacity: 0.3;
+        }
+
+        th.sorted-asc::after {
+            content: ' ↑';
+            opacity: 1;
+            color: var(--color-primary);
+        }
+
+        th.sorted-desc::after {
+            content: ' ↓';
+            opacity: 1;
+            color: var(--color-primary);
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--color-border);
+            font-size: 14px;
+            color: var(--color-text);
+        }
+
+        tbody tr:hover {
+            background: var(--color-bg);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-complete {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-incomplete {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .amount-positive {
+            color: var(--color-success);
+            font-weight: 600;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            gap: 12px;
+            color: var(--color-text-secondary);
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--color-border);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--color-text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Authenticated Content -->
+    <div id="authenticatedContent" class="hidden">
+        <!-- Sidebar will be inserted by SidebarComponent -->
+        
+        <!-- Main Content -->
+        <div class="main-wrapper">
+            <div class="container">
+                <div class="header">
+                    <h1>CPT Transaction Reports</h1>
+                    <p class="subtitle">View and analyze CPT payment gateway transactions</p>
+                </div>
+
+                <!-- Alert -->
+                <div id="alert" class="alert"></div>
+
+                <!-- Filters Section -->
+                <div class="filters-section">
+                    <!-- Search Bar -->
+                    <div style="margin-bottom: 20px;">
+                        <div class="filter-group">
+                            <label>Search Transactions</label>
+                            <div class="search-wrapper">
+                                <input 
+                                    type="text" 
+                                    id="searchInput" 
+                                    placeholder="Search by name, email, transaction ID, amount, site..." 
+                                    oninput="handleSearchInput()"
+                                    style="width: 100%;">
+                                <button 
+                                    id="searchClearBtn" 
+                                    class="search-clear-btn" 
+                                    onclick="clearSearch()"
+                                    title="Clear search">
+                                    ×
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label>Site</label>
+                            <select id="siteFilter" onchange="applyFilters()">
+                                <option value="">All Sites</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Status</label>
+                            <select id="transTypeFilter" onchange="applyFilters()">
+                                <option value="">All Status</option>
+                                <option value="complete">Complete</option>
+                                <option value="incomplete">Incomplete</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Date From</label>
+                            <input type="date" id="dateFrom" onchange="applyFilters()">
+                        </div>
+                        <div class="filter-group">
+                            <label>Date To</label>
+                            <input type="date" id="dateTo" onchange="applyFilters()">
+                        </div>
+                    </div>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" data-status="all" onclick="setStatusFilter('all')">All Transactions</button>
+                        <button class="toggle-btn" data-status="complete" onclick="setStatusFilter('complete')">Complete</button>
+                        <button class="toggle-btn" data-status="incomplete" onclick="setStatusFilter('incomplete')">Incomplete</button>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Transactions</div>
+                        <div class="stat-value" id="totalTransactions">-</div>
+                        <div id="searchResultsInfo" style="font-size: 12px; color: var(--color-text-secondary); margin-top: 8px; display: none;"></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Amount</div>
+                        <div class="stat-value" id="totalAmount">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Complete</div>
+                        <div class="stat-value" id="completeCount">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Incomplete</div>
+                        <div class="stat-value" id="incompleteCount">-</div>
+                    </div>
+                </div>
+
+                <!-- Transactions Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Transactions</div>
+                        <button class="export-btn" onclick="exportToCSV()">Export CSV</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="transactionsTable">
+                            <thead>
+                                <tr>
+                                    <th class="sortable" data-sort="transaction_date">Date</th>
+                                    <th class="sortable" data-sort="cust_name">Customer Name</th>
+                                    <th class="sortable" data-sort="cust_email_ad">Email</th>
+                                    <th class="sortable" data-sort="cust_amount">Amount</th>
+                                    <th class="sortable" data-sort="currency">Currency</th>
+                                    <th class="sortable" data-sort="trans_type">Status</th>
+                                    <th class="sortable" data-sort="status">IDV</th>
+                                    <th class="sortable" data-sort="site_name">Site</th>
+                                    <th class="sortable" data-sort="cust_trans_id">Trans ID</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionsBody">
+                                <tr>
+                                    <td colspan="9">
+                                        <div class="loading">
+                                            <div class="spinner"></div>
+                                            <div>Loading transactions...</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // PAGE-SPECIFIC CONFIGURATION
+        // Use var to allow redeclaration when router navigates
+        // ========================================
+        var SUPABASE_URL = 'https://hzdybwclwqkcobpwxzoo.supabase.co';
+        var supabase = window.supabaseClient;
+        
+        function getSupabase() {
+            return window.supabaseClient;
+        }
+
+        var allTransactions = [];
+        var filteredTransactions = [];
+        var currentSort = { column: 'transaction_date', direction: 'desc' };
+        var currentStatusFilter = 'all';
+        
+        // ========================================
+        // INITIALIZATION (runs on direct page load)
+        // ========================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('CPT Reports: DOMContentLoaded fired');
+            
+            var supabase = getSupabase();
+            console.log('Supabase client:', supabase ? 'OK' : 'MISSING');
+            
+            var session = (await supabase.auth.getSession()).data.session;
+            console.log('Session:', session ? 'Authenticated' : 'Not authenticated');
+            
+            if (!session) {
+                window.location.href = 'login.html?redirect=cpt-reports.html';
+                return;
+            }
+            
+            console.log('Initializing sidebar...');
+            // Initialize sidebar (only runs once)
+            SidebarComponent.init({ supabase: window.supabaseClient });
+            
+            // Initialize router (only runs once)
+            if (typeof Router !== 'undefined' && !Router.isReady()) {
+                Router.init({
+                    contentSelector: '.main-wrapper',
+                    transitionDuration: 100
+                });
+            }
+            
+            updateSidebarUser(session.user.email);
+            document.getElementById('authenticatedContent').classList.remove('hidden');
+            
+            console.log('Running initPage...');
+            await initPage();
+            console.log('initPage complete');
+        });
+        
+        // ========================================
+        // PAGE INIT - runs on first load AND router navigation
+        // ========================================
+        async function initPage() {
+            console.log('initPage: Starting');
+            supabase = window.supabaseClient;
+            await loadData();
+            setupSorting();
+            console.log('initPage: Complete');
+        }
+        
+        // Make initPage available to router
+        window.initPage = initPage;
+
+        // ========================================
+        // DATA LOADING
+        // ========================================
+        async function loadData() {
+            console.log('Loading CPT data...');
+            try {
+                var supabase = getSupabase();
+                
+                // Load transactions
+                var { data: transactions, error } = await supabase
+                    .from('cpt_data')
+                    .select('*')
+                    .order('transaction_date', { ascending: false });
+
+                console.log('Query result:', { transactions, error });
+
+                if (error) {
+                    console.error('Supabase error:', error);
+                    throw error;
+                }
+
+                allTransactions = transactions || [];
+                console.log('Loaded transactions:', allTransactions.length);
+                
+                // Debug: Check what status values we have
+                var statusValues = {};
+                allTransactions.forEach(function(t) {
+                    var status = t.status || '(empty)';
+                    statusValues[status] = (statusValues[status] || 0) + 1;
+                });
+                console.log('Status field values:', statusValues);
+                
+                var typeValues = {};
+                allTransactions.forEach(function(t) {
+                    var type = t.trans_type || '(empty)';
+                    typeValues[type] = (typeValues[type] || 0) + 1;
+                });
+                console.log('Trans_type field values:', typeValues);
+                
+                // Populate site filter
+                var uniqueSites = {};
+                allTransactions.forEach(function(t) {
+                    if (t.site_id && t.site_name && !uniqueSites[t.site_id]) {
+                        uniqueSites[t.site_id] = t.site_name;
+                    }
+                });
+                
+                var siteFilter = document.getElementById('siteFilter');
+                Object.keys(uniqueSites).forEach(function(siteId) {
+                    var option = document.createElement('option');
+                    option.value = siteId;
+                    option.textContent = uniqueSites[siteId];
+                    siteFilter.appendChild(option);
+                });
+
+                applyFilters();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showAlert('Error loading data: ' + error.message, 'error');
+                document.getElementById('transactionsBody').innerHTML = 
+                    '<tr><td colspan="9" style="text-align: center; color: var(--color-error); padding: 40px;">Error loading data: ' + error.message + '</td></tr>';
+            }
+        }
+
+        // ========================================
+        // FILTERING
+        // ========================================
+        function handleSearchInput() {
+            var searchInput = document.getElementById('searchInput');
+            var clearBtn = document.getElementById('searchClearBtn');
+            
+            // Show/hide clear button
+            if (searchInput.value.trim()) {
+                clearBtn.classList.add('visible');
+            } else {
+                clearBtn.classList.remove('visible');
+            }
+            
+            applyFilters();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('searchClearBtn').classList.remove('visible');
+            applyFilters();
+        }
+
+        function setStatusFilter(status) {
+            currentStatusFilter = status;
+            
+            // Update toggle buttons
+            document.querySelectorAll('.toggle-btn').forEach(function(btn) {
+                btn.classList.remove('active');
+                if (btn.dataset.status === status) {
+                    btn.classList.add('active');
+                }
+            });
+
+            applyFilters();
+        }
+
+        function applyFilters() {
+            var siteId = document.getElementById('siteFilter').value;
+            var transType = document.getElementById('transTypeFilter').value;
+            var dateFrom = document.getElementById('dateFrom').value;
+            var dateTo = document.getElementById('dateTo').value;
+            var searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            console.log('applyFilters: Filtering with', { siteId, transType, dateFrom, dateTo, searchQuery, statusFilter: currentStatusFilter });
+
+            filteredTransactions = allTransactions.filter(function(txn) {
+                // Search filter - check multiple fields
+                if (searchQuery) {
+                    var searchableText = [
+                        txn.cust_name || '',
+                        txn.cust_email_ad || '',
+                        txn.cust_trans_id || '',
+                        txn.cust_amount ? txn.cust_amount.toString() : '',
+                        txn.site_name || '',
+                        txn.status || '',
+                        txn.trans_type || '',
+                        txn.currency || '',
+                        txn.cust_session || '',
+                        txn.card_type || '',
+                        txn.cp_name || '',
+                        txn.cust_order_description || ''
+                    ].join(' ').toLowerCase();
+                    
+                    if (!searchableText.includes(searchQuery)) {
+                        return false;
+                    }
+                }
+                
+                // Site filter
+                if (siteId && txn.site_id !== siteId) return false;
+
+                // Trans type filter
+                if (transType && txn.trans_type !== transType) return false;
+
+                // Date filters
+                if (dateFrom && txn.transaction_date < dateFrom) return false;
+                if (dateTo && txn.transaction_date > dateTo) return false;
+
+                // Complete/Incomplete filter - based on trans_type field (Status column)
+                if (currentStatusFilter !== 'all') {
+                    var transTypeLower = (txn.trans_type || '').toLowerCase();
+                    var isComplete = transTypeLower === 'complete';
+                    
+                    if (currentStatusFilter === 'complete' && !isComplete) return false;
+                    if (currentStatusFilter === 'incomplete' && isComplete) return false;
+                }
+
+                return true;
+            });
+
+            console.log('applyFilters: Filtered to', filteredTransactions.length, 'transactions');
+
+            updateStats();
+            sortAndRender();
+        }
+
+        // ========================================
+        // STATISTICS
+        // ========================================
+        function updateStats() {
+            var total = filteredTransactions.length;
+            var totalAmount = filteredTransactions.reduce(function(sum, t) { return sum + (t.cust_amount || 0); }, 0);
+            
+            // Count complete vs incomplete based on trans_type
+            var complete = filteredTransactions.filter(function(t) { 
+                var transTypeLower = (t.trans_type || '').toLowerCase();
+                return transTypeLower === 'complete';
+            }).length;
+            var incomplete = total - complete;
+
+            document.getElementById('totalTransactions').textContent = total.toLocaleString();
+            document.getElementById('totalAmount').textContent = '$' + totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('completeCount').textContent = complete.toLocaleString();
+            document.getElementById('incompleteCount').textContent = incomplete.toLocaleString();
+            
+            // Show search results info
+            var searchQuery = document.getElementById('searchInput').value.trim();
+            var searchInfo = document.getElementById('searchResultsInfo');
+            if (searchQuery) {
+                searchInfo.style.display = 'block';
+                searchInfo.textContent = 'Showing ' + total + ' of ' + allTransactions.length + ' matching "' + searchQuery + '"';
+            } else if (total < allTransactions.length) {
+                searchInfo.style.display = 'block';
+                searchInfo.textContent = 'Showing ' + total + ' of ' + allTransactions.length + ' (filtered)';
+            } else {
+                searchInfo.style.display = 'none';
+            }
+        }
+
+        // ========================================
+        // SORTING
+        // ========================================
+        function sortAndRender() {
+            var sorted = filteredTransactions.slice().sort(function(a, b) {
+                var aVal = a[currentSort.column];
+                var bVal = b[currentSort.column];
+
+                // Handle nulls
+                if (aVal === null) aVal = '';
+                if (bVal === null) bVal = '';
+
+                // Handle numbers
+                if (currentSort.column === 'cust_amount') {
+                    aVal = parseFloat(aVal) || 0;
+                    bVal = parseFloat(bVal) || 0;
+                }
+
+                if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
+                if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            renderTransactions(sorted);
+        }
+
+        function setupSorting() {
+            document.querySelectorAll('th.sortable').forEach(function(th) {
+                th.addEventListener('click', function() {
+                    var column = th.dataset.sort;
+                    
+                    if (currentSort.column === column) {
+                        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSort.column = column;
+                        currentSort.direction = 'asc';
+                    }
+
+                    // Update UI
+                    document.querySelectorAll('th.sortable').forEach(function(t) {
+                        t.classList.remove('sorted-asc', 'sorted-desc');
+                    });
+                    th.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+
+                    sortAndRender();
+                });
+            });
+        }
+
+        // ========================================
+        // RENDERING
+        // ========================================
+        function renderTransactions(transactions) {
+            console.log('renderTransactions: Called with', transactions.length, 'transactions');
+            var tbody = document.getElementById('transactionsBody');
+
+            if (transactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon">📭</div><div>No transactions found</div></div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = transactions.map(function(txn) {
+                var date = new Date(txn.transaction_date).toLocaleString();
+                var amount = parseFloat(txn.cust_amount || 0);
+                
+                // Status column (trans_type field) - with color coding
+                var transType = txn.trans_type || '-';
+                var transTypeLower = (transType || '').toLowerCase();
+                
+                // Green for "complete", Red for "incomplete"
+                var isComplete = transTypeLower === 'complete';
+                var statusClass = isComplete ? 'status-complete' : 'status-incomplete';
+                
+                // Debug: Log a sample to verify colors
+                if (transactions.indexOf(txn) === 0) {
+                    console.log('Sample transaction color:', {
+                        trans_type: transType,
+                        isComplete: isComplete,
+                        cssClass: statusClass,
+                        color: isComplete ? 'GREEN' : 'RED'
+                    });
+                }
+                
+                // IDV column (status field) - plain text, no color
+                var idvValue = txn.status || '-';
+
+                return '<tr>' +
+                    '<td>' + date + '</td>' +
+                    '<td>' + (txn.cust_name || '-') + '</td>' +
+                    '<td>' + (txn.cust_email_ad || '-') + '</td>' +
+                    '<td class="amount-positive">$' + amount.toFixed(2) + '</td>' +
+                    '<td>' + (txn.currency || 'CAD') + '</td>' +
+                    '<td><span class="status-badge ' + statusClass + '">' + transType + '</span></td>' +
+                    '<td>' + idvValue + '</td>' +
+                    '<td>' + (txn.site_name || '-') + '</td>' +
+                    '<td style="font-family: monospace; font-size: 12px;">' + (txn.cust_trans_id || '-') + '</td>' +
+                    '</tr>';
+            }).join('');
+            console.log('renderTransactions: Rendered', transactions.length, 'rows');
+        }
+
+        // ========================================
+        // EXPORT
+        // ========================================
+        function exportToCSV() {
+            var headers = ['Date', 'Customer Name', 'Email', 'Amount', 'Currency', 'Status', 'IDV', 'Site', 'Transaction ID'];
+            var rows = filteredTransactions.map(function(txn) {
+                return [
+                    new Date(txn.transaction_date).toLocaleString(),
+                    txn.cust_name || '',
+                    txn.cust_email_ad || '',
+                    txn.cust_amount || 0,
+                    txn.currency || 'CAD',
+                    txn.trans_type || '',
+                    txn.status || '',
+                    txn.site_name || '',
+                    txn.cust_trans_id || ''
+                ];
+            });
+
+            var csv = [headers].concat(rows)
+                .map(function(row) {
+                    return row.map(function(cell) {
+                        return '"' + cell + '"';
+                    }).join(',');
+                })
+                .join('\n');
+
+            var blob = new Blob([csv], { type: 'text/csv' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'cpt-transactions-' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ========================================
+        // UTILITY FUNCTIONS
+        // ========================================
+        function showAlert(message, type) {
+            type = type || 'error';
+            var alert = document.getElementById('alert');
+            if (alert) {
+                alert.textContent = message;
+                alert.className = 'alert ' + type + ' show';
+                setTimeout(function() {
+                    alert.classList.remove('show');
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>
+
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>Site</label>
+                    <select id="siteFilter" onchange="applyFilters()">
+                        <option value="">All Sites</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Transaction Type</label>
+                    <select id="transTypeFilter" onchange="applyFilters()">
+                        <option value="">All Types</option>
+                        <option value="sale">Sale</option>
+                        <option value="refund">Refund</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Date From</label>
+                    <input type="date" id="dateFrom" onchange="applyFilters()">
+                </div>
+                <div class="filter-group">
+                    <label>Date To</label>
+                    <input type="date" id="dateTo" onchange="applyFilters()">
+                </div>
+            </div>
+            <div class="toggle-group">
+                <button class="toggle-btn active" data-status="all" onclick="setStatusFilter('all')">All Transactions</button>
+                <button class="toggle-btn" data-status="complete" onclick="setStatusFilter('complete')">Complete</button>
+                <button class="toggle-btn" data-status="incomplete" onclick="setStatusFilter('incomplete')">Incomplete</button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Transactions</div>
+                <div class="stat-value" id="totalTransactions">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Amount</div>
+                <div class="stat-value" id="totalAmount">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Complete</div>
+                <div class="stat-value" id="completeCount">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Incomplete</div>
+                <div class="stat-value" id="incompleteCount">-</div>
+            </div>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Transactions</div>
+                <button class="export-btn" onclick="exportToCSV()">Export CSV</button>
+            </div>
+            <div class="table-wrapper">
+                <table id="transactionsTable">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="transaction_date">Date</th>
+                            <th class="sortable" data-sort="cust_name">Customer Name</th>
+                            <th class="sortable" data-sort="cust_email_ad">Email</th>
+                            <th class="sortable" data-sort="cust_amount">Amount</th>
+                            <th class="sortable" data-sort="currency">Currency</th>
+                            <th class="sortable" data-sort="status">Status</th>
+                            <th class="sortable" data-sort="trans_type">Type</th>
+                            <th class="sortable" data-sort="site_name">Site</th>
+                            <th class="sortable" data-sort="cust_trans_id">Trans ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsBody">
+                        <tr>
+                            <td colspan="9">
+                                <div class="loading">
+                                    <div class="spinner"></div>
+                                    <div>Loading transactions...</div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://hzdybwclwqkcobpwxzoo.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6ZHlid2Nsd3FrY29icHd4em9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ2MzkxMDEsImV4cCI6MjA1MDIxNTEwMX0.dtLnLUh7OO07GV3JPUNOO_L-E90NiLSdKe_kqvzSzN0';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let allTransactions = [];
+        let filteredTransactions = [];
+        let currentSort = { column: 'transaction_date', direction: 'desc' };
+        let currentStatusFilter = 'all';
+
+        // Initialize
+        async function init() {
+            // Check auth
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            await loadData();
+            setupSorting();
+        }
+
+        // Load all data
+        async function loadData() {
+            try {
+                // Load transactions
+                const { data: transactions, error } = await supabase
+                    .from('cpt_data')
+                    .select('*')
+                    .order('transaction_date', { ascending: false });
+
+                if (error) throw error;
+
+                allTransactions = transactions || [];
+                
+                // Populate site filter
+                const sites = [...new Set(allTransactions
+                    .filter(t => t.site_name)
+                    .map(t => ({ id: t.site_id, name: t.site_name }))
+                )];
+                
+                const siteFilter = document.getElementById('siteFilter');
+                sites.forEach(site => {
+                    const option = document.createElement('option');
+                    option.value = site.id;
+                    option.textContent = site.name;
+                    siteFilter.appendChild(option);
+                });
+
+                applyFilters();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('transactionsBody').innerHTML = `
+                    <tr><td colspan="9" style="text-align: center; color: var(--color-danger);">
+                        Error loading data: ${error.message}
+                    </td></tr>
+                `;
+            }
+        }
+
+        // Set status filter
+        function setStatusFilter(status) {
+            currentStatusFilter = status;
+            
+            // Update toggle buttons
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.status === status) {
+                    btn.classList.add('active');
+                }
+            });
+
+            applyFilters();
+        }
+
+        // Apply all filters
+        function applyFilters() {
+            const siteId = document.getElementById('siteFilter').value;
+            const transType = document.getElementById('transTypeFilter').value;
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+
+            filteredTransactions = allTransactions.filter(txn => {
+                // Site filter
+                if (siteId && txn.site_id !== siteId) return false;
+
+                // Trans type filter
+                if (transType && txn.trans_type !== transType) return false;
+
+                // Date filters
+                if (dateFrom && txn.transaction_date < dateFrom) return false;
+                if (dateTo && txn.transaction_date > dateTo) return false;
+
+                // Status filter
+                if (currentStatusFilter === 'complete' && txn.status !== 'complete') return false;
+                if (currentStatusFilter === 'incomplete' && txn.status === 'complete') return false;
+
+                return true;
+            });
+
+            updateStats();
+            sortAndRender();
+        }
+
+        // Update stats
+        function updateStats() {
+            const total = filteredTransactions.length;
+            const totalAmount = filteredTransactions.reduce((sum, t) => sum + (t.cust_amount || 0), 0);
+            const complete = filteredTransactions.filter(t => t.status === 'complete').length;
+            const incomplete = total - complete;
+
+            document.getElementById('totalTransactions').textContent = total.toLocaleString();
+            document.getElementById('totalAmount').textContent = `$${totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('completeCount').textContent = complete.toLocaleString();
+            document.getElementById('incompleteCount').textContent = incomplete.toLocaleString();
+        }
+
+        // Sort and render
+        function sortAndRender() {
+            const sorted = [...filteredTransactions].sort((a, b) => {
+                let aVal = a[currentSort.column];
+                let bVal = b[currentSort.column];
+
+                // Handle nulls
+                if (aVal === null) aVal = '';
+                if (bVal === null) bVal = '';
+
+                // Handle numbers
+                if (currentSort.column === 'cust_amount') {
+                    aVal = parseFloat(aVal) || 0;
+                    bVal = parseFloat(bVal) || 0;
+                }
+
+                if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
+                if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            renderTransactions(sorted);
+        }
+
+        // Render transactions table
+        function renderTransactions(transactions) {
+            const tbody = document.getElementById('transactionsBody');
+
+            if (transactions.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="9">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <div>No transactions found</div>
+                        </div>
+                    </td></tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = transactions.map(txn => {
+                const date = new Date(txn.transaction_date).toLocaleString();
+                const amount = parseFloat(txn.cust_amount || 0);
+                const statusClass = txn.status === 'complete' ? 'status-complete' : 'status-incomplete';
+                const statusText = txn.status === 'complete' ? 'Complete' : 'Incomplete';
+
+                return `
+                    <tr>
+                        <td>${date}</td>
+                        <td>${txn.cust_name || '-'}</td>
+                        <td>${txn.cust_email_ad || '-'}</td>
+                        <td class="amount-positive">$${amount.toFixed(2)}</td>
+                        <td>${txn.currency || 'CAD'}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>${txn.trans_type || '-'}</td>
+                        <td>${txn.site_name || '-'}</td>
+                        <td style="font-family: monospace; font-size: 12px;">${txn.cust_trans_id || '-'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Setup table sorting
+        function setupSorting() {
+            document.querySelectorAll('th.sortable').forEach(th => {
+                th.addEventListener('click', () => {
+                    const column = th.dataset.sort;
+                    
+                    if (currentSort.column === column) {
+                        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSort.column = column;
+                        currentSort.direction = 'asc';
+                    }
+
+                    // Update UI
+                    document.querySelectorAll('th.sortable').forEach(t => {
+                        t.classList.remove('sorted-asc', 'sorted-desc');
+                    });
+                    th.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+
+                    sortAndRender();
+                });
+            });
+        }
+
+        // Export to CSV
+        function exportToCSV() {
+            const headers = ['Date', 'Customer Name', 'Email', 'Amount', 'Currency', 'Status', 'Type', 'Site', 'Transaction ID'];
+            const rows = filteredTransactions.map(txn => [
+                new Date(txn.transaction_date).toLocaleString(),
+                txn.cust_name || '',
+                txn.cust_email_ad || '',
+                txn.cust_amount || 0,
+                txn.currency || 'CAD',
+                txn.status || '',
+                txn.trans_type || '',
+                txn.site_name || '',
+                txn.cust_trans_id || ''
+            ]);
+
+            const csv = [headers, ...rows]
+                .map(row => row.map(cell => `"${cell}"`).join(','))
+                .join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cpt-transactions-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Logout
+        async function logout() {
+            await supabase.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>
