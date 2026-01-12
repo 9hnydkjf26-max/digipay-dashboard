@@ -144,8 +144,19 @@
     </style>
 </head>
 <body>
-    <div class="main-wrapper">
-        <div id="authenticatedContent" class="hidden">
+    <script>
+        // Force full page reload for Site Pricing to load styles
+        if (window.location.hash !== '#loaded') {
+            window.location.hash = '#loaded';
+            window.location.reload();
+        }
+    </script>
+    <!-- Authenticated Content -->
+    <div id="authenticatedContent" class="hidden">
+        <!-- Sidebar will be inserted by SidebarComponent -->
+        
+        <!-- Main Content -->
+        <div class="main-wrapper">
             <div class="cpt-container">
                 <div class="cpt-header">
                     <div class="cpt-header-left">
@@ -274,12 +285,29 @@
         
         async function init() {
             const { data: { session } } = await sb.auth.getSession();
-            if (!session) { window.location.href = 'login.html'; return; }
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
             currentUserId = session.user.id;
+            
+            // Initialize sidebar
             SidebarComponent.init({ supabase: window.supabaseClient });
-            if (typeof Router !== 'undefined' && !Router.isReady()) { Router.init({ contentSelector: '.main-wrapper', transitionDuration: 100 }); }
+            
+            // Initialize router (only runs once)
+            if (typeof Router !== 'undefined' && !Router.isReady()) {
+                Router.init({
+                    contentSelector: '.main-wrapper',
+                    transitionDuration: 100
+                });
+            }
+            
+            // Update user info in sidebar
             updateSidebarUser(session.user.email);
+            
+            // Show authenticated content
             document.getElementById('authenticatedContent').classList.remove('hidden');
+            
             await loadSites();
             await loadPricing();
         }

@@ -1,0 +1,343 @@
+/* Settlement Reports Page Styles - Scoped to prevent global pollution */
+
+/* Since settlement reports uses same .cpt-* classes, it can share most styles with cpt-reports.css */
+/* This file only contains settlement-specific additions */
+
+/* Make sure to include BOTH cpt-reports.css AND this file */
+
+/* Tabs */
+.cpt-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--cpt-surface);
+    border: 1px solid var(--cpt-border);
+    border-radius: var(--cpt-radius);
+    padding: 6px;
+    margin-bottom: 24px;
+}
+
+.cpt-tab {
+    flex: 1;
+    padding: 12px 24px;
+    background: transparent;
+    border: none;
+    border-radius: var(--cpt-radius-sm);
+    color: var(--cpt-text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--cpt-font);
+    cursor: pointer;
+    transition: all var(--cpt-transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.cpt-tab:hover {
+    color: var(--cpt-text);
+    background: var(--cpt-surface-hover);
+}
+
+.cpt-tab.active {
+    background: var(--cpt-primary);
+    color: white;
+}
+
+.cpt-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 11px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.cpt-tab:not(.active) .cpt-tab-badge {
+    background: var(--cpt-surface-hover);
+}
+
+.cpt-panel {
+    display: none;
+}
+
+.cpt-panel.active {
+    display: block;
+}
+
+/* Selection Summary */
+.cpt-selection-summary {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 24px;
+    background: var(--cpt-surface-elevated);
+    border-bottom: 1px solid var(--cpt-border);
+}
+
+.cpt-selection-summary.visible {
+    display: flex;
+}
+
+.cpt-selection-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.cpt-selection-count {
+    font-size: 14px;
+    color: var(--cpt-text-secondary);
+}
+
+.cpt-selection-count strong {
+    color: var(--cpt-primary);
+    font-weight: 600;
+}
+
+.cpt-selection-amount {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--cpt-mono);
+    color: var(--cpt-success);
+    padding: 6px 14px;
+    background: var(--cpt-success-bg);
+    border-radius: 20px;
+}
+
+/* Checkbox */
+.cpt-checkbox {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid var(--cpt-border-light);
+    background: var(--cpt-surface);
+    cursor: pointer;
+    appearance: none;
+    transition: all var(--cpt-transition);
+}
+
+.cpt-checkbox:checked {
+    background: var(--cpt-primary);
+    border-color: var(--cpt-primary);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M5 13l4 4L19 7'/%3E%3C/svg%3E");
+    background-size: 12px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Report Summary in Modal */
+.cpt-report-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.cpt-report-stat {
+    background: var(--cpt-surface-elevated);
+    border-radius: var(--cpt-radius-sm);
+    padding: 16px;
+}
+
+.cpt-report-stat-label {
+    font-size: 12px;
+    color: var(--cpt-text-tertiary);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.cpt-report-stat-value {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.cpt-report-stat-value.positive {
+    color: var(--cpt-success);
+}
+
+.cpt-report-stat-value.negative {
+    color: var(--cpt-error);
+}
+
+/* Form Elements */
+.cpt-form-group {
+    margin-bottom: 16px;
+}
+
+.cpt-form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--cpt-text-secondary);
+    margin-bottom: 8px;
+}
+
+.cpt-notes-input {
+    width: 100%;
+    padding: 12px;
+    background: var(--cpt-surface-elevated);
+    border: 1px solid var(--cpt-border);
+    border-radius: var(--cpt-radius-sm);
+    color: var(--cpt-text);
+    font-family: var(--cpt-font);
+    font-size: 14px;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.cpt-notes-input:focus {
+    outline: none;
+    border-color: var(--cpt-primary);
+}
+
+/* Adjustments Section */
+.cpt-adjustments-section {
+    padding: 16px 24px;
+    background: var(--cpt-warning-bg);
+    border-bottom: 1px solid var(--cpt-border);
+}
+
+.cpt-adjustments-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.cpt-adjustments-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: var(--cpt-warning);
+}
+
+.cpt-adjustments-total {
+    font-family: var(--cpt-mono);
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--cpt-error);
+}
+
+.cpt-adjustments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.cpt-adjustment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--cpt-surface);
+    border-radius: var(--cpt-radius-sm);
+    border: 1px solid var(--cpt-border);
+}
+
+.cpt-adjustment-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cpt-adjustment-reason {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.cpt-adjustment-reason.refund {
+    background: var(--cpt-purple-bg);
+    color: var(--cpt-purple);
+}
+
+.cpt-adjustment-reason.chargeback {
+    background: var(--cpt-error-bg);
+    color: var(--cpt-error);
+}
+
+.cpt-adjustment-customer {
+    font-weight: 500;
+}
+
+.cpt-adjustment-ref {
+    font-size: 12px;
+    color: var(--cpt-text-tertiary);
+}
+
+.cpt-adjustment-amount {
+    font-family: var(--cpt-mono);
+    font-weight: 600;
+    color: var(--cpt-error);
+}
+
+.cpt-adjustments-note {
+    font-size: 12px;
+    color: var(--cpt-text-secondary);
+    font-style: italic;
+}
+
+/* Pending Report Blocker */
+.cpt-pending-blocker {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 24px;
+    background: var(--cpt-error-bg);
+    border-bottom: 1px solid var(--cpt-error);
+}
+
+.cpt-blocker-icon {
+    color: var(--cpt-error);
+    flex-shrink: 0;
+}
+
+.cpt-blocker-content {
+    flex: 1;
+}
+
+.cpt-blocker-title {
+    font-weight: 600;
+    color: var(--cpt-error);
+    margin-bottom: 4px;
+}
+
+.cpt-blocker-text {
+    font-size: 14px;
+    color: var(--cpt-text-secondary);
+    margin-bottom: 12px;
+    line-height: 1.5;
+}
+
+.cpt-blocker-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Modal specific overrides */
+.cpt-modal {
+    background: #111827;  /* Solid background instead of var */
+}
+
+.cpt-table-subtitle {
+    font-size: 13px;
+    color: var(--cpt-text-secondary);
+    margin-top: 4px;
+}
+
+/* Make sure selected rows work */
+.cpt-table tbody tr.selected {
+    background: var(--cpt-primary-glow);
+}

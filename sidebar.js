@@ -38,7 +38,7 @@ var NAVIGATION_ITEMS = [
         ariaLabel: 'Navigate to CPT Reports page'
     },
     {
-        href: 'settlement-report.html',
+        href: 'settlement-reports.html',
         icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12l-3-3m0 0l-3 3m3-3v12"/></svg>',
         label: 'Settlement Report',
         ariaLabel: 'Navigate to Settlement Report page'
@@ -56,7 +56,7 @@ var NAVIGATION_ITEMS = [
         ariaLabel: 'Navigate to Balances page'
     },
     {
-        href: 'pricing.html',
+        href: 'site-pricing.html',
         icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
         label: 'Pricing',
         ariaLabel: 'Navigate to Pricing page'
@@ -91,7 +91,7 @@ var _userRole = null;
  * @returns {string} - The sidebar HTML string
  */
 function generateSidebarHTML(activePage, userRole) {
-    var currentPage = activePage || window.location.pathname.split('/').pop() || 'index.html';
+    var currentPage = (activePage || window.location.pathname.split('/').pop() || 'index.html').split('#')[0].split('?')[0];
     // IMPORTANT: Only show admin items if role is EXACTLY 'admin'
     // Default to false - admin items hidden until explicitly confirmed
     var isAdmin = (userRole === 'admin');
@@ -110,8 +110,7 @@ function generateSidebarHTML(activePage, userRole) {
     console.log('Sidebar: Visible nav items:', visibleItems.length, 'of', NAVIGATION_ITEMS.length);
     
     var navItemsHTML = visibleItems.map(function(item) {
-        var isActive = currentPage === item.href || 
-                        currentPage.indexOf(item.href.replace('.html', '')) !== -1;
+        var isActive = currentPage.split('#')[0].split('?')[0] === item.href;
         return '<a href="' + item.href + '" ' +
                'class="nav-item' + (isActive ? ' active' : '') + '" ' +
                'aria-label="' + item.ariaLabel + '"' +
@@ -252,8 +251,7 @@ function updateNavForRole(userRole) {
     });
     
     var navItemsHTML = visibleItems.map(function(item) {
-        var isActive = currentPage === item.href || 
-                        currentPage.indexOf(item.href.replace('.html', '')) !== -1;
+        var isActive = currentPage.split('#')[0].split('?')[0] === item.href;
         return '<a href="' + item.href + '" ' +
                'class="nav-item' + (isActive ? ' active' : '') + '" ' +
                'aria-label="' + item.ariaLabel + '"' +
@@ -399,12 +397,12 @@ window.toggleSidebar = toggleSidebar;
  * @param {string} page - Optional page name override
  */
 function setActivePage(page) {
-    var currentPage = page || window.location.pathname.split('/').pop() || 'index.html';
+    var currentPage = (page || window.location.pathname.split('/').pop() || 'index.html').split('#')[0].split('?')[0];
     
     var navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(function(item) {
         var href = item.getAttribute('href');
-        var isActive = href === currentPage || currentPage.indexOf(href.replace('.html', '')) !== -1;
+        var isActive = href === currentPage;
         
         if (isActive) {
             item.classList.add('active');
