@@ -972,7 +972,7 @@
 }
 
 .cpt-modal {
-    background: var(--cpt-surface);
+    background: #ffffff;  /* Solid white background */
     border-radius: var(--cpt-radius-lg);
     width: 90%;
     max-width: 600px;
