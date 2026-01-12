@@ -32,6 +32,18 @@ var NAVIGATION_ITEMS = [
         ariaLabel: 'Navigate to Reports page'
     },
     {
+        href: 'cpt-reports.html',
+        icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+        label: 'CPT Reports',
+        ariaLabel: 'Navigate to CPT Reports page'
+    },
+    {
+        href: 'settlement-report.html',
+        icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12l-3-3m0 0l-3 3m3-3v12"/></svg>',
+        label: 'Settlement Report',
+        ariaLabel: 'Navigate to Settlement Report page'
+    },
+    {
         href: 'warmup.html',
         icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="m16.24 16.24 2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="m4.93 19.07 2.83-2.83"/><path d="m16.24 7.76 2.83-2.83"/></svg>',
         label: 'Warm Up',
@@ -42,6 +54,12 @@ var NAVIGATION_ITEMS = [
         icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 10v4"/><path d="M2 10h20"/></svg>',
         label: 'Balances',
         ariaLabel: 'Navigate to Balances page'
+    },
+    {
+        href: 'pricing.html',
+        icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+        label: 'Pricing',
+        ariaLabel: 'Navigate to Pricing page'
     },
     {
         href: 'admin.html',
@@ -213,14 +231,13 @@ async function checkAndUpdateRole() {
 }
 
 /**
- * Update navigation items based on user role
+ * Update navigation based on user role
  * @param {string} userRole - The user's role
  */
 function updateNavForRole(userRole) {
     var sidebarNav = document.getElementById('sidebarNav');
     if (!sidebarNav) return;
     
-    // IMPORTANT: Only show admin items if role is EXACTLY 'admin'
     var isAdmin = (userRole === 'admin');
     var currentPage = window.location.pathname.split('/').pop() || 'index.html';
     

@@ -28,7 +28,7 @@
     <script src="router.js"></script>
     
     <style>
-        :root {
+        .cpt-dashboard {
             --cpt-bg: #0a0f1a;
             --cpt-surface: #111827;
             --cpt-surface-elevated: #1a2332;
@@ -59,7 +59,7 @@
         }
 
         @media (prefers-color-scheme: light) {
-            :root {
+            .cpt-dashboard {
                 --cpt-bg: #f8fafc;
                 --cpt-surface: #ffffff;
                 --cpt-surface-elevated: #ffffff;
@@ -1377,6 +1377,13 @@
     </style>
 </head>
 <body>
+<script>
+        // Force full page reload for CPT Reports to load styles
+        if (window.location.hash !== '#loaded') {
+            window.location.hash = '#loaded';
+            window.location.reload();
+        }
+    </script>
     <!-- Authenticated Content -->
     <div id="authenticatedContent" class="hidden">
         <!-- Sidebar will be inserted by SidebarComponent -->

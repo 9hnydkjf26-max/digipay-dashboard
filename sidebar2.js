@@ -33,6 +33,20 @@ var NAVIGATION_ITEMS = [
         section: 'overview'
     },
     {
+        href: 'cpt-reports.html',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+        label: 'CPT Reports',
+        ariaLabel: 'Navigate to CPT Reports page',
+        section: 'overview'
+    },
+    {
+        href: 'settlement-report.html',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12l-3-3m0 0l-3 3m3-3v12"/></svg>',
+        label: 'Settlement Report',
+        ariaLabel: 'Navigate to Settlement Report page',
+        section: 'overview'
+    },
+    {
         href: 'refunds.html',
         icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>',
         label: 'Refunds',
@@ -42,41 +56,236 @@ var NAVIGATION_ITEMS = [
     {
         href: 'warmup.html',
         icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>',
-        label: 'Warm Up',
-        ariaLabel: 'Navigate to Warm Up page',
+        label: 'Warmup',
+        ariaLabel: 'Navigate to Warmup page',
         section: 'operations'
     },
     {
-        href: 'admin.html',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
-        label: 'Admin',
-        ariaLabel: 'Navigate to Admin page',
-        section: 'settings',
-        requiresAdmin: true
+        href: 'pricing.html',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+        label: 'Pricing',
+        ariaLabel: 'Navigate to Pricing page',
+        section: 'settings'
     }
 ];
 
-// Section labels
+// Section labels for grouping navigation items
 var SECTION_LABELS = {
-    overview: 'Overview',
-    operations: 'Operations',
-    settings: 'Settings'
+    'overview': 'Overview',
+    'operations': 'Operations',
+    'settings': 'Settings'
 };
 
 // Sidebar configuration
 var SIDEBAR_CONFIG = {
-    logoText: 'DigiPay',
-    logoSubtitle: 'Payments',
-    logoImage: 'digipaylogo.svg',
-    logoHeight: '42px',
-    logoHeightMobile: '32px',
+    logoText: 'Dashboard',
+    logoSubtitle: 'Payment Management',
+    logoImage: null, // Set to image path to use logo image instead
     defaultRole: 'Admin',
-    showSections: true // Set to false to disable section grouping
+    showSections: true // Set to false to disable section headers
 };
 
-// Store Supabase client reference and user role
-var _supabaseClient = null;
-var _userRole = null;
+/**
+ * Initialize the sidebar component
+ */
+function initSidebar(options) {
+    options = options || {};
+    var activePage = options.activePage || null;
+    
+    console.log('Sidebar: Initializing...');
+    
+    // Get current user role
+    getUserRole().then(function(userRole) {
+        console.log('Sidebar: User role:', userRole);
+        
+        // Generate and inject sidebar HTML
+        var sidebarHTML = generateSidebarHTML(activePage, userRole);
+        
+        // Find wrapper or content container
+        var mainWrapper = document.querySelector('.main-wrapper') || 
+                          document.getElementById('authenticatedContent') ||
+                          document.body;
+        
+        // Create sidebar container if it doesn't exist
+        var existingSidebar = document.getElementById('sidebar');
+        if (!existingSidebar) {
+            var sidebarDiv = document.createElement('div');
+            sidebarDiv.id = 'sidebar-container';
+            sidebarDiv.innerHTML = sidebarHTML;
+            
+            // Insert at the beginning of the wrapper
+            mainWrapper.insertBefore(sidebarDiv, mainWrapper.firstChild);
+            console.log('Sidebar: Created and inserted sidebar container');
+        } else {
+            // Update existing sidebar
+            existingSidebar.outerHTML = sidebarHTML;
+            console.log('Sidebar: Updated existing sidebar');
+        }
+        
+        // Setup event listeners
+        setupEventListeners();
+        
+        // Update user info
+        updateSidebarUser();
+        
+        console.log('Sidebar: Initialization complete');
+    }).catch(function(error) {
+        console.error('Sidebar: Initialization error:', error);
+    });
+}
+
+/**
+ * Get current user's role from Supabase
+ */
+async function getUserRole() {
+    try {
+        var supabase = getSupabaseClient();
+        if (!supabase) {
+            console.warn('Sidebar: Supabase client not available');
+            return null;
+        }
+        
+        var session = await supabase.auth.getSession();
+        if (!session || !session.data || !session.data.session) {
+            console.warn('Sidebar: No active session');
+            return null;
+        }
+        
+        var userId = session.data.session.user.id;
+        
+        // Query user_roles table
+        var result = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', userId)
+            .single();
+        
+        if (result.error) {
+            console.warn('Sidebar: Error fetching user role:', result.error);
+            return null;
+        }
+        
+        return result.data ? result.data.role : null;
+    } catch (error) {
+        console.warn('Sidebar: Error in getUserRole:', error);
+        return null;
+    }
+}
+
+/**
+ * Get Supabase client from window
+ */
+function getSupabaseClient() {
+    return window.supabaseClient || window.mySupabase || window.supabase;
+}
+
+/**
+ * Setup event listeners for sidebar interactions
+ */
+function setupEventListeners() {
+    // Mobile menu toggle
+    var hamburger = document.getElementById('hamburgerBtn');
+    if (hamburger) {
+        hamburger.addEventListener('click', toggleMobileSidebar);
+    }
+    
+    // Mobile overlay click
+    var overlay = document.getElementById('mobileOverlay');
+    if (overlay) {
+        overlay.addEventListener('click', closeMobileSidebar);
+    }
+    
+    // Logout button
+    var logoutBtn = document.getElementById('sidebarLogoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+}
+
+/**
+ * Update sidebar with current user information
+ */
+async function updateSidebarUser() {
+    try {
+        var supabase = getSupabaseClient();
+        if (!supabase) return;
+        
+        var session = await supabase.auth.getSession();
+        if (!session || !session.data || !session.data.session) return;
+        
+        var user = session.data.session.user;
+        
+        // Update user name
+        var nameEl = document.getElementById('sidebarUserName');
+        if (nameEl) {
+            nameEl.textContent = user.email.split('@')[0];
+        }
+        
+        // Update user avatar
+        var avatarEl = document.getElementById('sidebarUserAvatar');
+        if (avatarEl) {
+            var initial = user.email.charAt(0).toUpperCase();
+            avatarEl.textContent = initial;
+        }
+    } catch (error) {
+        console.warn('Sidebar: Error updating user info:', error);
+    }
+}
+
+/**
+ * Handle user logout
+ */
+async function handleLogout() {
+    try {
+        var supabase = getSupabaseClient();
+        if (supabase) {
+            await supabase.auth.signOut();
+        }
+    } catch (error) {
+        console.error('Sidebar: Logout error:', error);
+    } finally {
+        window.location.href = 'login.html';
+    }
+}
+
+/**
+ * Toggle mobile sidebar open/closed
+ */
+function toggleMobileSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('mobileOverlay');
+    
+    if (sidebar && overlay) {
+        var isOpen = sidebar.classList.contains('mobile-open');
+        
+        if (isOpen) {
+            closeMobileSidebar();
+        } else {
+            sidebar.classList.add('mobile-open');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+}
+
+/**
+ * Close mobile sidebar
+ */
+function closeMobileSidebar() {
+    var sidebar = document.getElementById('sidebar');
+    var overlay = document.getElementById('mobileOverlay');
+    
+    if (sidebar) sidebar.classList.remove('mobile-open');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+/**
+ * Alias for toggleMobileSidebar (for compatibility)
+ */
+function toggleSidebar() {
+    toggleMobileSidebar();
+}
 
 /**
  * Group navigation items by section
@@ -156,359 +365,64 @@ function generateSidebarHTML(activePage, userRole) {
         });
     }
     
-    // Logo HTML - if image provided, show it centered; otherwise show styled text
-    var logoHTML;
+    // Generate logo HTML
+    var logoHTML = '';
     if (SIDEBAR_CONFIG.logoImage) {
-        logoHTML = '<img src="' + SIDEBAR_CONFIG.logoImage + '" alt="' + SIDEBAR_CONFIG.logoText + '" class="logo-image">';
+        logoHTML = '<img src="' + SIDEBAR_CONFIG.logoImage + '" alt="' + SIDEBAR_CONFIG.logoText + '" class="sidebar-logo-img">';
     } else {
-        logoHTML = '<div class="logo-mark">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-              '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>' +
-              '</svg></div>' +
-              '<div class="logo-text">' +
-              '<div class="logo-title">' + SIDEBAR_CONFIG.logoText + '</div>' +
-              (SIDEBAR_CONFIG.logoSubtitle ? '<div class="sidebar-subtitle">' + SIDEBAR_CONFIG.logoSubtitle + '</div>' : '') +
-              '</div>';
+        logoHTML = '<div class="sidebar-logo-text">' +
+                   '<div class="logo-main">' + SIDEBAR_CONFIG.logoText + '</div>' +
+                   (SIDEBAR_CONFIG.logoSubtitle ? '<div class="logo-subtitle">' + SIDEBAR_CONFIG.logoSubtitle + '</div>' : '') +
+                   '</div>';
     }
     
-    var mobileLogoHTML;
-    if (SIDEBAR_CONFIG.logoImage) {
-        mobileLogoHTML = '<img src="' + SIDEBAR_CONFIG.logoImage + '" alt="' + SIDEBAR_CONFIG.logoText + '" style="height: ' + (SIDEBAR_CONFIG.logoHeightMobile || '32px') + '; width: auto;">';
-    } else {
-        mobileLogoHTML = '<span style="font-family: Instrument Serif, Georgia, serif; font-style: italic; font-size: 20px; color: #fff;">' + SIDEBAR_CONFIG.logoText + '</span>';
-    }
+    // Complete sidebar HTML
+    return `
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+        <button class="hamburger" id="hamburgerBtn" aria-label="Toggle sidebar">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <div class="mobile-title">${SIDEBAR_CONFIG.logoText}</div>
+    </div>
     
-    // Sign out icon
-    var signOutIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>';
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
     
-    return '<!-- Sidebar -->' +
-        '<div class="sidebar" id="sidebar">' +
-            '<div class="sidebar-header">' +
-                '<div class="sidebar-logo">' + logoHTML + '</div>' +
-            '</div>' +
-            '<nav class="sidebar-nav" id="sidebarNav">' +
-                navItemsHTML +
-            '</nav>' +
-            '<div class="sidebar-footer">' +
-                '<div class="user-profile">' +
-                    '<div class="user-avatar" id="sidebarUserAvatar"></div>' +
-                    '<div class="user-info-sidebar">' +
-                        '<div class="user-name" id="sidebarUserName"></div>' +
-                        '<div class="user-role" id="sidebarUserRole">' + SIDEBAR_CONFIG.defaultRole + '</div>' +
-                    '</div>' +
-                '</div>' +
-                '<button class="btn-signout" onclick="handleLogout()">' +
-                    signOutIcon +
-                    '<span>Sign out</span>' +
-                '</button>' +
-            '</div>' +
-        '</div>' +
-        '<!-- Mobile Overlay -->' +
-        '<div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileSidebar()"></div>' +
-        '<!-- Mobile Header -->' +
-        '<div class="mobile-header">' +
-            '<button class="hamburger" id="hamburgerBtn" onclick="toggleMobileSidebar()" aria-label="Toggle menu">' +
-                '<span></span>' +
-                '<span></span>' +
-                '<span></span>' +
-            '</button>' +
-            '<div class="sidebar-logo">' + mobileLogoHTML + '</div>' +
-            '<div style="width: 44px;"></div>' +
-        '</div>';
-}
-
-/**
- * Initialize the sidebar component
- */
-function initSidebar(options) {
-    options = options || {};
-    var container = options.container || document.querySelector('.main-wrapper') || document.querySelector('#authenticatedContent');
-    
-    if (!container) {
-        console.error('Sidebar: No container found.');
-        return;
-    }
-    
-    _supabaseClient = options.supabase || window.supabaseClient || window.supabase || window.mySupabase;
-    
-    if (document.getElementById('sidebar')) {
-        console.log('Sidebar: Already initialized');
-        setActivePage(options.activePage);
-        checkAndUpdateRole();
-        return;
-    }
-    
-    var sidebarHTML = generateSidebarHTML(options.activePage, _userRole);
-    container.insertAdjacentHTML('beforebegin', sidebarHTML);
-    
-    initUserDisplay();
-    
-    console.log('Sidebar: Initialized successfully');
-}
-
-/**
- * Check user role and update nav if needed
- */
-async function checkAndUpdateRole() {
-    var supabase = _supabaseClient || window.supabaseClient || window.supabase || window.mySupabase;
-    
-    if (!supabase) return;
-    
-    try {
-        var result = await supabase.auth.getSession();
-        var session = result.data.session;
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                ${logoHTML}
+            </div>
+        </div>
         
-        if (session && session.user) {
-            var userRole = (session.user.user_metadata && session.user.user_metadata.role) || 
-                          (session.user.app_metadata && session.user.app_metadata.role);
-            
-            if (userRole && userRole !== _userRole) {
-                _userRole = userRole;
-                updateNavForRole(userRole);
-            }
-        }
-    } catch (error) {
-        console.error('Sidebar: Error checking role:', error);
-    }
-}
-
-/**
- * Update navigation items based on user role
- */
-function updateNavForRole(userRole) {
-    var sidebarNav = document.getElementById('sidebarNav');
-    if (!sidebarNav) return;
-    
-    var isAdmin = (userRole === 'admin');
-    var currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    
-    console.log('Sidebar: updateNavForRole called with role:', userRole, 'isAdmin:', isAdmin);
-    
-    var visibleItems = NAVIGATION_ITEMS.filter(function(item) {
-        if (item.requiresAdmin) {
-            return isAdmin === true;
-        }
-        return true;
-    });
-    
-    var navItemsHTML = '';
-    
-    if (SIDEBAR_CONFIG.showSections) {
-        var sections = groupBySection(visibleItems);
-        var sectionOrder = ['overview', 'operations', 'settings', 'default'];
+        <nav class="sidebar-nav">
+            ${navItemsHTML}
+        </nav>
         
-        sectionOrder.forEach(function(sectionKey) {
-            if (sections[sectionKey] && sections[sectionKey].length > 0) {
-                var label = SECTION_LABELS[sectionKey] || '';
-                if (label) {
-                    navItemsHTML += '<div class="nav-section">';
-                    navItemsHTML += '<div class="nav-section-label">' + label + '</div>';
-                }
-                
-                sections[sectionKey].forEach(function(item) {
-                    var isActive = currentPage === item.href || 
-                                    currentPage.indexOf(item.href.replace('.html', '')) !== -1;
-                    navItemsHTML += '<a href="' + item.href + '" ' +
-                           'class="nav-item' + (isActive ? ' active' : '') + '" ' +
-                           'aria-label="' + item.ariaLabel + '"' +
-                           (isActive ? ' aria-current="page"' : '') + '>' +
-                           '<span class="nav-item-icon">' + item.icon + '</span>' +
-                           '<span class="nav-item-label">' + item.label + '</span>' +
-                           '</a>';
-                });
-                
-                if (label) {
-                    navItemsHTML += '</div>';
-                }
-            }
-        });
-    } else {
-        visibleItems.forEach(function(item) {
-            var isActive = currentPage === item.href || 
-                            currentPage.indexOf(item.href.replace('.html', '')) !== -1;
-            navItemsHTML += '<a href="' + item.href + '" ' +
-                   'class="nav-item' + (isActive ? ' active' : '') + '" ' +
-                   'aria-label="' + item.ariaLabel + '"' +
-                   (isActive ? ' aria-current="page"' : '') + '>' +
-                   '<span class="nav-item-icon">' + item.icon + '</span>' +
-                   '<span class="nav-item-label">' + item.label + '</span>' +
-                   '</a>';
-        });
-    }
-    
-    sidebarNav.innerHTML = navItemsHTML;
-    
-    var roleEl = document.getElementById('sidebarUserRole');
-    if (roleEl) {
-        roleEl.textContent = isAdmin ? 'Administrator' : 'User';
-    }
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="user-avatar" id="sidebarUserAvatar">U</div>
+                <div class="user-info-sidebar">
+                    <div class="user-name" id="sidebarUserName">User</div>
+                    <div class="user-role">${SIDEBAR_CONFIG.defaultRole}</div>
+                </div>
+            </div>
+            <button class="btn btn-secondary" id="sidebarLogoutBtn" style="width: 100%; margin-top: 12px;">
+                Sign out
+            </button>
+        </div>
+    </div>
+    `;
 }
 
-window.updateNavForRole = updateNavForRole;
-
-/**
- * Initialize user display in sidebar
- */
-async function initUserDisplay() {
-    var supabase = _supabaseClient || window.supabaseClient || window.supabase || window.mySupabase;
-    
-    if (!supabase) {
-        console.warn('Sidebar: Supabase client not available for user display');
-        return;
-    }
-    
-    try {
-        var result = await supabase.auth.getSession();
-        var session = result.data.session;
-        
-        if (session && session.user) {
-            if (session.user.email) {
-                updateSidebarUser(session.user.email);
-            }
-            
-            var userMetaRole = session.user.user_metadata && session.user.user_metadata.role;
-            var appMetaRole = session.user.app_metadata && session.user.app_metadata.role;
-            var userRole = userMetaRole || appMetaRole;
-            
-            console.log('Sidebar: User role check - user_metadata.role:', userMetaRole, 'app_metadata.role:', appMetaRole, 'using:', userRole);
-            
-            _userRole = userRole || null;
-            updateNavForRole(_userRole);
-        }
-    } catch (error) {
-        console.error('Sidebar: Error getting user:', error);
-    }
-}
-
-/**
- * Update sidebar with user information
- */
-function updateSidebarUser(email) {
-    var avatarEl = document.getElementById('sidebarUserAvatar');
-    var nameEl = document.getElementById('sidebarUserName');
-    
-    if (avatarEl && email) {
-        var initials = email.substring(0, 2).toUpperCase();
-        avatarEl.textContent = initials;
-    }
-    
-    if (nameEl && email) {
-        var username = email.split('@')[0];
-        nameEl.textContent = username;
-    }
-}
-
+// Make functions globally available
+window.initSidebar = initSidebar;
 window.updateSidebarUser = updateSidebarUser;
-
-/**
- * Handle logout
- */
-async function handleLogout() {
-    var supabase = _supabaseClient || window.supabaseClient || window.supabase || window.mySupabase;
-    
-    try {
-        if (supabase && supabase.auth) {
-            await supabase.auth.signOut();
-        }
-    } catch (error) {
-        console.error('Logout error:', error);
-    }
-    
-    window.location.href = 'login.html';
-}
-
 window.handleLogout = handleLogout;
-
-/**
- * Toggle mobile sidebar
- */
-function toggleMobileSidebar() {
-    var sidebar = document.getElementById('sidebar');
-    var overlay = document.getElementById('mobileOverlay');
-    var hamburger = document.getElementById('hamburgerBtn');
-    
-    if (sidebar) {
-        sidebar.classList.toggle('mobile-open');
-    }
-    if (overlay) {
-        overlay.classList.toggle('active');
-    }
-    if (hamburger) {
-        hamburger.classList.toggle('open');
-    }
-}
-
-/**
- * Close mobile sidebar
- */
-function closeMobileSidebar() {
-    var sidebar = document.getElementById('sidebar');
-    var overlay = document.getElementById('mobileOverlay');
-    var hamburger = document.getElementById('hamburgerBtn');
-    
-    if (sidebar) {
-        sidebar.classList.remove('mobile-open');
-    }
-    if (overlay) {
-        overlay.classList.remove('active');
-    }
-    if (hamburger) {
-        hamburger.classList.remove('open');
-    }
-}
-
-function toggleSidebar() {
-    toggleMobileSidebar();
-}
-
 window.toggleMobileSidebar = toggleMobileSidebar;
-window.closeMobileSidebar = closeMobileSidebar;
 window.toggleSidebar = toggleSidebar;
-
-/**
- * Set the active page in navigation
- */
-function setActivePage(page) {
-    var currentPage = page || window.location.pathname.split('/').pop() || 'index.html';
-    
-    var navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(function(item) {
-        var href = item.getAttribute('href');
-        var isActive = href === currentPage || currentPage.indexOf(href.replace('.html', '')) !== -1;
-        
-        if (isActive) {
-            item.classList.add('active');
-            item.setAttribute('aria-current', 'page');
-        } else {
-            item.classList.remove('active');
-            item.removeAttribute('aria-current');
-        }
-    });
-    
-    closeMobileSidebar();
-}
-
-window.setActivePage = setActivePage;
-
-function enableSmoothTransitions() {
-    console.warn('Sidebar: enableSmoothTransitions() is deprecated. Use Router.init() instead.');
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        initSidebar,
-        updateSidebarUser,
-        setActivePage,
-        NAVIGATION_ITEMS,
-        SIDEBAR_CONFIG
-    };
-}
-
-window.SidebarComponent = {
-    init: initSidebar,
-    updateUser: updateSidebarUser,
-    updateNavForRole: updateNavForRole,
-    setActivePage: setActivePage,
-    NAVIGATION_ITEMS: NAVIGATION_ITEMS,
-    SIDEBAR_CONFIG: SIDEBAR_CONFIG
-};
+window.closeMobileSidebar = closeMobileSidebar;
