@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Pricing — Transaction Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="sidebar.css">
+    <link rel="stylesheet" href="router-transitions.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        if (!window.supabaseClient) {
+            window.supabaseClient = window.supabase.createClient(
+                'https://hzdybwclwqkcobpwxzoo.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6ZHlid2Nsd3FrY29icHd4em9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzU4ODQsImV4cCI6MjA4MTc1MTg4NH0.e0mSI7Qp9sRaclOwP61guBNtwTVHYXc-TtVaUON67QU'
+            );
+        }
+    </script>
+    <script src="sidebar.js"></script>
+    <script src="router.js"></script>
+    
+    <style>
+        :root {
+            --cpt-bg: #0a0f1a;
+            --cpt-surface: #111827;
+            --cpt-surface-elevated: #1a2332;
+            --cpt-surface-hover: #1f2937;
+            --cpt-border: rgba(255, 255, 255, 0.08);
+            --cpt-border-light: rgba(255, 255, 255, 0.12);
+            --cpt-text: #f9fafb;
+            --cpt-text-secondary: #9ca3af;
+            --cpt-text-tertiary: #6b7280;
+            --cpt-primary: #3b82f6;
+            --cpt-primary-glow: rgba(59, 130, 246, 0.15);
+            --cpt-success: #10b981;
+            --cpt-success-bg: rgba(16, 185, 129, 0.1);
+            --cpt-warning: #f59e0b;
+            --cpt-warning-bg: rgba(245, 158, 11, 0.1);
+            --cpt-error: #ef4444;
+            --cpt-error-bg: rgba(239, 68, 68, 0.1);
+            --cpt-purple: #8b5cf6;
+            --cpt-purple-bg: rgba(139, 92, 246, 0.1);
+            --cpt-cyan: #06b6d4;
+            --cpt-font: 'DM Sans', -apple-system, sans-serif;
+            --cpt-mono: 'JetBrains Mono', monospace;
+            --cpt-radius: 12px;
+            --cpt-radius-sm: 8px;
+            --cpt-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @media (prefers-color-scheme: light) {
+            :root {
+                --cpt-bg: #f8fafc; --cpt-surface: #ffffff; --cpt-surface-elevated: #ffffff;
+                --cpt-surface-hover: #f1f5f9; --cpt-border: rgba(0, 0, 0, 0.08);
+                --cpt-border-light: rgba(0, 0, 0, 0.12); --cpt-text: #0f172a;
+                --cpt-text-secondary: #475569; --cpt-text-tertiary: #94a3b8;
+            }
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--cpt-font); background: var(--cpt-bg); color: var(--cpt-text); min-height: 100vh; }
+        .hidden { display: none !important; }
+        .main-wrapper { margin-left: var(--sidebar-width, 240px); min-height: 100vh; background: var(--cpt-bg); }
+        @media (max-width: 1024px) { .main-wrapper { margin-left: 0; } }
+        .cpt-container { max-width: 1200px; margin: 0 auto; padding: 32px 40px; }
+        .cpt-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; gap: 24px; flex-wrap: wrap; }
+        .cpt-header-left h1 { font-size: 28px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px; display: flex; align-items: center; gap: 12px; }
+        .cpt-header-left h1::before { content: ''; width: 4px; height: 28px; background: linear-gradient(180deg, var(--cpt-primary), var(--cpt-cyan)); border-radius: 2px; }
+        .cpt-header-subtitle { color: var(--cpt-text-secondary); font-size: 14px; margin: 0; }
+        
+        .cpt-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: var(--cpt-radius-sm); font-size: 14px; font-weight: 500; font-family: var(--cpt-font); cursor: pointer; transition: all var(--cpt-transition); border: none; }
+        .cpt-btn svg { width: 16px; height: 16px; }
+        .cpt-btn-primary { background: var(--cpt-primary); color: white; }
+        .cpt-btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+        .cpt-btn-secondary { background: var(--cpt-surface-elevated); color: var(--cpt-text); border: 1px solid var(--cpt-border-light); }
+        .cpt-btn-secondary:hover { background: var(--cpt-surface-hover); }
+        .cpt-btn-success { background: var(--cpt-success); color: white; }
+        .cpt-btn-sm { padding: 8px 14px; font-size: 13px; }
+        
+        .cpt-table-card { background: var(--cpt-surface); border: 1px solid var(--cpt-border); border-radius: var(--cpt-radius); overflow: hidden; }
+        .cpt-table-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--cpt-border); flex-wrap: wrap; gap: 16px; }
+        .cpt-table-title { font-size: 16px; font-weight: 600; }
+        .cpt-table-subtitle { font-size: 13px; color: var(--cpt-text-secondary); margin-top: 4px; }
+        
+        .cpt-table-wrapper { overflow-x: auto; }
+        .cpt-table { width: 100%; border-collapse: collapse; }
+        .cpt-table th, .cpt-table td { padding: 14px 20px; text-align: left; border-bottom: 1px solid var(--cpt-border); }
+        .cpt-table th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--cpt-text-tertiary); background: var(--cpt-surface-elevated); position: sticky; top: 0; }
+        .cpt-table tbody tr { transition: background var(--cpt-transition); }
+        .cpt-table tbody tr:hover { background: var(--cpt-surface-hover); }
+        
+        .cpt-cell-site { font-weight: 600; }
+        .cpt-cell-fee { font-family: var(--cpt-mono); font-size: 14px; }
+        .cpt-cell-percent { color: var(--cpt-primary); }
+        .cpt-cell-dollar { color: var(--cpt-success); }
+        
+        .cpt-empty { text-align: center; padding: 60px 20px; }
+        .cpt-empty-icon { width: 64px; height: 64px; margin: 0 auto 16px; color: var(--cpt-text-tertiary); }
+        .cpt-empty-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+        .cpt-empty-text { color: var(--cpt-text-secondary); font-size: 14px; }
+        
+        .cpt-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; gap: 16px; }
+        .cpt-spinner { width: 24px; height: 24px; border: 3px solid var(--cpt-border); border-top-color: var(--cpt-primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Modal */
+        .cpt-modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.2s; }
+        .cpt-modal.active { opacity: 1; visibility: visible; }
+        .cpt-modal-content { background: var(--cpt-surface); border: 1px solid var(--cpt-border); border-radius: var(--cpt-radius); width: 100%; max-width: 500px; max-height: 90vh; overflow: hidden; transform: translateY(20px) scale(0.95); transition: transform 0.2s; }
+        .cpt-modal.active .cpt-modal-content { transform: translateY(0) scale(1); }
+        .cpt-modal-header { padding: 20px 24px; border-bottom: 1px solid var(--cpt-border); display: flex; justify-content: space-between; align-items: center; }
+        .cpt-modal-title { font-size: 18px; font-weight: 600; }
+        .cpt-modal-close { background: none; border: none; color: var(--cpt-text-tertiary); cursor: pointer; padding: 8px; border-radius: 6px; transition: all var(--cpt-transition); }
+        .cpt-modal-close:hover { background: var(--cpt-surface-hover); color: var(--cpt-text); }
+        .cpt-modal-body { padding: 24px; overflow-y: auto; max-height: 60vh; }
+        .cpt-modal-footer { padding: 16px 24px; border-top: 1px solid var(--cpt-border); display: flex; justify-content: flex-end; gap: 12px; }
+        
+        /* Form */
+        .cpt-form-group { margin-bottom: 20px; }
+        .cpt-form-label { display: block; font-size: 13px; font-weight: 500; color: var(--cpt-text-secondary); margin-bottom: 8px; }
+        .cpt-form-input { width: 100%; padding: 12px 14px; background: var(--cpt-surface-elevated); border: 1px solid var(--cpt-border-light); border-radius: var(--cpt-radius-sm); font-size: 14px; color: var(--cpt-text); font-family: var(--cpt-font); transition: all var(--cpt-transition); }
+        .cpt-form-input:focus { outline: none; border-color: var(--cpt-primary); box-shadow: 0 0 0 3px var(--cpt-primary-glow); }
+        .cpt-form-input::placeholder { color: var(--cpt-text-tertiary); }
+        .cpt-form-hint { font-size: 12px; color: var(--cpt-text-tertiary); margin-top: 6px; }
+        
+        .cpt-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        
+        .cpt-input-group { display: flex; align-items: center; }
+        .cpt-input-prefix, .cpt-input-suffix { padding: 12px 14px; background: var(--cpt-surface-hover); border: 1px solid var(--cpt-border-light); font-size: 14px; color: var(--cpt-text-secondary); font-family: var(--cpt-mono); }
+        .cpt-input-prefix { border-radius: var(--cpt-radius-sm) 0 0 var(--cpt-radius-sm); border-right: none; }
+        .cpt-input-suffix { border-radius: 0 var(--cpt-radius-sm) var(--cpt-radius-sm) 0; border-left: none; }
+        .cpt-input-group .cpt-form-input { border-radius: 0; }
+        .cpt-input-group .cpt-form-input:first-child { border-radius: var(--cpt-radius-sm) 0 0 var(--cpt-radius-sm); }
+        .cpt-input-group .cpt-form-input:last-child { border-radius: 0 var(--cpt-radius-sm) var(--cpt-radius-sm) 0; }
+        
+        .cpt-no-pricing { background: var(--cpt-warning-bg); color: var(--cpt-warning); padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+        
+        @media (max-width: 768px) { 
+            .cpt-container { padding: 20px 16px; } 
+            .cpt-form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-wrapper">
+        <div id="authenticatedContent" class="hidden">
+            <div class="cpt-container">
+                <div class="cpt-header">
+                    <div class="cpt-header-left">
+                        <h1>Site Pricing</h1>
+                        <p class="cpt-header-subtitle">Configure processing fees for each site</p>
+                    </div>
+                    <button class="cpt-btn cpt-btn-primary" onclick="openAddModal()">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Add Site Pricing
+                    </button>
+                </div>
+                
+                <div class="cpt-table-card">
+                    <div class="cpt-table-header">
+                        <div>
+                            <div class="cpt-table-title">Pricing Configuration</div>
+                            <div class="cpt-table-subtitle">Fees applied when creating settlement reports</div>
+                        </div>
+                    </div>
+                    <div class="cpt-table-wrapper">
+                        <table class="cpt-table">
+                            <thead>
+                                <tr>
+                                    <th>Site</th>
+                                    <th>Processing Fee</th>
+                                    <th>Per Transaction</th>
+                                    <th>Refund Fee</th>
+                                    <th>Chargeback Fee</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pricingBody">
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="cpt-loading">
+                                            <div class="cpt-spinner"></div>
+                                            <div>Loading...</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Modal -->
+    <div class="cpt-modal" id="pricingModal">
+        <div class="cpt-modal-content">
+            <div class="cpt-modal-header">
+                <div class="cpt-modal-title" id="modalTitle">Add Site Pricing</div>
+                <button class="cpt-modal-close" onclick="closeModal()">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="cpt-modal-body">
+                <input type="hidden" id="editId">
+                
+                <div class="cpt-form-group">
+                    <label class="cpt-form-label">Site</label>
+                    <select class="cpt-form-input" id="siteSelect">
+                        <option value="">Select a site...</option>
+                    </select>
+                    <div class="cpt-form-hint">Select from sites in your transaction data</div>
+                </div>
+                
+                <div class="cpt-form-row">
+                    <div class="cpt-form-group">
+                        <label class="cpt-form-label">Processing Fee (%)</label>
+                        <div class="cpt-input-group">
+                            <input type="number" step="0.001" min="0" max="100" class="cpt-form-input" id="percentageFee" placeholder="2.9">
+                            <span class="cpt-input-suffix">%</span>
+                        </div>
+                        <div class="cpt-form-hint">Percentage of gross transaction amount</div>
+                    </div>
+                    
+                    <div class="cpt-form-group">
+                        <label class="cpt-form-label">Per Transaction Fee</label>
+                        <div class="cpt-input-group">
+                            <span class="cpt-input-prefix">$</span>
+                            <input type="number" step="0.01" min="0" class="cpt-form-input" id="perTransactionFee" placeholder="0.30">
+                        </div>
+                        <div class="cpt-form-hint">Fixed fee per transaction</div>
+                    </div>
+                </div>
+                
+                <div class="cpt-form-row">
+                    <div class="cpt-form-group">
+                        <label class="cpt-form-label">Refund Fee</label>
+                        <div class="cpt-input-group">
+                            <span class="cpt-input-prefix">$</span>
+                            <input type="number" step="0.01" min="0" class="cpt-form-input" id="refundFee" placeholder="15.00">
+                        </div>
+                        <div class="cpt-form-hint">Fee charged per refund</div>
+                    </div>
+                    
+                    <div class="cpt-form-group">
+                        <label class="cpt-form-label">Chargeback Fee</label>
+                        <div class="cpt-input-group">
+                            <span class="cpt-input-prefix">$</span>
+                            <input type="number" step="0.01" min="0" class="cpt-form-input" id="chargebackFee" placeholder="25.00">
+                        </div>
+                        <div class="cpt-form-hint">Fee charged per chargeback</div>
+                    </div>
+                </div>
+                
+                <div class="cpt-form-group">
+                    <label class="cpt-form-label">Notes (optional)</label>
+                    <input type="text" class="cpt-form-input" id="pricingNotes" placeholder="Any notes about this pricing...">
+                </div>
+            </div>
+            <div class="cpt-modal-footer">
+                <button class="cpt-btn cpt-btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="cpt-btn cpt-btn-primary" id="saveBtn" onclick="savePricing()">Save Pricing</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var sb = window.supabaseClient;
+        var currentUserId = null;
+        var allPricing = [];
+        var allSites = [];
+        
+        async function init() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { window.location.href = 'login.html'; return; }
+            currentUserId = session.user.id;
+            SidebarComponent.init({ supabase: window.supabaseClient });
+            if (typeof Router !== 'undefined' && !Router.isReady()) { Router.init({ contentSelector: '.main-wrapper', transitionDuration: 100 }); }
+            updateSidebarUser(session.user.email);
+            document.getElementById('authenticatedContent').classList.remove('hidden');
+            await loadSites();
+            await loadPricing();
+        }
+        
+        async function loadSites() {
+            // Get unique sites from cpt_data
+            const { data, error } = await sb
+                .from('cpt_data')
+                .select('site_id, site_name')
+                .not('site_name', 'is', null);
+            
+            if (error) {
+                console.error('Error loading sites:', error);
+                return;
+            }
+            
+            // Get unique sites
+            const siteMap = new Map();
+            (data || []).forEach(t => {
+                if (t.site_name && !siteMap.has(t.site_name)) {
+                    siteMap.set(t.site_name, t.site_id);
+                }
+            });
+            
+            allSites = Array.from(siteMap.entries()).map(([name, id]) => ({ site_id: id, site_name: name })).sort((a, b) => a.site_name.localeCompare(b.site_name));
+            console.log('Loaded sites:', allSites.length);
+        }
+        
+        async function loadPricing() {
+            const tbody = document.getElementById('pricingBody');
+            try {
+                const { data, error } = await sb
+                    .from('site_pricing')
+                    .select('*')
+                    .order('site_name', { ascending: true });
+                
+                if (error) throw error;
+                
+                allPricing = data || [];
+                renderPricingTable();
+            } catch (e) {
+                console.error('Error loading pricing:', e);
+                tbody.innerHTML = '<tr><td colspan="6"><div class="cpt-empty"><div class="cpt-empty-title">Error</div><div class="cpt-empty-text">' + e.message + '</div></div></td></tr>';
+            }
+        }
+        
+        function renderPricingTable() {
+            const tbody = document.getElementById('pricingBody');
+            
+            if (allPricing.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6">
+                            <div class="cpt-empty">
+                                <div class="cpt-empty-icon">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <div class="cpt-empty-title">No Pricing Configured</div>
+                                <div class="cpt-empty-text">Add pricing for your sites to calculate fees on settlement reports.</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = allPricing.map(p => `
+                <tr>
+                    <td>
+                        <div class="cpt-cell-site">${p.site_name || p.site_id}</div>
+                    </td>
+                    <td>
+                        <span class="cpt-cell-fee cpt-cell-percent">${parseFloat(p.percentage_fee || 0).toFixed(2)}%</span>
+                    </td>
+                    <td>
+                        <span class="cpt-cell-fee cpt-cell-dollar">${formatCurrency(p.per_transaction_fee)}</span>
+                    </td>
+                    <td>
+                        <span class="cpt-cell-fee cpt-cell-dollar">${formatCurrency(p.refund_fee)}</span>
+                    </td>
+                    <td>
+                        <span class="cpt-cell-fee cpt-cell-dollar">${formatCurrency(p.chargeback_fee)}</span>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="cpt-btn cpt-btn-secondary cpt-btn-sm" onclick="editPricing('${p.id}')">Edit</button>
+                            <button class="cpt-btn cpt-btn-sm" style="background: var(--cpt-error); color: white;" onclick="deletePricing('${p.id}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'Add Site Pricing';
+            document.getElementById('editId').value = '';
+            document.getElementById('percentageFee').value = '';
+            document.getElementById('perTransactionFee').value = '';
+            document.getElementById('refundFee').value = '';
+            document.getElementById('chargebackFee').value = '';
+            document.getElementById('pricingNotes').value = '';
+            
+            // Populate site dropdown with sites that don't have pricing yet
+            const existingSiteNames = new Set(allPricing.map(p => p.site_name));
+            const availableSites = allSites.filter(s => !existingSiteNames.has(s.site_name));
+            
+            const select = document.getElementById('siteSelect');
+            select.innerHTML = '<option value="">Select a site...</option>' + 
+                availableSites.map(s => `<option value="${s.site_name}" data-site-id="${s.site_id}">${s.site_name}</option>`).join('');
+            select.disabled = false;
+            
+            document.getElementById('pricingModal').classList.add('active');
+        }
+        
+        function editPricing(id) {
+            const pricing = allPricing.find(p => p.id === id);
+            if (!pricing) return;
+            
+            document.getElementById('modalTitle').textContent = 'Edit Site Pricing';
+            document.getElementById('editId').value = pricing.id;
+            document.getElementById('percentageFee').value = pricing.percentage_fee || '';
+            document.getElementById('perTransactionFee').value = pricing.per_transaction_fee || '';
+            document.getElementById('refundFee').value = pricing.refund_fee || '';
+            document.getElementById('chargebackFee').value = pricing.chargeback_fee || '';
+            document.getElementById('pricingNotes').value = pricing.notes || '';
+            
+            // Set site dropdown to current site (disabled for editing)
+            const select = document.getElementById('siteSelect');
+            select.innerHTML = `<option value="${pricing.site_name}">${pricing.site_name}</option>`;
+            select.disabled = true;
+            
+            document.getElementById('pricingModal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('pricingModal').classList.remove('active');
+        }
+        
+        async function savePricing() {
+            const editId = document.getElementById('editId').value;
+            const siteName = document.getElementById('siteSelect').value;
+            const siteOption = document.getElementById('siteSelect').selectedOptions[0];
+            const siteId = siteOption?.dataset?.siteId || siteName;
+            
+            const percentageFee = parseFloat(document.getElementById('percentageFee').value) || 0;
+            const perTransactionFee = parseFloat(document.getElementById('perTransactionFee').value) || 0;
+            const refundFee = parseFloat(document.getElementById('refundFee').value) || 0;
+            const chargebackFee = parseFloat(document.getElementById('chargebackFee').value) || 0;
+            const notes = document.getElementById('pricingNotes').value.trim();
+            
+            if (!siteName) {
+                alert('Please select a site.');
+                return;
+            }
+            
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="cpt-spinner" style="width:16px;height:16px;border-width:2px"></div> Saving...';
+            
+            try {
+                if (editId) {
+                    // Update existing
+                    const { error } = await sb
+                        .from('site_pricing')
+                        .update({
+                            percentage_fee: percentageFee,
+                            per_transaction_fee: perTransactionFee,
+                            refund_fee: refundFee,
+                            chargeback_fee: chargebackFee,
+                            notes: notes || null,
+                            updated_by: currentUserId
+                        })
+                        .eq('id', editId);
+                    
+                    if (error) throw error;
+                } else {
+                    // Insert new
+                    const { error } = await sb
+                        .from('site_pricing')
+                        .insert({
+                            site_id: siteId,
+                            site_name: siteName,
+                            percentage_fee: percentageFee,
+                            per_transaction_fee: perTransactionFee,
+                            refund_fee: refundFee,
+                            chargeback_fee: chargebackFee,
+                            notes: notes || null,
+                            created_by: currentUserId
+                        });
+                    
+                    if (error) throw error;
+                }
+                
+                closeModal();
+                await loadPricing();
+            } catch (e) {
+                console.error('Error saving pricing:', e);
+                alert('Error saving pricing: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Save Pricing';
+            }
+        }
+        
+        async function deletePricing(id) {
+            if (!confirm('Delete this pricing configuration?')) return;
+            
+            try {
+                const { error } = await sb.from('site_pricing').delete().eq('id', id);
+                if (error) throw error;
+                await loadPricing();
+            } catch (e) {
+                console.error('Error deleting pricing:', e);
+                alert('Error deleting pricing: ' + e.message);
+            }
+        }
+        
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(amount || 0);
+        }
+        
+        function updateSidebarUser(email) {
+            const el = document.querySelector('.sidebar-user-email');
+            if (el) el.textContent = email;
+        }
+        
+        document.addEventListener('DOMContentLoaded', init);
+        window.initPage = init;
+    </script>
+</body>
+</html>

@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settlement Reports — Transaction Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="sidebar.css">
+    <link rel="stylesheet" href="router-transitions.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        if (!window.supabaseClient) {
+            window.supabaseClient = window.supabase.createClient(
+                'https://hzdybwclwqkcobpwxzoo.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6ZHlid2Nsd3FrY29icHd4em9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzU4ODQsImV4cCI6MjA4MTc1MTg4NH0.e0mSI7Qp9sRaclOwP61guBNtwTVHYXc-TtVaUON67QU'
+            );
+        }
+    </script>
+    <script src="sidebar.js"></script>
+    <script src="router.js"></script>
+    
+    <style>
+        :root {
+            --cpt-bg: #0a0f1a;
+            --cpt-surface: #111827;
+            --cpt-surface-elevated: #1a2332;
+            --cpt-surface-hover: #1f2937;
+            --cpt-border: rgba(255, 255, 255, 0.08);
+            --cpt-border-light: rgba(255, 255, 255, 0.12);
+            --cpt-text: #f9fafb;
+            --cpt-text-secondary: #9ca3af;
+            --cpt-text-tertiary: #6b7280;
+            --cpt-primary: #3b82f6;
+            --cpt-primary-glow: rgba(59, 130, 246, 0.15);
+            --cpt-success: #10b981;
+            --cpt-success-bg: rgba(16, 185, 129, 0.1);
+            --cpt-warning: #f59e0b;
+            --cpt-warning-bg: rgba(245, 158, 11, 0.1);
+            --cpt-error: #ef4444;
+            --cpt-error-bg: rgba(239, 68, 68, 0.1);
+            --cpt-purple: #8b5cf6;
+            --cpt-purple-bg: rgba(139, 92, 246, 0.1);
+            --cpt-cyan: #06b6d4;
+            --cpt-font: 'DM Sans', -apple-system, sans-serif;
+            --cpt-mono: 'JetBrains Mono', monospace;
+            --cpt-radius: 12px;
+            --cpt-radius-sm: 8px;
+            --cpt-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @media (prefers-color-scheme: light) {
+            :root {
+                --cpt-bg: #f8fafc; --cpt-surface: #ffffff; --cpt-surface-elevated: #ffffff;
+                --cpt-surface-hover: #f1f5f9; --cpt-border: rgba(0, 0, 0, 0.08);
+                --cpt-border-light: rgba(0, 0, 0, 0.12); --cpt-text: #0f172a;
+                --cpt-text-secondary: #475569; --cpt-text-tertiary: #94a3b8;
+            }
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--cpt-font); background: var(--cpt-bg); color: var(--cpt-text); min-height: 100vh; }
+        .hidden { display: none !important; }
+        .main-wrapper { margin-left: var(--sidebar-width, 240px); min-height: 100vh; background: var(--cpt-bg); }
+        @media (max-width: 1024px) { .main-wrapper { margin-left: 0; } }
+        .cpt-container { max-width: 1600px; margin: 0 auto; padding: 32px 40px; }
+        .cpt-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; gap: 24px; flex-wrap: wrap; }
+        .cpt-header-left h1 { font-size: 28px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px; display: flex; align-items: center; gap: 12px; }
+        .cpt-header-left h1::before { content: ''; width: 4px; height: 28px; background: linear-gradient(180deg, var(--cpt-primary), var(--cpt-cyan)); border-radius: 2px; }
+        .cpt-header-subtitle { color: var(--cpt-text-secondary); font-size: 14px; margin: 0; }
+        .cpt-site-selector { display: flex; align-items: center; gap: 16px; padding: 16px 20px; background: var(--cpt-surface); border: 1px solid var(--cpt-border); border-radius: var(--cpt-radius); margin-bottom: 24px; }
+        .cpt-site-selector-label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; color: var(--cpt-text-secondary); }
+        .cpt-site-selector-label svg { color: var(--cpt-primary); width: 20px; height: 20px; }
+        .cpt-site-select { flex: 1; max-width: 320px; padding: 10px 36px 10px 14px; background: var(--cpt-surface-elevated); border: 1px solid var(--cpt-border-light); border-radius: var(--cpt-radius-sm); font-size: 14px; font-weight: 600; color: var(--cpt-text); font-family: var(--cpt-font); cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; transition: all var(--cpt-transition); }
+        .cpt-site-select:hover, .cpt-site-select:focus { border-color: var(--cpt-primary); outline: none; }
+        .cpt-site-indicator { display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--cpt-primary-glow); border-radius: var(--cpt-radius-sm); font-size: 13px; font-weight: 500; color: var(--cpt-primary); }
+        .cpt-site-indicator span { font-family: var(--cpt-mono); font-weight: 600; }
+        .cpt-tabs { display: flex; gap: 4px; background: var(--cpt-surface); border: 1px solid var(--cpt-border); border-radius: var(--cpt-radius); padding: 6px; margin-bottom: 24px; }
+        .cpt-tab { flex: 1; padding: 12px 24px; background: transparent; border: none; border-radius: var(--cpt-radius-sm); color: var(--cpt-text-secondary); font-size: 14px; font-weight: 500; font-family: var(--cpt-font); cursor: pointer; transition: all var(--cpt-transition); display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .cpt-tab:hover { color: var(--cpt-text); background: var(--cpt-surface-hover); }
+        .cpt-tab.active { background: var(--cpt-primary); color: white; }
+        .cpt-tab-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 7px; border-radius: 11px; font-size: 11px; font-weight: 600; background: rgba(255, 255, 255, 0.2); }
+        .cpt-tab:not(.active) .cpt-tab-badge { background: var(--cpt-surface-hover); }
+        .cpt-panel { display: none; }
+        .cpt-panel.active { display: block; }
+        .cpt-table-card { background: var(--cpt-surface); border: 1px solid var(--cpt-border); border-radius: var(--cpt-radius); overflow: hidden; }
+        .cpt-table-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--cpt-border); flex-wrap: wrap; gap: 16px; }
+        .cpt-table-title { font-size: 16px; font-weight: 600; }
+        .cpt-table-subtitle { font-size: 13px; color: var(--cpt-text-secondary); margin-top: 4px; }
+        .cpt-table-actions { display: flex; gap: 8px; }
+        .cpt-selection-summary { display: none; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; background: var(--cpt-surface-elevated); border-bottom: 1px solid var(--cpt-border); }
+        .cpt-selection-summary.visible { display: flex; }
+        .cpt-selection-info { display: flex; align-items: center; gap: 16px; }
+        .cpt-selection-count { font-size: 14px; color: var(--cpt-text-secondary); }
+        .cpt-selection-count strong { color: var(--cpt-primary); font-weight: 600; }
+        .cpt-selection-amount { font-size: 14px; font-weight: 600; font-family: var(--cpt-mono); color: var(--cpt-success); padding: 6px 14px; background: var(--cpt-success-bg); border-radius: 20px; }
+        .cpt-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: var(--cpt-radius-sm); font-size: 14px; font-weight: 500; font-family: var(--cpt-font); cursor: pointer; transition: all var(--cpt-transition); border: none; }
+        .cpt-btn svg { width: 16px; height: 16px; }
+        .cpt-btn-primary { background: var(--cpt-primary); color: white; }
+        .cpt-btn-primary:hover { background: #2563eb; }
+        .cpt-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .cpt-btn-secondary { background: var(--cpt-surface); color: var(--cpt-text); border: 1px solid var(--cpt-border); }
+        .cpt-btn-secondary:hover { background: var(--cpt-surface-hover); }
+        .cpt-btn-success { background: var(--cpt-success); color: white; }
+        .cpt-btn-success:hover { background: #059669; }
+        .cpt-btn-sm { padding: 8px 14px; font-size: 13px; }
+        .cpt-table-wrapper { overflow-x: auto; }
+        .cpt-table { width: 100%; border-collapse: collapse; }
+        .cpt-table th { text-align: left; padding: 14px 20px; font-size: 11px; font-weight: 600; color: var(--cpt-text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; background: var(--cpt-surface-hover); border-bottom: 1px solid var(--cpt-border); white-space: nowrap; }
+        .cpt-table td { padding: 16px 20px; font-size: 14px; color: var(--cpt-text); border-bottom: 1px solid var(--cpt-border); vertical-align: middle; }
+        .cpt-table tbody tr { transition: background var(--cpt-transition); cursor: pointer; }
+        .cpt-table tbody tr:hover { background: var(--cpt-surface-hover); }
+        .cpt-table tbody tr.selected { background: var(--cpt-primary-glow); }
+        .cpt-table tbody tr:last-child td { border-bottom: none; }
+        .cpt-checkbox { width: 18px; height: 18px; border-radius: 4px; border: 2px solid var(--cpt-border-light); background: var(--cpt-surface); cursor: pointer; appearance: none; transition: all var(--cpt-transition); }
+        .cpt-checkbox:checked { background: var(--cpt-primary); border-color: var(--cpt-primary); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M5 13l4 4L19 7'/%3E%3C/svg%3E"); background-size: 12px; background-position: center; background-repeat: no-repeat; }
+        .cpt-cell-date { display: flex; flex-direction: column; gap: 2px; }
+        .cpt-cell-date-main { font-weight: 500; }
+        .cpt-cell-date-time { font-size: 12px; color: var(--cpt-text-tertiary); }
+        .cpt-cell-customer { display: flex; flex-direction: column; gap: 2px; max-width: 200px; }
+        .cpt-cell-customer-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cpt-cell-customer-email { font-size: 12px; color: var(--cpt-text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cpt-cell-amount { font-family: var(--cpt-mono); font-weight: 600; font-size: 14px; color: var(--cpt-success); }
+        .cpt-cell-amount.negative { color: var(--cpt-error); }
+        .cpt-cell-id { font-family: var(--cpt-mono); font-size: 12px; color: var(--cpt-text-secondary); background: var(--cpt-surface-hover); padding: 4px 8px; border-radius: 4px; display: inline-block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cpt-status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 100px; font-size: 12px; font-weight: 600; }
+        .cpt-status-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+        .cpt-status-badge.complete, .cpt-status-badge.paid { background: var(--cpt-success-bg); color: var(--cpt-success); }
+        .cpt-status-badge.pending { background: var(--cpt-warning-bg); color: var(--cpt-warning); }
+        .cpt-status-badge.refund { background: var(--cpt-purple-bg); color: var(--cpt-purple); }
+        .cpt-status-badge.chargeback { background: var(--cpt-error-bg); color: var(--cpt-error); }
+        .cpt-row-indicator { display: inline-flex; font-size: 10px; font-weight: 600; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin-left: 8px; }
+        .cpt-row-indicator.refund { background: var(--cpt-purple-bg); color: var(--cpt-purple); }
+        .cpt-row-indicator.chargeback { background: var(--cpt-error-bg); color: var(--cpt-error); }
+        .cpt-report-number { font-family: var(--cpt-mono); font-weight: 600; color: var(--cpt-primary); }
+        .cpt-empty { padding: 60px 24px; text-align: center; }
+        .cpt-empty-icon { width: 64px; height: 64px; margin: 0 auto 16px; color: var(--cpt-text-tertiary); }
+        .cpt-empty-icon svg { width: 100%; height: 100%; }
+        .cpt-empty-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+        .cpt-empty-text { font-size: 14px; color: var(--cpt-text-secondary); }
+        .cpt-loading { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 60px 24px; color: var(--cpt-text-secondary); }
+        .cpt-spinner { width: 32px; height: 32px; border: 3px solid var(--cpt-border); border-top-color: var(--cpt-primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .cpt-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 24px; }
+        .cpt-modal-overlay.active { display: flex; }
+        .cpt-modal { background: var(--cpt-surface); border: 1px solid var(--cpt-border); border-radius: var(--cpt-radius); max-width: 800px; width: 100%; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; }
+        .cpt-modal-header { padding: 20px 24px; border-bottom: 1px solid var(--cpt-border); display: flex; align-items: center; justify-content: space-between; }
+        .cpt-modal-title { font-size: 18px; font-weight: 600; }
+        .cpt-modal-close { width: 32px; height: 32px; border-radius: var(--cpt-radius-sm); border: none; background: transparent; color: var(--cpt-text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .cpt-modal-close:hover { background: var(--cpt-surface-hover); color: var(--cpt-text); }
+        .cpt-modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+        .cpt-modal-footer { padding: 16px 24px; border-top: 1px solid var(--cpt-border); display: flex; justify-content: flex-end; gap: 12px; }
+        .cpt-report-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .cpt-report-stat { background: var(--cpt-surface-elevated); border-radius: var(--cpt-radius-sm); padding: 16px; }
+        .cpt-report-stat-label { font-size: 12px; color: var(--cpt-text-tertiary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .cpt-report-stat-value { font-size: 18px; font-weight: 600; }
+        .cpt-report-stat-value.positive { color: var(--cpt-success); }
+        .cpt-report-stat-value.negative { color: var(--cpt-error); }
+        .cpt-form-group { margin-bottom: 16px; }
+        .cpt-form-label { display: block; font-size: 13px; font-weight: 500; color: var(--cpt-text-secondary); margin-bottom: 8px; }
+        .cpt-notes-input { width: 100%; padding: 12px; background: var(--cpt-surface-elevated); border: 1px solid var(--cpt-border); border-radius: var(--cpt-radius-sm); color: var(--cpt-text); font-family: var(--cpt-font); font-size: 14px; resize: vertical; min-height: 80px; }
+        .cpt-notes-input:focus { outline: none; border-color: var(--cpt-primary); }
+        @media (max-width: 768px) { .cpt-container { padding: 20px 16px; } .cpt-site-selector { flex-direction: column; align-items: stretch; } .cpt-site-select { max-width: none; } }
+        
+        /* Adjustments Section */
+        .cpt-adjustments-section { padding: 16px 24px; background: var(--cpt-warning-bg); border-bottom: 1px solid var(--cpt-border); }
+        .cpt-adjustments-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .cpt-adjustments-title { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--cpt-warning); }
+        .cpt-adjustments-total { font-family: var(--cpt-mono); font-weight: 600; font-size: 16px; color: var(--cpt-error); }
+        .cpt-adjustments-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+        .cpt-adjustment-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--cpt-surface); border-radius: var(--cpt-radius-sm); border: 1px solid var(--cpt-border); }
+        .cpt-adjustment-info { display: flex; align-items: center; gap: 12px; }
+        .cpt-adjustment-reason { font-size: 11px; font-weight: 600; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; }
+        .cpt-adjustment-reason.refund { background: var(--cpt-purple-bg); color: var(--cpt-purple); }
+        .cpt-adjustment-reason.chargeback { background: var(--cpt-error-bg); color: var(--cpt-error); }
+        .cpt-adjustment-customer { font-weight: 500; }
+        .cpt-adjustment-ref { font-size: 12px; color: var(--cpt-text-tertiary); }
+        .cpt-adjustment-amount { font-family: var(--cpt-mono); font-weight: 600; color: var(--cpt-error); }
+        .cpt-adjustments-note { font-size: 12px; color: var(--cpt-text-secondary); font-style: italic; }
+        
+        /* Pending Report Blocker */
+        .cpt-pending-blocker { display: flex; align-items: flex-start; gap: 16px; padding: 20px 24px; background: var(--cpt-error-bg); border-bottom: 1px solid var(--cpt-error); }
+        .cpt-blocker-icon { color: var(--cpt-error); flex-shrink: 0; }
+        .cpt-blocker-content { flex: 1; }
+        .cpt-blocker-title { font-weight: 600; color: var(--cpt-error); margin-bottom: 4px; }
+        .cpt-blocker-text { font-size: 14px; color: var(--cpt-text-secondary); margin-bottom: 12px; line-height: 1.5; }
+        .cpt-blocker-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    </style>
+</head>
+<body>
+    <div id="authenticatedContent" class="hidden">
+        <div class="main-wrapper">
+            <div class="cpt-container">
+                <div class="cpt-header">
+                    <div class="cpt-header-left">
+                        <h1>Settlement Reports</h1>
+                        <p class="cpt-header-subtitle">Create and manage settlement reports for client payouts</p>
+                    </div>
+                </div>
+                <div class="cpt-site-selector">
+                    <div class="cpt-site-selector-label">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        Select Site
+                    </div>
+                    <select id="siteSelect" class="cpt-site-select" onchange="handleSiteChange()"><option value="">All Sites</option></select>
+                    <div class="cpt-site-indicator" id="siteIndicator" style="display: none;"><span id="txCount">0</span> unsettled transactions</div>
+                </div>
+                <div class="cpt-tabs">
+                    <button class="cpt-tab active" data-tab="create" onclick="switchTab('create')">Create Report</button>
+                    <button class="cpt-tab" data-tab="pending" onclick="switchTab('pending')">Pending<span class="cpt-tab-badge" id="pendingCount">0</span></button>
+                    <button class="cpt-tab" data-tab="paid" onclick="switchTab('paid')">Paid<span class="cpt-tab-badge" id="paidCount">0</span></button>
+                </div>
+                <div id="createPanel" class="cpt-panel active">
+                    <div class="cpt-table-card">
+                        <div class="cpt-table-header">
+                            <div><div class="cpt-table-title">Unsettled Transactions</div><div class="cpt-table-subtitle">Select completed transactions to include</div></div>
+                            <div class="cpt-table-actions">
+                                <button class="cpt-btn cpt-btn-secondary cpt-btn-sm" onclick="selectAll()">Select All</button>
+                                <button class="cpt-btn cpt-btn-secondary cpt-btn-sm" onclick="deselectAll()">Deselect All</button>
+                            </div>
+                        </div>
+                        <div class="cpt-selection-summary" id="selectionSummary">
+                            <div class="cpt-selection-info">
+                                <span class="cpt-selection-count"><strong id="selectedCount">0</strong> selected</span>
+                                <span class="cpt-selection-amount" id="selectedAmount">$0.00</span>
+                            </div>
+                            <button class="cpt-btn cpt-btn-primary" onclick="openCreateModal()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                Create Settlement Report
+                            </button>
+                        </div>
+                        <div class="cpt-adjustments-section" id="adjustmentsSection" style="display:none;"></div>
+                        <div class="cpt-pending-blocker" id="pendingReportBlocker" style="display:none;"></div>
+                        <div class="cpt-table-wrapper">
+                            <table class="cpt-table">
+                                <thead><tr><th style="width:50px"><input type="checkbox" class="cpt-checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()"></th><th>Date</th><th>Customer</th><th>Amount</th><th>Status</th><th>Trans ID</th></tr></thead>
+                                <tbody id="transactionsBody"><tr><td colspan="6"><div class="cpt-loading"><div class="cpt-spinner"></div><div>Loading...</div></div></td></tr></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div id="pendingPanel" class="cpt-panel">
+                    <div class="cpt-table-card">
+                        <div class="cpt-table-header"><div><div class="cpt-table-title">Pending Settlement Reports</div><div class="cpt-table-subtitle">Reports awaiting payment</div></div></div>
+                        <div class="cpt-table-wrapper">
+                            <table class="cpt-table"><thead><tr><th>Report #</th><th>Site</th><th>Transactions</th><th>Payout</th><th>Created</th><th>Actions</th></tr></thead><tbody id="pendingReportsBody"><tr><td colspan="6"><div class="cpt-loading"><div class="cpt-spinner"></div><div>Loading...</div></div></td></tr></tbody></table>
+                        </div>
+                    </div>
+                </div>
+                <div id="paidPanel" class="cpt-panel">
+                    <div class="cpt-table-card">
+                        <div class="cpt-table-header"><div><div class="cpt-table-title">Paid Settlement Reports</div><div class="cpt-table-subtitle">Completed settlements</div></div></div>
+                        <div class="cpt-table-wrapper">
+                            <table class="cpt-table"><thead><tr><th>Report #</th><th>Site</th><th>Transactions</th><th>Payout</th><th>Paid</th><th>Actions</th></tr></thead><tbody id="paidReportsBody"><tr><td colspan="6"><div class="cpt-loading"><div class="cpt-spinner"></div><div>Loading...</div></div></td></tr></tbody></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="cpt-modal-overlay" id="createModal">
+        <div class="cpt-modal">
+            <div class="cpt-modal-header"><h3 class="cpt-modal-title">Create Settlement Report</h3><button class="cpt-modal-close" onclick="closeCreateModal()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
+            <div class="cpt-modal-body"><div class="cpt-report-summary" id="createModalSummary"></div><div class="cpt-form-group"><label class="cpt-form-label">Notes (optional)</label><textarea class="cpt-notes-input" id="reportNotes" placeholder="Add notes..."></textarea></div></div>
+            <div class="cpt-modal-footer"><button class="cpt-btn cpt-btn-secondary" onclick="closeCreateModal()">Cancel</button><button class="cpt-btn cpt-btn-primary" onclick="createReport()" id="confirmCreateBtn">Create Report</button></div>
+        </div>
+    </div>
+    <div class="cpt-modal-overlay" id="viewModal">
+        <div class="cpt-modal" style="max-width:900px">
+            <div class="cpt-modal-header"><h3 class="cpt-modal-title" id="viewModalTitle">Report</h3><button class="cpt-modal-close" onclick="closeViewModal()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
+            <div class="cpt-modal-body" id="viewModalBody"></div>
+            <div class="cpt-modal-footer" id="viewModalFooter"><button class="cpt-btn cpt-btn-secondary" onclick="closeViewModal()">Close</button></div>
+        </div>
+    </div>
+    <script>
+        var sb = window.supabaseClient;
+        var currentUserId = null, currentSite = '', allTransactions = [], filteredTransactions = [], selectedTransactions = new Set(), pendingReports = [], paidReports = [];
+        var pendingAdjustments = []; // Adjustments for post-settlement refunds/chargebacks
+        var sitePricing = null; // Pricing configuration for selected site
+        
+        async function init() {
+            const { data: { session } } = await sb.auth.getSession();
+            if (!session) { window.location.href = 'login.html'; return; }
+            currentUserId = session.user.id;
+            SidebarComponent.init({ supabase: window.supabaseClient });
+            if (typeof Router !== 'undefined' && !Router.isReady()) { Router.init({ contentSelector: '.main-wrapper', transitionDuration: 100 }); }
+            updateSidebarUser(session.user.email);
+            document.getElementById('authenticatedContent').classList.remove('hidden');
+            await loadTransactions();
+            await loadReports();
+        }
+
+        async function loadTransactions() {
+            const tbody = document.getElementById('transactionsBody');
+            tbody.innerHTML = '<tr><td colspan="6"><div class="cpt-loading"><div class="cpt-spinner"></div><div>Loading...</div></div></td></tr>';
+            try {
+                // Load all complete transactions (trans_type = 'complete')
+                const { data, error } = await sb
+                    .from('cpt_data')
+                    .select('*')
+                    .eq('trans_type', 'complete')
+                    .order('transaction_date', { ascending: false });
+                
+                if (error) {
+                    console.error('Query error:', error);
+                    throw error;
+                }
+                
+                console.log('Total complete transactions:', data?.length || 0);
+                
+                // Filter out transactions that are already in a settlement report (pending or paid)
+                // A transaction is available if: not settled AND not in any report
+                allTransactions = (data || []).filter(t => !t.is_settled && !t.settlement_report_id);
+                console.log('Available for settlement:', allTransactions.length);
+                
+                if (data && data.length > 0) {
+                    console.log('Sample transaction:', data[0]);
+                    console.log('Site names in data:', [...new Set(data.map(t => t.site_name))]);
+                }
+                
+                populateSiteDropdown();
+                applyFilter();
+            } catch (e) {
+                console.error('Error loading transactions:', e);
+                tbody.innerHTML = '<tr><td colspan="6"><div class="cpt-empty"><div class="cpt-empty-title">Error</div><div class="cpt-empty-text">' + e.message + '</div></div></td></tr>';
+            }
+        }
+
+        function populateSiteDropdown() {
+            console.log('Populating site dropdown from', allTransactions.length, 'transactions');
+            const sites = [...new Set(allTransactions.map(t => t.site_name).filter(Boolean))].sort();
+            console.log('Found sites:', sites);
+            const sel = document.getElementById('siteSelect');
+            sel.innerHTML = '<option value="">All Sites</option>' + sites.map(s => '<option value="' + s + '">' + s + '</option>').join('');
+        }
+
+        function handleSiteChange() {
+            currentSite = document.getElementById('siteSelect').value;
+            selectedTransactions.clear();
+            document.getElementById('selectAllCheckbox').checked = false;
+            applyFilter();
+            loadAdjustmentsForSite();
+            loadPricingForSite();
+            checkPendingReportsForSite();
+            updateSelectionSummary();
+        }
+
+        async function loadPricingForSite() {
+            sitePricing = null;
+            if (!currentSite) return;
+            
+            try {
+                const { data, error } = await sb
+                    .from('site_pricing')
+                    .select('*')
+                    .eq('site_name', currentSite)
+                    .single();
+                
+                if (!error && data) {
+                    sitePricing = data;
+                    console.log('Loaded pricing for site:', sitePricing);
+                } else {
+                    console.log('No pricing found for site:', currentSite);
+                }
+            } catch (e) {
+                console.log('No pricing configured for site');
+            }
+        }
+
+        async function checkPendingReportsForSite() {
+            const blocker = document.getElementById('pendingReportBlocker');
+            if (!blocker) return;
+            
+            if (!currentSite) {
+                blocker.style.display = 'none';
+                document.getElementById('selectionSummary').style.pointerEvents = '';
+                return;
+            }
+            
+            try {
+                const { data: pendingForSite } = await sb
+                    .from('settlement_reports')
+                    .select('id, report_number, created_at, net_amount')
+                    .eq('site_name', currentSite)
+                    .eq('status', 'pending');
+                
+                if (pendingForSite && pendingForSite.length > 0) {
+                    const report = pendingForSite[0];
+                    blocker.style.display = 'block';
+                    blocker.innerHTML = `
+                        <div class="cpt-blocker-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                        </div>
+                        <div class="cpt-blocker-content">
+                            <div class="cpt-blocker-title">Pending Report Exists</div>
+                            <div class="cpt-blocker-text">
+                                <strong>${report.report_number}</strong> (${formatCurrency(report.net_amount)}) is still pending for this site.
+                                <br>You must mark it as paid or delete it before creating a new report.
+                            </div>
+                            <div class="cpt-blocker-actions">
+                                <button class="cpt-btn cpt-btn-secondary cpt-btn-sm" onclick="viewReport('${report.id}')">View Report</button>
+                                <button class="cpt-btn cpt-btn-success cpt-btn-sm" onclick="markAsPaid('${report.id}')">Mark as Paid</button>
+                                <button class="cpt-btn cpt-btn-sm" style="background:var(--cpt-error);color:white" onclick="deleteReport('${report.id}', false)">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                    // Disable the create button
+                    document.getElementById('selectionSummary').style.pointerEvents = 'none';
+                } else {
+                    blocker.style.display = 'none';
+                    document.getElementById('selectionSummary').style.pointerEvents = '';
+                }
+            } catch (e) {
+                console.error('Error checking pending reports:', e);
+            }
+        }
+
+        async function loadAdjustmentsForSite() {
+            pendingAdjustments = [];
+            if (!currentSite) {
+                renderAdjustmentsSection();
+                return;
+            }
+            
+            try {
+                const { data, error } = await sb
+                    .from('settlement_adjustments')
+                    .select('*')
+                    .eq('site_name', currentSite)
+                    .eq('status', 'pending')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                pendingAdjustments = data || [];
+                console.log('Pending adjustments for site:', pendingAdjustments.length, pendingAdjustments);
+                console.log('First adjustment processing_fee_credit:', pendingAdjustments[0]?.processing_fee_credit);
+                renderAdjustmentsSection();
+            } catch (e) {
+                console.error('Error loading adjustments:', e);
+            }
+        }
+
+        function renderAdjustmentsSection() {
+            const container = document.getElementById('adjustmentsSection');
+            if (!container) return;
+            
+            if (pendingAdjustments.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            const totalAdj = pendingAdjustments.reduce((sum, a) => sum + parseFloat(a.amount || 0), 0);
+            
+            container.style.display = 'block';
+            container.innerHTML = `
+                <div class="cpt-adjustments-header">
+                    <div class="cpt-adjustments-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        Post-Settlement Adjustments
+                    </div>
+                    <div class="cpt-adjustments-total">-${formatCurrency(totalAdj)}</div>
+                </div>
+                <div class="cpt-adjustments-list">
+                    ${pendingAdjustments.map(a => `
+                        <div class="cpt-adjustment-item">
+                            <div class="cpt-adjustment-info">
+                                <span class="cpt-adjustment-reason ${a.reason}">${a.reason}</span>
+                                <span class="cpt-adjustment-customer">${a.original_cust_name || 'Unknown'}</span>
+                                <span class="cpt-adjustment-ref">from ${a.original_settlement_report_number}</span>
+                            </div>
+                            <div class="cpt-adjustment-amount">-${formatCurrency(a.amount)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="cpt-adjustments-note">These adjustments will be automatically applied to the next settlement report for this site.</div>
+            `;
+        }
+
+        function applyFilter() {
+            filteredTransactions = currentSite ? allTransactions.filter(t => t.site_name === currentSite) : [...allTransactions];
+            const ind = document.getElementById('siteIndicator'), cnt = document.getElementById('txCount');
+            if (filteredTransactions.length > 0) { ind.style.display = 'flex'; cnt.textContent = filteredTransactions.length; } else { ind.style.display = 'none'; }
+            renderTransactionsTable();
+        }
+
+        function renderTransactionsTable() {
+            const tbody = document.getElementById('transactionsBody');
+            if (filteredTransactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6"><div class="cpt-empty"><div class="cpt-empty-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div class="cpt-empty-title">All caught up!</div><div class="cpt-empty-text">No unsettled transactions</div></div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = filteredTransactions.map(t => {
+                const key = t.cust_session + '|||' + t.transaction_date, sel = selectedTransactions.has(key), d = new Date(t.transaction_date), amt = parseFloat(t.cust_amount || 0);
+                let ind = ''; if (t.is_refund) ind += '<span class="cpt-row-indicator refund">R</span>'; if (t.is_chargeback) ind += '<span class="cpt-row-indicator chargeback">CB</span>';
+                return '<tr class="' + (sel ? 'selected' : '') + '" onclick="toggleTransaction(\'' + key + '\')"><td onclick="event.stopPropagation()"><input type="checkbox" class="cpt-checkbox" ' + (sel ? 'checked' : '') + ' onchange="toggleTransaction(\'' + key + '\')"></td><td><div class="cpt-cell-date"><span class="cpt-cell-date-main">' + d.toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) + '</span><span class="cpt-cell-date-time">' + d.toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'}) + '</span></div></td><td><div class="cpt-cell-customer"><span class="cpt-cell-customer-name">' + (t.cust_name || '—') + '</span><span class="cpt-cell-customer-email">' + (t.cust_email_ad || '—') + '</span></div></td><td><span class="cpt-cell-amount ' + ((t.is_refund || t.is_chargeback) ? 'negative' : '') + '">' + formatCurrency(amt) + '</span>' + ind + '</td><td><span class="cpt-status-badge ' + (t.is_refund ? 'refund' : t.is_chargeback ? 'chargeback' : 'complete') + '">' + (t.is_refund ? 'Refund' : t.is_chargeback ? 'Chargeback' : 'Complete') + '</span></td><td><span class="cpt-cell-id">' + (t.cust_trans_id || '—') + '</span></td></tr>';
+            }).join('');
+        }
+
+        function toggleTransaction(key) { if (selectedTransactions.has(key)) selectedTransactions.delete(key); else selectedTransactions.add(key); renderTransactionsTable(); updateSelectionSummary(); }
+        function selectAll() { 
+            console.log('Selecting all', filteredTransactions.length, 'filtered transactions');
+            filteredTransactions.forEach(t => {
+                const key = t.cust_session + '|||' + t.transaction_date;
+                selectedTransactions.add(key);
+            });
+            console.log('Total selected:', selectedTransactions.size);
+            document.getElementById('selectAllCheckbox').checked = true; 
+            renderTransactionsTable(); 
+            updateSelectionSummary(); 
+        }
+        function deselectAll() { selectedTransactions.clear(); document.getElementById('selectAllCheckbox').checked = false; renderTransactionsTable(); updateSelectionSummary(); }
+        function toggleSelectAll() { document.getElementById('selectAllCheckbox').checked ? selectAll() : deselectAll(); }
+
+        function updateSelectionSummary() {
+            const sum = document.getElementById('selectionSummary'), cnt = selectedTransactions.size;
+            if (cnt === 0) { sum.classList.remove('visible'); return; }
+            sum.classList.add('visible');
+            document.getElementById('selectedCount').textContent = cnt;
+            const totals = calculateSelectedTotals();
+            
+            // Calculate adjustment total
+            const adjTotal = pendingAdjustments.reduce((s, a) => s + parseFloat(a.amount || 0), 0);
+            const netAfterAdj = totals.net - adjTotal;
+            
+            // Show net after adjustments if there are any
+            if (adjTotal > 0) {
+                document.getElementById('selectedAmount').innerHTML = `${formatCurrency(totals.net)} <span style="color:var(--cpt-error);margin-left:4px;">- ${formatCurrency(adjTotal)}</span> = <strong>${formatCurrency(netAfterAdj)}</strong>`;
+            } else {
+                document.getElementById('selectedAmount').textContent = formatCurrency(totals.net);
+            }
+        }
+
+        function calculateSelectedTotals() {
+            let gross = 0, refunds = 0, chargebacks = 0;
+            selectedTransactions.forEach(key => { 
+                const parts = key.split('|||'), s = parts[0], d = parts[1], t = allTransactions.find(tx => tx.cust_session === s && tx.transaction_date === d); 
+                if (t) { 
+                    const a = parseFloat(t.cust_amount || 0); 
+                    if (t.is_refund) {
+                        // Refunded transaction: original sale was refunded, net = $0
+                        // Track the amount for display purposes but don't add to gross
+                        refunds += a;
+                    } else if (t.is_chargeback) {
+                        // Chargedback transaction: original sale was charged back, net = $0
+                        // Track the amount for display purposes but don't add to gross
+                        chargebacks += a;
+                    } else {
+                        // Normal completed transaction - counts toward payout
+                        gross += a;
+                    }
+                }
+            });
+            // Net = gross only (refunds/chargebacks already netted to $0)
+            return { gross, refunds, chargebacks, net: gross };
+        }
+
+        async function openCreateModal() {
+            if (selectedTransactions.size === 0) return;
+            
+            // Check if blocked by pending report
+            const blocker = document.getElementById('pendingReportBlocker');
+            if (blocker && blocker.style.display !== 'none') {
+                alert('You must resolve the pending report for this site before creating a new one.');
+                return;
+            }
+            
+            // Show loading on the create button
+            const createBtn = document.querySelector('#selectionSummary .cpt-btn-primary');
+            const originalBtnHTML = createBtn.innerHTML;
+            createBtn.disabled = true;
+            createBtn.innerHTML = '<div class="cpt-spinner" style="width:16px;height:16px;border-width:2px"></div> Loading...';
+            
+            try {
+                // Refresh adjustments for the site (may have changed in another tab)
+                if (currentSite) {
+                    await loadAdjustmentsForSite();
+                    console.log('Refreshed adjustments:', pendingAdjustments.length, pendingAdjustments);
+                }
+                
+                // Refresh transaction data to get latest state (refunds/chargebacks may have changed)
+                const selectedKeys = [...selectedTransactions];
+                const sessions = selectedKeys.map(k => k.split('|||')[0]);
+                
+                const { data: freshData, error } = await sb
+                    .from('cpt_data')
+                    .select('*')
+                    .in('cust_session', sessions);
+                
+                if (error) {
+                    console.error('Error refreshing transaction data:', error);
+                    alert('Error loading latest transaction data. Please refresh the page.');
+                    return;
+                }
+                
+                // Update allTransactions with fresh data
+                const freshMap = new Map();
+                (freshData || []).forEach(t => {
+                    freshMap.set(t.cust_session + '|||' + t.transaction_date, t);
+                });
+                
+                // Update our local data with fresh values
+                allTransactions = allTransactions.map(t => {
+                    const key = t.cust_session + '|||' + t.transaction_date;
+                    return freshMap.get(key) || t;
+                });
+                
+                // Also update filteredTransactions
+                filteredTransactions = filteredTransactions.map(t => {
+                    const key = t.cust_session + '|||' + t.transaction_date;
+                    return freshMap.get(key) || t;
+                });
+                
+                // Refresh the table to show any status changes
+                renderTransactionsTable();
+                
+                const totals = calculateSelectedTotals();
+                
+                // Count refunds and chargebacks for fee calculation
+                let refundCount = 0, chargebackCount = 0, successfulCount = 0;
+                selectedTransactions.forEach(key => {
+                    const parts = key.split('|||'), s = parts[0], d = parts[1];
+                    const t = allTransactions.find(tx => tx.cust_session === s && tx.transaction_date === d);
+                    if (t) {
+                        if (t.is_refund) refundCount++;
+                        else if (t.is_chargeback) chargebackCount++;
+                        else successfulCount++;
+                    }
+                });
+                
+            let siteName = 'Multiple Sites'; const sites = new Set();
+            selectedTransactions.forEach(key => { const parts = key.split('|||'), s = parts[0], d = parts[1], t = allTransactions.find(tx => tx.cust_session === s && tx.transaction_date === d); if (t && t.site_name) sites.add(t.site_name); });
+            if (sites.size === 1) siteName = [...sites][0];
+            
+            // Calculate adjustments
+            const adjTotal = pendingAdjustments.reduce((s, a) => s + parseFloat(a.amount || 0), 0);
+            const netAfterAdj = totals.net - adjTotal;
+            
+            // Calculate fees based on pricing
+            let feesHTML = '';
+            let totalFees = 0;
+            let processingFeeAmount = 0, transactionFeesTotal = 0, refundFeesTotal = 0, chargebackFeesTotal = 0;
+            
+            // Count adjustments by type for fees
+            const adjRefundCount = pendingAdjustments.filter(a => a.reason === 'refund').length;
+            const adjChargebackCount = pendingAdjustments.filter(a => a.reason === 'chargeback').length;
+            
+            // Calculate processing fee credit from REFUND adjustments only (chargebacks don't get credit)
+            const processingFeeCredit = pendingAdjustments
+                .filter(a => a.reason === 'refund')
+                .reduce((sum, a) => sum + parseFloat(a.processing_fee_credit || 0), 0);
+            
+            // Total counts including adjustments
+            const totalRefundCount = refundCount + adjRefundCount;
+            const totalChargebackCount = chargebackCount + adjChargebackCount;
+            const totalTransactionCount = successfulCount + refundCount + chargebackCount;
+            
+            console.log('Fee calculation debug:', {
+                refundCount,
+                adjRefundCount,
+                totalRefundCount,
+                chargebackCount,
+                adjChargebackCount,
+                totalChargebackCount,
+                sitePricing,
+                hasPricing: !!sitePricing
+            });
+            
+            if (sitePricing) {
+                // Processing fee is on gross (successful sales only)
+                processingFeeAmount = totals.gross * (parseFloat(sitePricing.percentage_fee) / 100);
+                
+                // Transaction fee applies to ALL transactions (successful + refunds + chargebacks)
+                // because the initial transaction still happened
+                transactionFeesTotal = totalTransactionCount * parseFloat(sitePricing.per_transaction_fee || 0);
+                
+                // Refund fees: transactions in this report + adjustments from previous reports
+                refundFeesTotal = totalRefundCount * parseFloat(sitePricing.refund_fee || 0);
+                
+                // Chargeback fees: transactions in this report + adjustments from previous reports
+                chargebackFeesTotal = totalChargebackCount * parseFloat(sitePricing.chargeback_fee || 0);
+                
+                // Net fees = fees charged - credits
+                totalFees = processingFeeAmount + transactionFeesTotal + refundFeesTotal + chargebackFeesTotal - processingFeeCredit;
+                
+                console.log('Computed fees:', {
+                    processingFeeAmount,
+                    transactionFeesTotal,
+                    refundFeesTotal,
+                    chargebackFeesTotal,
+                    processingFeeCredit,
+                    totalFees,
+                    refundFeePer: sitePricing.refund_fee,
+                    chargebackFeePer: sitePricing.chargeback_fee
+                });
+                
+                feesHTML = `
+                    <div style="grid-column: 1 / -1; border-top: 1px solid var(--cpt-border); margin-top: 8px; padding-top: 16px;">
+                        <div style="font-size: 13px; font-weight: 600; color: var(--cpt-purple); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Processing Fees
+                        </div>
+                        <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--cpt-surface-hover); border-radius: 6px; margin-bottom: 6px; font-size: 13px;">
+                            <span>Processing Fee (${parseFloat(sitePricing.percentage_fee).toFixed(2)}% of ${formatCurrency(totals.gross)})</span>
+                            <span style="font-family: var(--cpt-mono); color: var(--cpt-error);">-${formatCurrency(processingFeeAmount)}</span>
+                        </div>
+                        ${parseFloat(sitePricing.per_transaction_fee) > 0 ? `
+                        <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--cpt-surface-hover); border-radius: 6px; margin-bottom: 6px; font-size: 13px;">
+                            <span>Transaction Fee (${formatCurrency(sitePricing.per_transaction_fee)} × ${totalTransactionCount} transactions)</span>
+                            <span style="font-family: var(--cpt-mono); color: var(--cpt-error);">-${formatCurrency(transactionFeesTotal)}</span>
+                        </div>
+                        ` : ''}
+                        ${totalRefundCount > 0 && parseFloat(sitePricing.refund_fee) > 0 ? `
+                        <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--cpt-surface-hover); border-radius: 6px; margin-bottom: 6px; font-size: 13px;">
+                            <span>Refund Fee (${formatCurrency(sitePricing.refund_fee)} × ${totalRefundCount} refund${totalRefundCount > 1 ? 's' : ''}${adjRefundCount > 0 ? ` <span style="color:var(--cpt-text-tertiary)">(${refundCount} in report + ${adjRefundCount} adj)</span>` : ''})</span>
+                            <span style="font-family: var(--cpt-mono); color: var(--cpt-error);">-${formatCurrency(refundFeesTotal)}</span>
+                        </div>
+                        ` : ''}
+                        ${totalChargebackCount > 0 && parseFloat(sitePricing.chargeback_fee) > 0 ? `
+                        <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--cpt-surface-hover); border-radius: 6px; margin-bottom: 6px; font-size: 13px;">
+                            <span>Chargeback Fee (${formatCurrency(sitePricing.chargeback_fee)} × ${totalChargebackCount} chargeback${totalChargebackCount > 1 ? 's' : ''}${adjChargebackCount > 0 ? ` <span style="color:var(--cpt-text-tertiary)">(${chargebackCount} in report + ${adjChargebackCount} adj)</span>` : ''})</span>
+                            <span style="font-family: var(--cpt-mono); color: var(--cpt-error);">-${formatCurrency(chargebackFeesTotal)}</span>
+                        </div>
+                        ` : ''}
+                        ${processingFeeCredit > 0 ? `
+                        <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--cpt-success-bg); border-radius: 6px; margin-bottom: 6px; font-size: 13px; border: 1px solid var(--cpt-success);">
+                            <span>Processing Fee Credit <span style="color:var(--cpt-text-tertiary)">(refunds only)</span></span>
+                            <span style="font-family: var(--cpt-mono); color: var(--cpt-success); font-weight: 600;">+${formatCurrency(processingFeeCredit)}</span>
+                        </div>
+                        ` : ''}
+                        <div style="display: flex; justify-content: space-between; padding: 8px 12px; font-size: 13px; font-weight: 600; border-top: 1px dashed var(--cpt-border); margin-top: 8px; padding-top: 12px;">
+                            <span>Net Fees</span>
+                            <span style="font-family: var(--cpt-mono); color: var(--cpt-error);">-${formatCurrency(totalFees)}</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                feesHTML = `
+                    <div style="grid-column: 1 / -1; border-top: 1px solid var(--cpt-border); margin-top: 8px; padding-top: 16px;">
+                        <div style="padding: 16px; background: var(--cpt-warning-bg); border-radius: 8px; border: 1px solid var(--cpt-warning);">
+                            <div style="font-size: 13px; font-weight: 600; color: var(--cpt-warning); margin-bottom: 4px;">No Pricing Configured</div>
+                            <div style="font-size: 12px; color: var(--cpt-text-secondary);">Configure pricing for this site in <a href="site-pricing.html" style="color: var(--cpt-primary);">Site Pricing</a> to calculate fees.</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            let adjustmentsHTML = '';
+            if (pendingAdjustments.length > 0) {
+                adjustmentsHTML = `
+                    <div style="grid-column: 1 / -1; border-top: 1px solid var(--cpt-border); margin-top: 8px; padding-top: 16px;">
+                        <div style="font-size: 13px; font-weight: 600; color: var(--cpt-warning); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                            Post-Settlement Adjustments (${pendingAdjustments.length})
+                        </div>
+                        ${pendingAdjustments.map(a => `
+                            <div style="padding: 8px 12px; background: var(--cpt-surface-hover); border-radius: 6px; margin-bottom: 6px; font-size: 13px;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span><span style="color: ${a.reason === 'refund' ? 'var(--cpt-purple)' : 'var(--cpt-error)'}; font-weight: 600; text-transform: uppercase; font-size: 10px;">${a.reason}</span> ${a.original_cust_name || 'Unknown'} <span style="color: var(--cpt-text-tertiary);">from ${a.original_settlement_report_number}</span></span>
+                                    <span style="font-family: var(--cpt-mono); color: var(--cpt-error); font-weight: 600;">-${formatCurrency(a.amount)}</span>
+                                </div>
+                                ${(a.reason === 'refund' && parseFloat(a.processing_fee_credit || 0) > 0) ? `
+                                <div style="display: flex; justify-content: space-between; margin-top: 4px; padding-top: 4px; border-top: 1px dashed var(--cpt-border); font-size: 12px; color: var(--cpt-text-secondary);">
+                                    <span>Processing fee credit (${parseFloat(a.original_processing_fee_percent || 0).toFixed(2)}%)</span>
+                                    <span style="font-family: var(--cpt-mono); color: var(--cpt-success);">+${formatCurrency(a.processing_fee_credit)}</span>
+                                </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            // Calculate merchant payout
+            const merchantPayout = netAfterAdj - totalFees;
+            
+            // Store fee data for createReport
+            window.currentReportFees = {
+                processingFeePercent: sitePricing ? parseFloat(sitePricing.percentage_fee) : 0,
+                processingFeeAmount,
+                transactionFeePer: sitePricing ? parseFloat(sitePricing.per_transaction_fee || 0) : 0,
+                transactionFeesTotal,
+                refundFeePer: sitePricing ? parseFloat(sitePricing.refund_fee || 0) : 0,
+                refundFeesTotal,
+                chargebackFeePer: sitePricing ? parseFloat(sitePricing.chargeback_fee || 0) : 0,
+                chargebackFeesTotal,
+                processingFeeCredit,
+                totalFees,
+                refundCount: totalRefundCount,  // includes adjustments
+                chargebackCount: totalChargebackCount,  // includes adjustments
+                successfulCount,
+                totalTransactionCount,
+                adjRefundCount,
+                adjChargebackCount
+            };
+            
+            document.getElementById('createModalSummary').innerHTML = `
+                <div class="cpt-report-stat"><div class="cpt-report-stat-label">Site</div><div class="cpt-report-stat-value">${siteName}</div></div>
+                <div class="cpt-report-stat"><div class="cpt-report-stat-label">Transactions</div><div class="cpt-report-stat-value">${selectedTransactions.size}</div></div>
+                <div class="cpt-report-stat"><div class="cpt-report-stat-label">Successful Sales</div><div class="cpt-report-stat-value positive">${formatCurrency(totals.gross)}</div></div>
+                <div class="cpt-report-stat"><div class="cpt-report-stat-label">Refunded (net $0)</div><div class="cpt-report-stat-value" style="color:var(--cpt-text-tertiary)">${formatCurrency(totals.refunds)} <span style="font-size:11px">(${refundCount})</span></div></div>
+                <div class="cpt-report-stat"><div class="cpt-report-stat-label">Chargebacks (net $0)</div><div class="cpt-report-stat-value" style="color:var(--cpt-text-tertiary)">${formatCurrency(totals.chargebacks)} <span style="font-size:11px">(${chargebackCount})</span></div></div>
+                <div class="cpt-report-stat"><div class="cpt-report-stat-label">Subtotal</div><div class="cpt-report-stat-value">${formatCurrency(totals.net)}</div></div>
+                ${adjustmentsHTML}
+                ${adjTotal > 0 ? `
+                    <div class="cpt-report-stat"><div class="cpt-report-stat-label">After Adjustments</div><div class="cpt-report-stat-value">${formatCurrency(netAfterAdj)}</div></div>
+                ` : ''}
+                ${feesHTML}
+                
+                <div style="grid-column: 1 / -1; border-top: 1px solid var(--cpt-border); margin-top: 8px; padding-top: 16px;">
+                    <div style="font-size: 13px; font-weight: 600; color: var(--cpt-text-secondary); margin-bottom: 12px;">Manual Adjustment (optional)</div>
+                    <div style="display: flex; gap: 12px; align-items: flex-start;">
+                        <div style="flex: 0 0 120px;">
+                            <div style="display: flex; align-items: center; background: var(--cpt-surface-elevated); border: 1px solid var(--cpt-border-light); border-radius: 8px; overflow: hidden;">
+                                <span style="padding: 10px 12px; background: var(--cpt-surface-hover); border-right: 1px solid var(--cpt-border-light); font-size: 14px; color: var(--cpt-text-secondary);">$</span>
+                                <input type="number" step="0.01" id="manualAdjustment" value="0" style="flex:1; padding: 10px 12px; background: transparent; border: none; font-size: 14px; color: var(--cpt-text); font-family: var(--cpt-mono); width: 80px;" onchange="updateMerchantPayout()">
+                            </div>
+                            <div style="font-size: 11px; color: var(--cpt-text-tertiary); margin-top: 4px;">Negative = deduct</div>
+                        </div>
+                        <div style="flex: 1;">
+                            <input type="text" id="manualAdjustmentNote" placeholder="Reason for adjustment..." style="width: 100%; padding: 10px 12px; background: var(--cpt-surface-elevated); border: 1px solid var(--cpt-border-light); border-radius: 8px; font-size: 14px; color: var(--cpt-text); font-family: var(--cpt-font);">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="cpt-report-stat" style="grid-column: 1 / -1; background: var(--cpt-success-bg); border: 2px solid var(--cpt-success); margin-top: 16px;">
+                    <div class="cpt-report-stat-label">Merchant Payout</div>
+                    <div class="cpt-report-stat-value positive" style="font-size: 28px;" id="merchantPayoutDisplay">${formatCurrency(merchantPayout)}</div>
+                </div>
+            `;
+            
+            // Store base values for recalculation
+            window.currentReportBase = {
+                netAfterAdj,
+                totalFees,
+                merchantPayout
+            };
+            
+            document.getElementById('reportNotes').value = '';
+            document.getElementById('createModal').classList.add('active');
+            } finally {
+                // Restore button
+                createBtn.disabled = false;
+                createBtn.innerHTML = originalBtnHTML;
+            }
+        }
+        function closeCreateModal() { document.getElementById('createModal').classList.remove('active'); }
+        
+        function updateMerchantPayout() {
+            const manualAdj = parseFloat(document.getElementById('manualAdjustment').value) || 0;
+            const base = window.currentReportBase || { merchantPayout: 0 };
+            const newPayout = base.netAfterAdj - base.totalFees + manualAdj;
+            document.getElementById('merchantPayoutDisplay').textContent = formatCurrency(newPayout);
+        }
+
+        async function createReport() {
+            const btn = document.getElementById('confirmCreateBtn');
+            btn.disabled = true; btn.innerHTML = '<div class="cpt-spinner" style="width:16px;height:16px;border-width:2px"></div> Creating...';
+            try {
+                const totals = calculateSelectedTotals(), notes = document.getElementById('reportNotes').value.trim();
+                let minDate = null, maxDate = null; const txList = [], siteIds = new Set(), siteNames = new Set();
+                
+                console.log('Selected transactions:', selectedTransactions.size);
+                
+                selectedTransactions.forEach(key => { 
+                    const parts = key.split('|||');
+                    const s = parts[0], d = parts[1];
+                    const t = allTransactions.find(tx => tx.cust_session === s && tx.transaction_date === d); 
+                    if (t) { 
+                        txList.push(t); 
+                        if (t.site_id) siteIds.add(t.site_id); 
+                        if (t.site_name) siteNames.add(t.site_name); 
+                        const td = new Date(t.transaction_date); 
+                        if (!minDate || td < minDate) minDate = td; 
+                        if (!maxDate || td > maxDate) maxDate = td; 
+                    } else {
+                        console.warn('Could not find transaction for key:', key);
+                    }
+                });
+                
+                console.log('Transactions to include in report:', txList.length);
+                
+                if (txList.length === 0) {
+                    throw new Error('No transactions found to include in report');
+                }
+                
+                // Calculate adjustment totals
+                const adjTotal = pendingAdjustments.reduce((s, a) => s + parseFloat(a.amount || 0), 0);
+                const adjCount = pendingAdjustments.length;
+                const netAfterAdj = totals.net - adjTotal;
+                
+                // Get fee data and manual adjustment
+                const fees = window.currentReportFees || {};
+                const manualAdj = parseFloat(document.getElementById('manualAdjustment')?.value) || 0;
+                const manualAdjNote = document.getElementById('manualAdjustmentNote')?.value?.trim() || null;
+                const merchantPayout = netAfterAdj - (fees.totalFees || 0) + manualAdj;
+                
+                console.log('Adjustments:', adjCount, 'totaling', adjTotal);
+                console.log('Fees:', fees);
+                console.log('Manual adjustment:', manualAdj, manualAdjNote);
+                console.log('Merchant payout:', merchantPayout);
+                
+                const siteId = siteIds.size === 1 ? [...siteIds][0] : 'multiple', siteName = siteNames.size === 1 ? [...siteNames][0] : 'Multiple Sites';
+                const { data: rn, error: e1 } = await sb.rpc('generate_settlement_report_number'); if (e1) throw e1;
+                
+                // Create report with adjustment and pricing info
+                const { data: rpt, error: e2 } = await sb.from('settlement_reports').insert({ 
+                    report_number: rn, 
+                    site_id: siteId, 
+                    site_name: siteName, 
+                    status: 'pending', 
+                    total_transactions: txList.length, 
+                    gross_amount: totals.gross, 
+                    refunds_amount: totals.refunds, 
+                    chargebacks_amount: totals.chargebacks, 
+                    net_amount: netAfterAdj,
+                    adjustments_total: adjTotal,
+                    adjustments_count: adjCount,
+                    // Pricing/fee data
+                    processing_fee_percent: fees.processingFeePercent || 0,
+                    processing_fee_amount: fees.processingFeeAmount || 0,
+                    transaction_fee_per: fees.transactionFeePer || 0,
+                    transaction_fees_total: fees.transactionFeesTotal || 0,
+                    refund_fee_per: fees.refundFeePer || 0,
+                    refund_fees_total: fees.refundFeesTotal || 0,
+                    chargeback_fee_per: fees.chargebackFeePer || 0,
+                    chargeback_fees_total: fees.chargebackFeesTotal || 0,
+                    processing_fee_credit: fees.processingFeeCredit || 0,
+                    total_fees: fees.totalFees || 0,
+                    manual_adjustment: manualAdj,
+                    manual_adjustment_note: manualAdjNote,
+                    merchant_payout: merchantPayout,
+                    period_start: minDate?.toISOString(), 
+                    period_end: maxDate?.toISOString(), 
+                    created_by: currentUserId, 
+                    notes: notes || null 
+                }).select().single(); 
+                if (e2) throw e2;
+                
+                console.log('Created report:', rpt.id, rpt.report_number);
+                
+                const items = txList.map(t => ({ settlement_report_id: rpt.id, cust_session: t.cust_session, transaction_date: t.transaction_date, cust_name: t.cust_name, cust_email: t.cust_email_ad, amount: parseFloat(t.cust_amount || 0), currency: t.currency || 'CAD', status: t.status, trans_type: t.trans_type, cust_trans_id: t.cust_trans_id, is_refund: t.is_refund || false, is_chargeback: t.is_chargeback || false }));
+                const { error: e3 } = await sb.from('settlement_report_items').insert(items); if (e3) throw e3;
+                
+                console.log('Inserted', items.length, 'report items');
+                
+                // Update cpt_data to link transactions to this report (parallel)
+                await Promise.all(txList.map(t => 
+                    sb.from('cpt_data')
+                        .update({ settlement_report_id: rpt.id })
+                        .eq('cust_session', t.cust_session)
+                        .eq('transaction_date', t.transaction_date)
+                ));
+                
+                console.log('Updated', txList.length, 'transactions in cpt_data');
+                
+                // Apply adjustments - mark them as applied (parallel)
+                if (pendingAdjustments.length > 0) {
+                    await Promise.all(pendingAdjustments.map(adj => 
+                        sb.from('settlement_adjustments')
+                            .update({ 
+                                status: 'applied', 
+                                applied_to_settlement_id: rpt.id,
+                                applied_at: new Date().toISOString()
+                            })
+                            .eq('id', adj.id)
+                    ));
+                    console.log('Applied', pendingAdjustments.length, 'adjustments to report');
+                }
+                
+                closeCreateModal(); selectedTransactions.clear(); await loadTransactions(); await loadReports(); await checkPendingReportsForSite(); switchTab('pending');
+            } catch (e) { console.error(e); alert('Error: ' + e.message); } finally { btn.disabled = false; btn.innerHTML = 'Create Report'; }
+        }
+
+        async function loadReports() {
+            try {
+                const { data: p } = await sb.from('settlement_reports').select('*').eq('status', 'pending').order('created_at', { ascending: false }); pendingReports = p || [];
+                const { data: pd } = await sb.from('settlement_reports').select('*').eq('status', 'paid').order('paid_at', { ascending: false }); paidReports = pd || [];
+                document.getElementById('pendingCount').textContent = pendingReports.length;
+                document.getElementById('paidCount').textContent = paidReports.length;
+                renderPendingReports(); renderPaidReports();
+            } catch (e) { console.error(e); }
+        }
+
+        function renderPendingReports() {
+            const tbody = document.getElementById('pendingReportsBody');
+            if (pendingReports.length === 0) { tbody.innerHTML = '<tr><td colspan="6"><div class="cpt-empty"><div class="cpt-empty-title">No pending reports</div></div></td></tr>'; return; }
+            tbody.innerHTML = pendingReports.map(r => '<tr onclick="viewReport(\'' + r.id + '\')"><td><span class="cpt-report-number">' + r.report_number + '</span></td><td>' + (r.site_name || '—') + '</td><td>' + r.total_transactions + '</td><td><span class="cpt-cell-amount">' + formatCurrency(r.merchant_payout || r.net_amount) + '</span></td><td>' + new Date(r.created_at).toLocaleDateString() + '</td><td onclick="event.stopPropagation()"><div style="display:flex;gap:8px"><button class="cpt-btn cpt-btn-success cpt-btn-sm" onclick="markAsPaid(\'' + r.id + '\')">Mark Paid</button><button class="cpt-btn cpt-btn-sm" style="background:var(--cpt-error);color:white" onclick="deleteReport(\'' + r.id + '\', false)">Delete</button></div></td></tr>').join('');
+        }
+
+        function renderPaidReports() {
+            const tbody = document.getElementById('paidReportsBody');
+            if (paidReports.length === 0) { tbody.innerHTML = '<tr><td colspan="6"><div class="cpt-empty"><div class="cpt-empty-title">No paid reports</div></div></td></tr>'; return; }
+            tbody.innerHTML = paidReports.map(r => '<tr onclick="viewReport(\'' + r.id + '\')"><td><span class="cpt-report-number">' + r.report_number + '</span></td><td>' + (r.site_name || '—') + '</td><td>' + r.total_transactions + '</td><td><span class="cpt-cell-amount">' + formatCurrency(r.merchant_payout || r.net_amount) + '</span></td><td>' + (r.paid_at ? new Date(r.paid_at).toLocaleDateString() : '—') + '</td><td onclick="event.stopPropagation()"><div style="display:flex;gap:8px"><button class="cpt-btn cpt-btn-secondary cpt-btn-sm" onclick="viewReport(\'' + r.id + '\')">View</button><button class="cpt-btn cpt-btn-sm" style="background:var(--cpt-error);color:white" onclick="deleteReport(\'' + r.id + '\', true)">Delete</button></div></td></tr>').join('');
+        }
+
+        async function viewReport(id) {
+            const modal = document.getElementById('viewModal'), body = document.getElementById('viewModalBody'), footer = document.getElementById('viewModalFooter');
+            body.innerHTML = '<div class="cpt-loading"><div class="cpt-spinner"></div><div>Loading...</div></div>'; modal.classList.add('active');
+            try {
+                const { data: r } = await sb.from('settlement_reports').select('*').eq('id', id).single();
+                const { data: items } = await sb.from('settlement_report_items').select('*').eq('settlement_report_id', id).order('transaction_date', { ascending: false });
+                
+                // Load adjustments applied to this report
+                const { data: adjustments } = await sb.from('settlement_adjustments').select('*').eq('applied_to_settlement_id', id).order('created_at', { ascending: false });
+                
+                document.getElementById('viewModalTitle').textContent = 'Report ' + r.report_number;
+                
+                // Build adjustments HTML if any
+                let adjustmentsHTML = '';
+                const adjTotal = parseFloat(r.adjustments_total || 0);
+                const adjCount = r.adjustments_count || 0;
+                
+                if (adjCount > 0 && adjustments && adjustments.length > 0) {
+                    adjustmentsHTML = `
+                        <div style="margin: 24px 0; padding: 16px; background: var(--cpt-warning-bg); border-radius: var(--cpt-radius-sm); border: 1px solid var(--cpt-warning);">
+                            <div style="font-weight: 600; color: var(--cpt-warning); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
+                                Post-Settlement Adjustments Applied (${adjCount})
+                            </div>
+                            ${adjustments.map(a => `
+                                <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--cpt-surface); border-radius: 6px; margin-bottom: 6px; font-size: 13px;">
+                                    <span>
+                                        <span style="color: ${a.reason === 'refund' ? 'var(--cpt-purple)' : 'var(--cpt-error)'}; font-weight: 600; text-transform: uppercase; font-size: 10px;">${a.reason}</span> 
+                                        ${a.original_cust_name || 'Unknown'} 
+                                        <span style="color: var(--cpt-text-tertiary);">from ${a.original_settlement_report_number}</span>
+                                    </span>
+                                    <span style="font-family: var(--cpt-mono); color: var(--cpt-error); font-weight: 600;">-${formatCurrency(a.amount)}</span>
+                                </div>
+                            `).join('')}
+                            <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid var(--cpt-border); margin-top: 8px; font-weight: 600;">
+                                <span>Total Adjustments</span>
+                                <span style="font-family: var(--cpt-mono); color: var(--cpt-error);">-${formatCurrency(adjTotal)}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Calculate gross subtotal (before adjustments)
+                const grossSubtotal = parseFloat(r.net_amount || 0) + adjTotal;
+                
+                // Build fees HTML if fees exist
+                let feesHTML = '';
+                const totalFees = parseFloat(r.total_fees || 0);
+                if (totalFees > 0) {
+                    feesHTML = `
+                        <div style="margin: 24px 0; padding: 16px; background: var(--cpt-purple-bg); border-radius: var(--cpt-radius-sm); border: 1px solid var(--cpt-purple);">
+                            <div style="font-weight: 600; color: var(--cpt-purple); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Processing Fees
+                            </div>
+                            ${parseFloat(r.processing_fee_amount || 0) > 0 ? `
+                            <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--cpt-surface); border-radius: 6px; margin-bottom: 6px; font-size: 13px;">
+                                <span>Processing Fee (${parseFloat(r.processing_fee_percent || 0).toFixed(2)}%)</span>
+                                <span style="font-family: var(--cpt-mono); color: var(--cpt-error);">-${formatCurrency(r.processing_fee_amount)}</span>
+                            </div>
+                            ` : ''}
+                            ${parseFloat(r.transaction_fees_total || 0) > 0 ? `
+                            <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--cpt-surface); border-radius: 6px; margin-bottom: 6px; font-size: 13px;">
+                                <span>Transaction Fees (${formatCurrency(r.transaction_fee_per)} each)</span>
+                                <span style="font-family: var(--cpt-mono); color: var(--cpt-error);">-${formatCurrency(r.transaction_fees_total)}</span>
+                            </div>
+                            ` : ''}
+                            ${parseFloat(r.refund_fees_total || 0) > 0 ? `
+                            <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--cpt-surface); border-radius: 6px; margin-bottom: 6px; font-size: 13px;">
+                                <span>Refund Fees (${formatCurrency(r.refund_fee_per)} each)</span>
+                                <span style="font-family: var(--cpt-mono); color: var(--cpt-error);">-${formatCurrency(r.refund_fees_total)}</span>
+                            </div>
+                            ` : ''}
+                            ${parseFloat(r.chargeback_fees_total || 0) > 0 ? `
+                            <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--cpt-surface); border-radius: 6px; margin-bottom: 6px; font-size: 13px;">
+                                <span>Chargeback Fees (${formatCurrency(r.chargeback_fee_per)} each)</span>
+                                <span style="font-family: var(--cpt-mono); color: var(--cpt-error);">-${formatCurrency(r.chargeback_fees_total)}</span>
+                            </div>
+                            ` : ''}
+                            ${parseFloat(r.processing_fee_credit || 0) > 0 ? `
+                            <div style="display: flex; justify-content: space-between; padding: 8px 12px; background: var(--cpt-success-bg); border-radius: 6px; margin-bottom: 6px; font-size: 13px; border: 1px solid var(--cpt-success);">
+                                <span>Processing Fee Credit <span style="color:var(--cpt-text-tertiary)">(refunds only)</span></span>
+                                <span style="font-family: var(--cpt-mono); color: var(--cpt-success); font-weight: 600;">+${formatCurrency(r.processing_fee_credit)}</span>
+                            </div>
+                            ` : ''}
+                            <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid var(--cpt-border); margin-top: 8px; font-weight: 600;">
+                                <span>Net Fees</span>
+                                <span style="font-family: var(--cpt-mono); color: var(--cpt-error);">-${formatCurrency(totalFees)}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Manual adjustment HTML
+                let manualAdjHTML = '';
+                const manualAdj = parseFloat(r.manual_adjustment || 0);
+                if (manualAdj !== 0) {
+                    manualAdjHTML = `
+                        <div style="margin: 24px 0; padding: 16px; background: var(--cpt-surface-elevated); border-radius: var(--cpt-radius-sm); border: 1px solid var(--cpt-border);">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-weight: 600; margin-bottom: 4px;">Manual Adjustment</div>
+                                    ${r.manual_adjustment_note ? `<div style="font-size: 13px; color: var(--cpt-text-secondary);">${r.manual_adjustment_note}</div>` : ''}
+                                </div>
+                                <div style="font-family: var(--cpt-mono); font-size: 16px; font-weight: 600; color: ${manualAdj >= 0 ? 'var(--cpt-success)' : 'var(--cpt-error)'};">
+                                    ${manualAdj >= 0 ? '+' : ''}${formatCurrency(manualAdj)}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                body.innerHTML = `
+                    <div class="cpt-report-summary">
+                        <div class="cpt-report-stat"><div class="cpt-report-stat-label">Status</div><div class="cpt-report-stat-value"><span class="cpt-status-badge ${r.status}">${r.status}</span></div></div>
+                        <div class="cpt-report-stat"><div class="cpt-report-stat-label">Site</div><div class="cpt-report-stat-value">${r.site_name}</div></div>
+                        <div class="cpt-report-stat"><div class="cpt-report-stat-label">Transactions</div><div class="cpt-report-stat-value">${r.total_transactions}</div></div>
+                        <div class="cpt-report-stat"><div class="cpt-report-stat-label">Successful Sales</div><div class="cpt-report-stat-value positive">${formatCurrency(r.gross_amount)}</div></div>
+                        <div class="cpt-report-stat"><div class="cpt-report-stat-label">Refunded (net $0)</div><div class="cpt-report-stat-value" style="color:var(--cpt-text-tertiary)">${formatCurrency(r.refunds_amount)}</div></div>
+                        <div class="cpt-report-stat"><div class="cpt-report-stat-label">Chargebacks (net $0)</div><div class="cpt-report-stat-value" style="color:var(--cpt-text-tertiary)">${formatCurrency(r.chargebacks_amount)}</div></div>
+                        ${adjCount > 0 ? `
+                            <div class="cpt-report-stat"><div class="cpt-report-stat-label">Subtotal</div><div class="cpt-report-stat-value">${formatCurrency(grossSubtotal)}</div></div>
+                            <div class="cpt-report-stat"><div class="cpt-report-stat-label">Adjustments (${adjCount})</div><div class="cpt-report-stat-value negative">-${formatCurrency(adjTotal)}</div></div>
+                        ` : ''}
+                        ${totalFees > 0 ? `
+                            <div class="cpt-report-stat"><div class="cpt-report-stat-label">Total Fees</div><div class="cpt-report-stat-value negative">-${formatCurrency(totalFees)}</div></div>
+                        ` : ''}
+                        ${manualAdj !== 0 ? `
+                            <div class="cpt-report-stat"><div class="cpt-report-stat-label">Manual Adjustment</div><div class="cpt-report-stat-value ${manualAdj >= 0 ? 'positive' : 'negative'}">${manualAdj >= 0 ? '+' : ''}${formatCurrency(manualAdj)}</div></div>
+                        ` : ''}
+                        <div class="cpt-report-stat" style="grid-column: 1 / -1; background: var(--cpt-success-bg); border: 2px solid var(--cpt-success);">
+                            <div class="cpt-report-stat-label">Merchant Payout</div>
+                            <div class="cpt-report-stat-value positive" style="font-size: 28px;">${formatCurrency(r.merchant_payout || r.net_amount)}</div>
+                        </div>
+                    </div>
+                    ${r.notes ? '<div style="margin-bottom:24px;padding:16px;background:var(--cpt-surface-elevated);border-radius:var(--cpt-radius-sm)"><strong>Notes:</strong> ' + r.notes + '</div>' : ''}
+                    ${adjustmentsHTML}
+                    ${feesHTML}
+                    ${manualAdjHTML}
+                    <div style="font-weight: 600; margin-bottom: 12px;">Transactions (${items.length})</div>
+                    <div class="cpt-table-wrapper" style="max-height:300px;overflow-y:auto;border:1px solid var(--cpt-border);border-radius:var(--cpt-radius-sm)">
+                        <table class="cpt-table">
+                            <thead><tr><th>Date</th><th>Customer</th><th>Amount</th><th>Type</th></tr></thead>
+                            <tbody>
+                                ${items.map(i => `
+                                    <tr>
+                                        <td>${new Date(i.transaction_date).toLocaleDateString()}</td>
+                                        <td><div class="cpt-cell-customer"><span class="cpt-cell-customer-name">${i.cust_name || '—'}</span><span class="cpt-cell-customer-email">${i.cust_email || '—'}</span></div></td>
+                                        <td><span class="cpt-cell-amount ${(i.is_refund || i.is_chargeback) ? 'negative' : ''}">${formatCurrency(i.amount)}</span></td>
+                                        <td>${i.is_refund ? '<span class="cpt-status-badge refund">Refund</span>' : i.is_chargeback ? '<span class="cpt-status-badge chargeback">Chargeback</span>' : '<span class="cpt-status-badge complete">Payment</span>'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                footer.innerHTML = '<button class="cpt-btn cpt-btn-secondary" onclick="closeViewModal()">Close</button><button class="cpt-btn" style="background:var(--cpt-error);color:white" onclick="deleteReport(\'' + r.id + '\', ' + (r.status === 'paid') + ')">Delete Report</button>' + (r.status === 'pending' ? '<button class="cpt-btn cpt-btn-success" onclick="markAsPaid(\'' + r.id + '\')">Mark Paid</button>' : '');
+            } catch (e) { body.innerHTML = '<div class="cpt-empty"><div class="cpt-empty-title">Error</div><div class="cpt-empty-text">' + e.message + '</div></div>'; }
+        }
+        function closeViewModal() { document.getElementById('viewModal').classList.remove('active'); }
+
+        async function markAsPaid(id) {
+            if (!confirm('Mark this report as paid?')) return;
+            
+            // Show loading overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'markPaidLoadingOverlay';
+            overlay.innerHTML = `
+                <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000;">
+                    <div style="background:var(--cpt-surface);padding:32px 48px;border-radius:var(--cpt-radius-md);text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+                        <div class="cpt-spinner" style="width:32px;height:32px;margin:0 auto 16px;"></div>
+                        <div style="font-weight:600;color:var(--cpt-text);">Marking as Paid...</div>
+                        <div style="font-size:13px;color:var(--cpt-text-secondary);margin-top:4px;">Processing transactions</div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            
+            try {
+                // Get report info
+                const { data: report } = await sb.from('settlement_reports').select('*').eq('id', id).single();
+                
+                // Get the report items
+                const { data: items } = await sb.from('settlement_report_items').select('*').eq('settlement_report_id', id);
+                
+                // Fetch current state of ALL transactions in one query per batch
+                const sessions = items.map(i => i.cust_session);
+                const { data: currentTxs } = await sb
+                    .from('cpt_data')
+                    .select('cust_session, transaction_date, is_refund, is_chargeback, cust_name, cust_email_ad, cust_trans_id, cust_amount')
+                    .in('cust_session', sessions);
+                
+                // Map for quick lookup
+                const txMap = new Map();
+                (currentTxs || []).forEach(tx => {
+                    txMap.set(tx.cust_session + '|||' + tx.transaction_date, tx);
+                });
+                
+                // Get site pricing for processing fee credit
+                const { data: pricing } = await sb
+                    .from('site_pricing')
+                    .select('percentage_fee')
+                    .eq('site_name', report.site_name)
+                    .single();
+                const processingFeePercent = pricing ? parseFloat(pricing.percentage_fee) : 0;
+                
+                // Check which adjustments already exist
+                const { data: existingAdjs } = await sb
+                    .from('settlement_adjustments')
+                    .select('original_cust_session, original_transaction_date, reason')
+                    .eq('original_settlement_report_id', id);
+                
+                const existingAdjKeys = new Set();
+                (existingAdjs || []).forEach(adj => {
+                    existingAdjKeys.add(adj.original_cust_session + '|||' + adj.original_transaction_date + '|||' + adj.reason);
+                });
+                
+                // Find refunds/chargebacks and create adjustments (only if not already exists)
+                const adjustmentsToCreate = [];
+                for (const item of items) {
+                    const key = item.cust_session + '|||' + item.transaction_date;
+                    const currentTx = txMap.get(key);
+                    
+                    if (currentTx && (currentTx.is_refund || currentTx.is_chargeback)) {
+                        const reason = currentTx.is_refund ? 'refund' : 'chargeback';
+                        const adjKey = item.cust_session + '|||' + item.transaction_date + '|||' + reason;
+                        
+                        // Skip if adjustment already exists
+                        if (existingAdjKeys.has(adjKey)) {
+                            console.log('Adjustment already exists, skipping:', adjKey);
+                            continue;
+                        }
+                        
+                        const amount = parseFloat(currentTx.cust_amount || item.amount || 0);
+                        // Only refunds get processing fee credit, NOT chargebacks
+                        const processingFeeCredit = reason === 'refund' ? amount * (processingFeePercent / 100) : 0;
+                        
+                        adjustmentsToCreate.push({
+                            site_id: report.site_id,
+                            site_name: report.site_name,
+                            original_cust_session: item.cust_session,
+                            original_transaction_date: item.transaction_date,
+                            original_cust_name: currentTx.cust_name || item.cust_name,
+                            original_cust_email: currentTx.cust_email_ad || item.cust_email,
+                            original_trans_id: currentTx.cust_trans_id || item.cust_trans_id,
+                            original_settlement_report_id: id,
+                            original_settlement_report_number: report.report_number,
+                            amount: amount,
+                            reason: reason,
+                            status: 'pending',
+                            original_processing_fee_percent: reason === 'refund' ? processingFeePercent : 0,
+                            processing_fee_credit: processingFeeCredit,
+                            created_by: currentUserId
+                        });
+                    }
+                }
+                
+                // Batch insert all adjustments at once (unique constraint will prevent duplicates at DB level too)
+                if (adjustmentsToCreate.length > 0) {
+                    const { error: adjError } = await sb.from('settlement_adjustments').insert(adjustmentsToCreate);
+                    if (adjError) {
+                        // Ignore unique constraint violations
+                        if (adjError.code !== '23505') {
+                            console.error('Error creating adjustments:', adjError);
+                        }
+                    }
+                }
+                
+                // Mark report as paid
+                await sb.from('settlement_reports').update({ status: 'paid', paid_at: new Date().toISOString(), paid_by: currentUserId }).eq('id', id);
+                
+                // Mark all transactions as settled (parallel)
+                const settledAt = new Date().toISOString();
+                await Promise.all(items.map(i => 
+                    sb.from('cpt_data')
+                        .update({ is_settled: true, settled_at: settledAt })
+                        .eq('cust_session', i.cust_session)
+                        .eq('transaction_date', i.transaction_date)
+                ));
+                
+                if (adjustmentsToCreate.length > 0) {
+                    alert(`Report marked as paid. ${adjustmentsToCreate.length} adjustment(s) created for refunds/chargebacks that will be applied to future settlements.`);
+                }
+                
+                closeViewModal(); 
+                await loadTransactions(); 
+                await loadReports();
+                await checkPendingReportsForSite();
+                await loadAdjustmentsForSite();
+            } catch (e) { 
+                alert('Error: ' + e.message); 
+            } finally {
+                const loadingOverlay = document.getElementById('markPaidLoadingOverlay');
+                if (loadingOverlay) loadingOverlay.remove();
+            }
+        }
+
+        async function deleteReport(id, isPaid) {
+            const confirmMsg = isPaid 
+                ? 'Delete this PAID settlement report? The transactions will be unmarked as settled and become available again. Any adjustments will also be removed.'
+                : 'Delete this settlement report? The transactions will become available again for a new report. Any adjustments will also be removed.';
+            if (!confirm(confirmMsg)) return;
+            
+            // Show loading overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'deleteLoadingOverlay';
+            overlay.innerHTML = `
+                <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:10000;">
+                    <div style="background:var(--cpt-surface);padding:32px 48px;border-radius:var(--cpt-radius-md);text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+                        <div class="cpt-spinner" style="width:32px;height:32px;margin:0 auto 16px;"></div>
+                        <div style="font-weight:600;color:var(--cpt-text);">Deleting Report...</div>
+                        <div style="font-size:13px;color:var(--cpt-text-secondary);margin-top:4px;">This may take a moment</div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            
+            try {
+                // Batch update: Clear settlement_report_id from all transactions in this report
+                const updateData = { settlement_report_id: null };
+                if (isPaid) {
+                    updateData.is_settled = false;
+                    updateData.settled_at = null;
+                }
+                await sb.from('cpt_data')
+                    .update(updateData)
+                    .eq('settlement_report_id', id);
+                
+                // Un-apply any adjustments that were applied to this report
+                await sb.from('settlement_adjustments')
+                    .update({ status: 'pending', applied_to_settlement_id: null, applied_at: null })
+                    .eq('applied_to_settlement_id', id);
+                
+                // Delete adjustments created from this report
+                await sb.from('settlement_adjustments')
+                    .delete()
+                    .eq('original_settlement_report_id', id);
+                
+                // Delete the report items
+                await sb.from('settlement_report_items').delete().eq('settlement_report_id', id);
+                
+                // Delete the report itself
+                const { error } = await sb.from('settlement_reports').delete().eq('id', id);
+                if (error) throw error;
+                
+                closeViewModal(); 
+                
+                // Reset selections and site filter
+                selectedTransactions.clear();
+                currentSite = '';
+                document.getElementById('siteSelect').value = '';
+                document.getElementById('selectAllCheckbox').checked = false;
+                
+                await loadTransactions(); 
+                await loadReports();
+                checkPendingReportsForSite();
+                renderAdjustmentsSection();
+                updateSelectionSummary();
+                switchTab('create');
+            } catch (e) { 
+                console.error('Delete error:', e);
+                alert('Error deleting report: ' + e.message); 
+            } finally {
+                const loadingOverlay = document.getElementById('deleteLoadingOverlay');
+                if (loadingOverlay) loadingOverlay.remove();
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.cpt-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.cpt-panel').forEach(p => p.classList.remove('active'));
+            document.querySelector('.cpt-tab[data-tab="' + tab + '"]').classList.add('active');
+            document.getElementById(tab + 'Panel').classList.add('active');
+            
+            // Reset selections when switching to create tab
+            if (tab === 'create') {
+                selectedTransactions.clear();
+                currentSite = '';
+                document.getElementById('siteSelect').value = '';
+                document.getElementById('selectAllCheckbox').checked = false;
+                applyFilter();
+                checkPendingReportsForSite();
+                renderAdjustmentsSection();
+                updateSelectionSummary();
+            }
+        }
+
+        function formatCurrency(a) { return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(a || 0); }
+        document.addEventListener('DOMContentLoaded', init);
+        window.initPage = init;
+    </script>
+</body>
+</html>
