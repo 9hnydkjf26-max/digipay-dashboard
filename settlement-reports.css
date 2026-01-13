@@ -327,8 +327,68 @@
 }
 
 /* Modal specific overrides */
-.cpt-modal {
-    background: #111827;  /* Solid background instead of var */
+/* Settlement Reports Modal - Dark Theme */
+/* Modals are outside .cpt-dashboard scope, so we use explicit colors */
+
+.cpt-dashboard ~ .cpt-modal-overlay .cpt-modal {
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.cpt-dashboard ~ .cpt-modal-overlay .cpt-modal-header {
+    background: #111827;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cpt-dashboard ~ .cpt-modal-overlay .cpt-modal-title {
+    color: #f9fafb;
+}
+
+.cpt-dashboard ~ .cpt-modal-overlay .cpt-modal-body {
+    background: #1a2332;
+}
+
+.cpt-dashboard ~ .cpt-modal-overlay .cpt-modal-footer {
+    background: #111827;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cpt-dashboard ~ .cpt-modal-overlay .cpt-modal-close {
+    color: #9ca3af;
+}
+
+.cpt-dashboard ~ .cpt-modal-overlay .cpt-modal-close:hover {
+    background: #1f2937;
+    color: #f9fafb;
+}
+
+/* Settlement-specific modal content */
+.cpt-dashboard ~ .cpt-modal-overlay .cpt-form-label {
+    color: #9ca3af;
+}
+
+.cpt-dashboard ~ .cpt-modal-overlay .cpt-notes-input {
+    background: #1a2332;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #f9fafb;
+}
+
+.cpt-dashboard ~ .cpt-modal-overlay .cpt-notes-input:focus {
+    border-color: #3b82f6;
+}
+
+.cpt-dashboard ~ .cpt-modal-overlay .cpt-report-stat {
+    background: #1a2332;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cpt-dashboard ~ .cpt-modal-overlay .cpt-report-stat-label {
+    color: #6b7280;
+}
+
+.cpt-dashboard ~ .cpt-modal-overlay .cpt-report-stat-value {
+    color: #f9fafb;
 }
 
 .cpt-table-subtitle {

@@ -54,62 +54,79 @@
         @media (prefers-color-scheme: light) {
             :root {
                 --cpt-bg: #f8fafc; --cpt-surface: #ffffff; --cpt-surface-elevated: #ffffff;
-                --cpt-surface-hover: #f1f5f9; --cpt-border: rgba(0, 0, 0, 0.08);
-                --cpt-border-light: rgba(0, 0, 0, 0.12); --cpt-text: #0f172a;
+                --cpt-surface-hover: #f1f5f9; --cpt-border: rgba(0, 0, 0, 0.06);
+                --cpt-border-light: rgba(0, 0, 0, 0.1); --cpt-text: #0f172a;
                 --cpt-text-secondary: #475569; --cpt-text-tertiary: #94a3b8;
             }
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: var(--cpt-font); background: var(--cpt-bg); color: var(--cpt-text); min-height: 100vh; }
-        .hidden { display: none !important; }
-        .main-wrapper { margin-left: var(--sidebar-width, 240px); min-height: 100vh; background: var(--cpt-bg); }
-        @media (max-width: 1024px) { .main-wrapper { margin-left: 0; } }
-        .cpt-container { max-width: 1200px; margin: 0 auto; padding: 32px 40px; }
-        .cpt-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; gap: 24px; flex-wrap: wrap; }
-        .cpt-header-left h1 { font-size: 28px; font-weight: 700; margin: 0 0 8px 0; letter-spacing: -0.5px; display: flex; align-items: center; gap: 12px; }
-        .cpt-header-left h1::before { content: ''; width: 4px; height: 28px; background: linear-gradient(180deg, var(--cpt-primary), var(--cpt-cyan)); border-radius: 2px; }
-        .cpt-header-subtitle { color: var(--cpt-text-secondary); font-size: 14px; margin: 0; }
         
-        .cpt-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: var(--cpt-radius-sm); font-size: 14px; font-weight: 500; font-family: var(--cpt-font); cursor: pointer; transition: all var(--cpt-transition); border: none; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        body { font-family: var(--cpt-font); background: var(--cpt-bg); color: var(--cpt-text); display: flex; }
+        
+        .hidden { display: none !important; }
+        #authenticatedContent { display: flex; width: 100%; }
+        .main-wrapper { flex: 1; overflow-y: auto; padding-left: 250px; }
+        @media (max-width: 1024px) { .main-wrapper { padding-left: 0; } }
+        
+        /* Container */
+        .cpt-container { max-width: 1200px; margin: 0 auto; padding: 32px 40px; }
+        
+        /* Header */
+        .cpt-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; gap: 20px; flex-wrap: wrap; }
+        .cpt-header h1 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+        .cpt-header-subtitle { font-size: 14px; color: var(--cpt-text-secondary); }
+        
+        /* Buttons */
+        .cpt-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; font-family: var(--cpt-font); font-size: 14px; font-weight: 500; border-radius: var(--cpt-radius-sm); cursor: pointer; transition: all var(--cpt-transition); border: none; }
         .cpt-btn svg { width: 16px; height: 16px; }
         .cpt-btn-primary { background: var(--cpt-primary); color: white; }
         .cpt-btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
         .cpt-btn-secondary { background: var(--cpt-surface-elevated); color: var(--cpt-text); border: 1px solid var(--cpt-border-light); }
-        .cpt-btn-secondary:hover { background: var(--cpt-surface-hover); }
-        .cpt-btn-success { background: var(--cpt-success); color: white; }
-        .cpt-btn-sm { padding: 8px 14px; font-size: 13px; }
+        .cpt-btn-secondary:hover { background: var(--cpt-surface-hover); border-color: var(--cpt-border-light); }
+        .cpt-btn-sm { padding: 6px 12px; font-size: 13px; }
         
-        .cpt-table-card { background: var(--cpt-surface); border: 1px solid var(--cpt-border); border-radius: var(--cpt-radius); overflow: hidden; }
-        .cpt-table-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; border-bottom: 1px solid var(--cpt-border); flex-wrap: wrap; gap: 16px; }
-        .cpt-table-title { font-size: 16px; font-weight: 600; }
-        .cpt-table-subtitle { font-size: 13px; color: var(--cpt-text-secondary); margin-top: 4px; }
-        
+        /* Cards */
+        .cpt-table-card { background: var(--cpt-surface); border-radius: var(--cpt-radius); border: 1px solid var(--cpt-border); overflow: hidden; margin-bottom: 24px; }
+        .cpt-table-header { padding: 20px 24px; border-bottom: 1px solid var(--cpt-border); display: flex; justify-content: space-between; align-items: center; }
+        .cpt-table-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+        .cpt-table-subtitle { font-size: 13px; color: var(--cpt-text-secondary); }
         .cpt-table-wrapper { overflow-x: auto; }
+        
+        /* Table */
         .cpt-table { width: 100%; border-collapse: collapse; }
         .cpt-table th, .cpt-table td { padding: 14px 20px; text-align: left; border-bottom: 1px solid var(--cpt-border); }
-        .cpt-table th { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--cpt-text-tertiary); background: var(--cpt-surface-elevated); position: sticky; top: 0; }
-        .cpt-table tbody tr { transition: background var(--cpt-transition); }
+        .cpt-table th { font-size: 12px; font-weight: 600; color: var(--cpt-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; background: var(--cpt-surface-elevated); }
         .cpt-table tbody tr:hover { background: var(--cpt-surface-hover); }
+        .cpt-table tbody tr:last-child td { border-bottom: none; }
         
-        .cpt-cell-site { font-weight: 600; }
-        .cpt-cell-fee { font-family: var(--cpt-mono); font-size: 14px; }
-        .cpt-cell-percent { color: var(--cpt-primary); }
-        .cpt-cell-dollar { color: var(--cpt-success); }
+        .cpt-cell-site { font-weight: 500; }
+        .cpt-cell-fee { font-family: var(--cpt-mono); font-size: 13px; padding: 4px 8px; border-radius: 4px; }
+        .cpt-cell-percent { background: var(--cpt-purple-bg); color: var(--cpt-purple); }
+        .cpt-cell-dollar { background: var(--cpt-success-bg); color: var(--cpt-success); }
+        .cpt-cell-limit { background: var(--cpt-primary-glow); color: var(--cpt-primary); }
         
-        .cpt-empty { text-align: center; padding: 60px 20px; }
-        .cpt-empty-icon { width: 64px; height: 64px; margin: 0 auto 16px; color: var(--cpt-text-tertiary); }
-        .cpt-empty-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
-        .cpt-empty-text { color: var(--cpt-text-secondary); font-size: 14px; }
+        /* Status badges */
+        .cpt-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: capitalize; }
+        .cpt-status-active { background: var(--cpt-success-bg); color: var(--cpt-success); }
+        .cpt-status-suspended { background: var(--cpt-warning-bg); color: var(--cpt-warning); }
+        .cpt-status-disabled { background: var(--cpt-error-bg); color: var(--cpt-error); }
+        .cpt-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
         
-        .cpt-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; gap: 16px; }
+        /* Loading & Empty States */
+        .cpt-loading { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 48px 24px; color: var(--cpt-text-secondary); }
         .cpt-spinner { width: 24px; height: 24px; border: 3px solid var(--cpt-border); border-top-color: var(--cpt-primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .cpt-empty { text-align: center; padding: 48px 24px; }
+        .cpt-empty-icon { width: 48px; height: 48px; margin: 0 auto 16px; color: var(--cpt-text-tertiary); }
+        .cpt-empty-icon svg { width: 100%; height: 100%; }
+        .cpt-empty-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+        .cpt-empty-text { font-size: 14px; color: var(--cpt-text-secondary); }
         
         /* Modal */
-        .cpt-modal { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.2s; }
-        .cpt-modal.active { opacity: 1; visibility: visible; }
-        .cpt-modal-content { background: var(--cpt-surface); border: 1px solid var(--cpt-border); border-radius: var(--cpt-radius); width: 100%; max-width: 500px; max-height: 90vh; overflow: hidden; transform: translateY(20px) scale(0.95); transition: transform 0.2s; }
-        .cpt-modal.active .cpt-modal-content { transform: translateY(0) scale(1); }
+        .cpt-modal { display: none; position: fixed; inset: 0; z-index: 1000; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); padding: 20px; }
+        .cpt-modal.active { display: flex; }
+        .cpt-modal-content { background: var(--cpt-surface); border-radius: var(--cpt-radius); width: 100%; max-width: 580px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); }
         .cpt-modal-header { padding: 20px 24px; border-bottom: 1px solid var(--cpt-border); display: flex; justify-content: space-between; align-items: center; }
         .cpt-modal-title { font-size: 18px; font-weight: 600; }
         .cpt-modal-close { background: none; border: none; color: var(--cpt-text-tertiary); cursor: pointer; padding: 8px; border-radius: 6px; transition: all var(--cpt-transition); }
@@ -135,11 +152,33 @@
         .cpt-input-group .cpt-form-input:first-child { border-radius: var(--cpt-radius-sm) 0 0 var(--cpt-radius-sm); }
         .cpt-input-group .cpt-form-input:last-child { border-radius: 0 var(--cpt-radius-sm) var(--cpt-radius-sm) 0; }
         
+        /* Form Section Divider */
+        .cpt-form-section { margin: 24px 0 20px 0; padding-bottom: 8px; border-bottom: 1px solid var(--cpt-border); }
+        .cpt-form-section-title { font-size: 14px; font-weight: 600; color: var(--cpt-text); display: flex; align-items: center; gap: 8px; }
+        .cpt-form-section-title svg { width: 16px; height: 16px; color: var(--cpt-primary); }
+        .cpt-form-section-hint { font-size: 12px; color: var(--cpt-text-tertiary); margin-top: 4px; }
+        
+        /* Tabs */
+        .cpt-tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--cpt-surface); border-radius: var(--cpt-radius-sm); padding: 4px; border: 1px solid var(--cpt-border); }
+        .cpt-tab { flex: 1; padding: 10px 16px; font-size: 14px; font-weight: 500; color: var(--cpt-text-secondary); background: transparent; border: none; border-radius: 6px; cursor: pointer; transition: all var(--cpt-transition); }
+        .cpt-tab:hover { color: var(--cpt-text); background: var(--cpt-surface-hover); }
+        .cpt-tab.active { color: var(--cpt-text); background: var(--cpt-surface-elevated); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        
         .cpt-no-pricing { background: var(--cpt-warning-bg); color: var(--cpt-warning); padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+        .cpt-no-limit { color: var(--cpt-text-tertiary); font-style: italic; font-size: 13px; }
+        
+        /* Info banner */
+        .cpt-info-banner { background: var(--cpt-primary-glow); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: var(--cpt-radius-sm); padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: flex-start; gap: 12px; }
+        .cpt-info-banner svg { width: 20px; height: 20px; color: var(--cpt-primary); flex-shrink: 0; margin-top: 2px; }
+        .cpt-info-banner-content { flex: 1; }
+        .cpt-info-banner-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+        .cpt-info-banner-text { font-size: 13px; color: var(--cpt-text-secondary); }
+        .cpt-info-banner code { background: var(--cpt-surface); padding: 2px 6px; border-radius: 4px; font-family: var(--cpt-mono); font-size: 12px; }
         
         @media (max-width: 768px) { 
             .cpt-container { padding: 20px 16px; } 
             .cpt-form-row { grid-template-columns: 1fr; }
+            .cpt-tabs { flex-direction: column; }
         }
     </style>
 </head>
@@ -160,20 +199,39 @@
             <div class="cpt-container">
                 <div class="cpt-header">
                     <div class="cpt-header-left">
-                        <h1>Site Pricing</h1>
-                        <p class="cpt-header-subtitle">Configure processing fees for each site</p>
+                        <h1>Site Pricing & Limits</h1>
+                        <p class="cpt-header-subtitle">Configure processing fees and transaction limits for each site</p>
                     </div>
                     <button class="cpt-btn cpt-btn-primary" onclick="openAddModal()">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                        Add Site Pricing
+                        Add Site Configuration
                     </button>
+                </div>
+                
+                <!-- API Info Banner -->
+                <div class="cpt-info-banner">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div class="cpt-info-banner-content">
+                        <div class="cpt-info-banner-title">Plugin API Endpoint</div>
+                        <div class="cpt-info-banner-text">
+                            Transaction limits are served via: <code>https://hzdybwclwqkcobpwxzoo.supabase.co/functions/v1/site-limits?site_id=YOUR_SITE_ID</code>
+                            <br>WordPress plugins will automatically fetch and cache these limits every 5 minutes.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tabs -->
+                <div class="cpt-tabs">
+                    <button class="cpt-tab active" data-tab="all" onclick="switchTab('all')">All Sites</button>
+                    <button class="cpt-tab" data-tab="limits" onclick="switchTab('limits')">With Limits</button>
+                    <button class="cpt-tab" data-tab="suspended" onclick="switchTab('suspended')">Suspended/Disabled</button>
                 </div>
                 
                 <div class="cpt-table-card">
                     <div class="cpt-table-header">
                         <div>
-                            <div class="cpt-table-title">Pricing Configuration</div>
-                            <div class="cpt-table-subtitle">Fees applied when creating settlement reports</div>
+                            <div class="cpt-table-title">Site Configuration</div>
+                            <div class="cpt-table-subtitle">Fees and limits applied to WooCommerce gateways</div>
                         </div>
                     </div>
                     <div class="cpt-table-wrapper">
@@ -182,9 +240,9 @@
                                 <tr>
                                     <th>Site</th>
                                     <th>Processing Fee</th>
-                                    <th>Per Transaction</th>
-                                    <th>Refund Fee</th>
-                                    <th>Chargeback Fee</th>
+                                    <th>Daily Limit</th>
+                                    <th>Max Order</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -209,7 +267,7 @@
     <div class="cpt-modal" id="pricingModal">
         <div class="cpt-modal-content">
             <div class="cpt-modal-header">
-                <div class="cpt-modal-title" id="modalTitle">Add Site Pricing</div>
+                <div class="cpt-modal-title" id="modalTitle">Add Site Configuration</div>
                 <button class="cpt-modal-close" onclick="closeModal()">
                     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
@@ -225,6 +283,54 @@
                     <div class="cpt-form-hint">Select from sites in your transaction data</div>
                 </div>
                 
+                <!-- Transaction Limits Section -->
+                <div class="cpt-form-section">
+                    <div class="cpt-form-section-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        Transaction Limits
+                    </div>
+                    <div class="cpt-form-section-hint">Controls synced to WooCommerce plugin via API</div>
+                </div>
+                
+                <div class="cpt-form-row">
+                    <div class="cpt-form-group">
+                        <label class="cpt-form-label">Daily Transaction Limit</label>
+                        <div class="cpt-input-group">
+                            <span class="cpt-input-prefix">$</span>
+                            <input type="number" step="1" min="0" class="cpt-form-input" id="dailyLimit" placeholder="0">
+                        </div>
+                        <div class="cpt-form-hint">Maximum daily volume. 0 = no limit</div>
+                    </div>
+                    
+                    <div class="cpt-form-group">
+                        <label class="cpt-form-label">Max Order Size</label>
+                        <div class="cpt-input-group">
+                            <span class="cpt-input-prefix">$</span>
+                            <input type="number" step="1" min="0" class="cpt-form-input" id="maxTicketSize" placeholder="0">
+                        </div>
+                        <div class="cpt-form-hint">Maximum single order. 0 = no limit</div>
+                    </div>
+                </div>
+                
+                <div class="cpt-form-group">
+                    <label class="cpt-form-label">Gateway Status</label>
+                    <select class="cpt-form-input" id="gatewayStatus">
+                        <option value="active">Active — Gateway fully operational</option>
+                        <option value="suspended">Suspended — Temporarily disabled</option>
+                        <option value="disabled">Disabled — Gateway blocked</option>
+                    </select>
+                    <div class="cpt-form-hint">Suspended/Disabled will prevent all transactions</div>
+                </div>
+                
+                <!-- Processing Fees Section -->
+                <div class="cpt-form-section">
+                    <div class="cpt-form-section-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Processing Fees
+                    </div>
+                    <div class="cpt-form-section-hint">Used for settlement report calculations</div>
+                </div>
+                
                 <div class="cpt-form-row">
                     <div class="cpt-form-group">
                         <label class="cpt-form-label">Processing Fee (%)</label>
@@ -232,7 +338,7 @@
                             <input type="number" step="0.001" min="0" max="100" class="cpt-form-input" id="percentageFee" placeholder="2.9">
                             <span class="cpt-input-suffix">%</span>
                         </div>
-                        <div class="cpt-form-hint">Percentage of gross transaction amount</div>
+                        <div class="cpt-form-hint">Percentage of gross amount</div>
                     </div>
                     
                     <div class="cpt-form-group">
@@ -267,12 +373,12 @@
                 
                 <div class="cpt-form-group">
                     <label class="cpt-form-label">Notes (optional)</label>
-                    <input type="text" class="cpt-form-input" id="pricingNotes" placeholder="Any notes about this pricing...">
+                    <input type="text" class="cpt-form-input" id="pricingNotes" placeholder="Any notes about this configuration...">
                 </div>
             </div>
             <div class="cpt-modal-footer">
                 <button class="cpt-btn cpt-btn-secondary" onclick="closeModal()">Cancel</button>
-                <button class="cpt-btn cpt-btn-primary" id="saveBtn" onclick="savePricing()">Save Pricing</button>
+                <button class="cpt-btn cpt-btn-primary" id="saveBtn" onclick="savePricing()">Save Configuration</button>
             </div>
         </div>
     </div>
@@ -282,6 +388,7 @@
         var currentUserId = null;
         var allPricing = [];
         var allSites = [];
+        var currentTab = 'all';
         
         async function init() {
             const { data: { session } } = await sb.auth.getSession();
@@ -354,10 +461,29 @@
             }
         }
         
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.cpt-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.cpt-tab[data-tab="${tab}"]`).classList.add('active');
+            renderPricingTable();
+        }
+        
+        function getFilteredPricing() {
+            switch (currentTab) {
+                case 'limits':
+                    return allPricing.filter(p => (parseFloat(p.daily_limit) > 0 || parseFloat(p.max_ticket_size) > 0));
+                case 'suspended':
+                    return allPricing.filter(p => p.gateway_status && p.gateway_status !== 'active');
+                default:
+                    return allPricing;
+            }
+        }
+        
         function renderPricingTable() {
             const tbody = document.getElementById('pricingBody');
+            const filtered = getFilteredPricing();
             
-            if (allPricing.length === 0) {
+            if (filtered.length === 0) {
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="6">
@@ -367,8 +493,8 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
                                 </div>
-                                <div class="cpt-empty-title">No Pricing Configured</div>
-                                <div class="cpt-empty-text">Add pricing for your sites to calculate fees on settlement reports.</div>
+                                <div class="cpt-empty-title">${currentTab === 'all' ? 'No Sites Configured' : 'No Sites Match Filter'}</div>
+                                <div class="cpt-empty-text">${currentTab === 'all' ? 'Add configuration for your sites to set fees and limits.' : 'Try selecting a different filter tab.'}</div>
                             </div>
                         </td>
                     </tr>
@@ -376,22 +502,29 @@
                 return;
             }
             
-            tbody.innerHTML = allPricing.map(p => `
+            tbody.innerHTML = filtered.map(p => {
+                const status = p.gateway_status || 'active';
+                const dailyLimit = parseFloat(p.daily_limit) || 0;
+                const maxTicket = parseFloat(p.max_ticket_size) || 0;
+                
+                return `
                 <tr>
                     <td>
                         <div class="cpt-cell-site">${p.site_name || p.site_id}</div>
+                        <div style="font-size: 11px; color: var(--cpt-text-tertiary); margin-top: 2px;">ID: ${p.site_id}</div>
                     </td>
                     <td>
                         <span class="cpt-cell-fee cpt-cell-percent">${parseFloat(p.percentage_fee || 0).toFixed(2)}%</span>
+                        <span style="color: var(--cpt-text-tertiary); font-size: 12px; margin-left: 4px;">+ ${formatCurrency(p.per_transaction_fee)}</span>
                     </td>
                     <td>
-                        <span class="cpt-cell-fee cpt-cell-dollar">${formatCurrency(p.per_transaction_fee)}</span>
+                        ${dailyLimit > 0 ? `<span class="cpt-cell-fee cpt-cell-limit">${formatCurrency(dailyLimit)}</span>` : '<span class="cpt-no-limit">No limit</span>'}
                     </td>
                     <td>
-                        <span class="cpt-cell-fee cpt-cell-dollar">${formatCurrency(p.refund_fee)}</span>
+                        ${maxTicket > 0 ? `<span class="cpt-cell-fee cpt-cell-limit">${formatCurrency(maxTicket)}</span>` : '<span class="cpt-no-limit">No limit</span>'}
                     </td>
                     <td>
-                        <span class="cpt-cell-fee cpt-cell-dollar">${formatCurrency(p.chargeback_fee)}</span>
+                        <span class="cpt-status cpt-status-${status}">${status}</span>
                     </td>
                     <td>
                         <div style="display: flex; gap: 8px;">
@@ -400,16 +533,19 @@
                         </div>
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
         
         function openAddModal() {
-            document.getElementById('modalTitle').textContent = 'Add Site Pricing';
+            document.getElementById('modalTitle').textContent = 'Add Site Configuration';
             document.getElementById('editId').value = '';
             document.getElementById('percentageFee').value = '';
             document.getElementById('perTransactionFee').value = '';
             document.getElementById('refundFee').value = '';
             document.getElementById('chargebackFee').value = '';
+            document.getElementById('dailyLimit').value = '';
+            document.getElementById('maxTicketSize').value = '';
+            document.getElementById('gatewayStatus').value = 'active';
             document.getElementById('pricingNotes').value = '';
             
             // Populate site dropdown with sites that don't have pricing yet
@@ -418,27 +554,30 @@
             
             const select = document.getElementById('siteSelect');
             select.innerHTML = '<option value="">Select a site...</option>' + 
-                availableSites.map(s => `<option value="${s.site_name}" data-site-id="${s.site_id}">${s.site_name}</option>`).join('');
+                availableSites.map(s => `<option value="${s.site_id}" data-name="${s.site_name}">${s.site_name}</option>`).join('');
             select.disabled = false;
             
             document.getElementById('pricingModal').classList.add('active');
         }
         
-        function editPricing(id) {
-            const pricing = allPricing.find(p => p.id === id);
-            if (!pricing) return;
+        async function editPricing(id) {
+            const p = allPricing.find(x => x.id === id);
+            if (!p) return;
             
-            document.getElementById('modalTitle').textContent = 'Edit Site Pricing';
-            document.getElementById('editId').value = pricing.id;
-            document.getElementById('percentageFee').value = pricing.percentage_fee || '';
-            document.getElementById('perTransactionFee').value = pricing.per_transaction_fee || '';
-            document.getElementById('refundFee').value = pricing.refund_fee || '';
-            document.getElementById('chargebackFee').value = pricing.chargeback_fee || '';
-            document.getElementById('pricingNotes').value = pricing.notes || '';
+            document.getElementById('modalTitle').textContent = 'Edit Site Configuration';
+            document.getElementById('editId').value = id;
+            document.getElementById('percentageFee').value = p.percentage_fee || '';
+            document.getElementById('perTransactionFee').value = p.per_transaction_fee || '';
+            document.getElementById('refundFee').value = p.refund_fee || '';
+            document.getElementById('chargebackFee').value = p.chargeback_fee || '';
+            document.getElementById('dailyLimit').value = p.daily_limit || '';
+            document.getElementById('maxTicketSize').value = p.max_ticket_size || '';
+            document.getElementById('gatewayStatus').value = p.gateway_status || 'active';
+            document.getElementById('pricingNotes').value = p.notes || '';
             
-            // Set site dropdown to current site (disabled for editing)
+            // Show site name but disable selection when editing
             const select = document.getElementById('siteSelect');
-            select.innerHTML = `<option value="${pricing.site_name}">${pricing.site_name}</option>`;
+            select.innerHTML = `<option value="${p.site_id}" data-name="${p.site_name}" selected>${p.site_name}</option>`;
             select.disabled = true;
             
             document.getElementById('pricingModal').classList.add('active');
@@ -450,18 +589,20 @@
         
         async function savePricing() {
             const editId = document.getElementById('editId').value;
-            const siteName = document.getElementById('siteSelect').value;
-            const siteOption = document.getElementById('siteSelect').selectedOptions[0];
-            const siteId = siteOption?.dataset?.siteId || siteName;
-            
+            const select = document.getElementById('siteSelect');
+            const siteId = select.value;
+            const siteName = select.options[select.selectedIndex]?.dataset?.name || '';
             const percentageFee = parseFloat(document.getElementById('percentageFee').value) || 0;
             const perTransactionFee = parseFloat(document.getElementById('perTransactionFee').value) || 0;
             const refundFee = parseFloat(document.getElementById('refundFee').value) || 0;
             const chargebackFee = parseFloat(document.getElementById('chargebackFee').value) || 0;
+            const dailyLimit = parseFloat(document.getElementById('dailyLimit').value) || 0;
+            const maxTicketSize = parseFloat(document.getElementById('maxTicketSize').value) || 0;
+            const gatewayStatus = document.getElementById('gatewayStatus').value;
             const notes = document.getElementById('pricingNotes').value.trim();
             
-            if (!siteName) {
-                alert('Please select a site.');
+            if (!editId && !siteId) {
+                alert('Please select a site');
                 return;
             }
             
@@ -479,6 +620,9 @@
                             per_transaction_fee: perTransactionFee,
                             refund_fee: refundFee,
                             chargeback_fee: chargebackFee,
+                            daily_limit: dailyLimit,
+                            max_ticket_size: maxTicketSize,
+                            gateway_status: gatewayStatus,
                             notes: notes || null,
                             updated_by: currentUserId
                         })
@@ -496,6 +640,9 @@
                             per_transaction_fee: perTransactionFee,
                             refund_fee: refundFee,
                             chargeback_fee: chargebackFee,
+                            daily_limit: dailyLimit,
+                            max_ticket_size: maxTicketSize,
+                            gateway_status: gatewayStatus,
                             notes: notes || null,
                             created_by: currentUserId
                         });
@@ -506,24 +653,25 @@
                 closeModal();
                 await loadPricing();
             } catch (e) {
-                console.error('Error saving pricing:', e);
-                alert('Error saving pricing: ' + e.message);
+                console.error('Error saving configuration:', e);
+                alert('Error saving configuration: ' + e.message);
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = 'Save Pricing';
+                btn.innerHTML = 'Save Configuration';
             }
         }
         
         async function deletePricing(id) {
-            if (!confirm('Delete this pricing configuration?')) return;
+            if (!confirm('Delete this site configuration? This will also remove the transaction limits.'))
+                return;
             
             try {
                 const { error } = await sb.from('site_pricing').delete().eq('id', id);
                 if (error) throw error;
                 await loadPricing();
             } catch (e) {
-                console.error('Error deleting pricing:', e);
-                alert('Error deleting pricing: ' + e.message);
+                console.error('Error deleting configuration:', e);
+                alert('Error deleting configuration: ' + e.message);
             }
         }
         

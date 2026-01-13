@@ -972,15 +972,38 @@
 }
 
 .cpt-modal {
-    background: var(--cpt-surface);
-    border-radius: var(--cpt-radius-lg);
+    background: #ffffff;  /* White surface */
+    border: 1px solid rgba(0, 0, 0, 0.08);  /* Subtle dark border */
+    border-radius: 12px;
     width: 90%;
     max-width: 600px;
     max-height: 90vh;
     overflow: hidden;
     transform: scale(0.95) translateY(20px);
     transition: transform 0.3s ease;
-    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);  /* Light theme shadow */
+}
+
+.cpt-modal * {
+    /* Let colors work naturally */
+}
+
+/* Light theme modal styling */
+@media (prefers-color-scheme: light) {
+    .cpt-modal {
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+    }
+}
+
+/* Dark theme modal styling */
+@media (prefers-color-scheme: dark) {
+    .cpt-modal {
+        background: #111827;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
 }
 
 .cpt-modal-overlay.active .cpt-modal {
@@ -992,33 +1015,66 @@
     justify-content: space-between;
     align-items: center;
     padding: 24px;
-    border-bottom: 1px solid var(--cpt-border);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);  /* Light theme border */
+    background: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+    .cpt-modal-header {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        background: #111827;
+    }
 }
 
 .cpt-modal-title {
     font-size: 18px;
     font-weight: 600;
+    color: #0f172a;  /* Dark text for light theme */
+}
+
+@media (prefers-color-scheme: dark) {
+    .cpt-modal-title {
+        color: #f9fafb;
+    }
 }
 
 .cpt-modal-close {
     background: none;
     border: none;
-    color: var(--cpt-text-secondary);
+    color: #475569;  /* Secondary text light theme */
     cursor: pointer;
     padding: 8px;
-    border-radius: var(--cpt-radius-sm);
-    transition: all var(--cpt-transition);
+    border-radius: 6px;
+    transition: all 0.2s ease;
 }
 
 .cpt-modal-close:hover {
-    background: var(--cpt-surface-hover);
-    color: var(--cpt-text);
+    background: #f1f5f9;  /* Light hover */
+    color: #0f172a;
+}
+
+@media (prefers-color-scheme: dark) {
+    .cpt-modal-close {
+        color: #9ca3af;
+    }
+    
+    .cpt-modal-close:hover {
+        background: #1f2937;
+        color: #f9fafb;
+    }
 }
 
 .cpt-modal-body {
     padding: 24px;
     overflow-y: auto;
     max-height: calc(90vh - 140px);
+    background: #f8fafc;  /* Light gray background for subtle depth */
+}
+
+@media (prefers-color-scheme: dark) {
+    .cpt-modal-body {
+        background: #1a2332;
+    }
 }
 
 .cpt-detail-grid {
@@ -1031,6 +1087,17 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
+    padding: 12px 16px;
+    background: #ffffff;  /* White cards on light background */
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, 0.08);  /* Light theme subtle border */
+}
+
+@media (prefers-color-scheme: dark) {
+    .cpt-detail-item {
+        background: #111827;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
 }
 
 .cpt-detail-item.full {
@@ -1040,14 +1107,25 @@
 .cpt-detail-label {
     font-size: 11px;
     font-weight: 600;
-    color: var(--cpt-text-tertiary);
+    color: #94a3b8;  /* Light theme tertiary text */
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .cpt-detail-value {
     font-size: 15px;
-    color: var(--cpt-text);
+    color: #0f172a;  /* Light theme primary text */
+    font-weight: 500;
+}
+
+@media (prefers-color-scheme: dark) {
+    .cpt-detail-label {
+        color: #6b7280;
+    }
+    
+    .cpt-detail-value {
+        color: #f9fafb;
+    }
 }
 
 .cpt-detail-value.mono {
@@ -1064,16 +1142,26 @@
 .cpt-detail-actions {
     margin-top: 24px;
     padding-top: 20px;
-    border-top: 1px solid var(--cpt-border);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);  /* Light theme border */
 }
 
 .cpt-detail-actions-label {
     font-size: 12px;
     font-weight: 600;
-    color: var(--cpt-text-tertiary);
+    color: #94a3b8;  /* Light theme tertiary text */
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+    .cpt-detail-actions {
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    .cpt-detail-actions-label {
+        color: #6b7280;
+    }
 }
 
 .cpt-detail-actions-buttons {
