@@ -1,13 +1,18 @@
-// Edge Function: stripe-immediate-sync
+// Edge Function: stripe-immediate-sync (FIXED VERSION)
 // Syncs all Stripe accounts WITHOUT delays - for manual testing
 // Use stripe-scheduled-sync for automated cron jobs
+//
+// FIXES:
+// - Now properly checks active_until field to prevent syncing expired accounts
+// - Improved logging for debugging account discovery
 //
 // ACCOUNT DISCOVERY:
 // Reads from `payment_accounts` table where payment_provider = 'stripe'
 // Uses the `secret_key_name` field to look up the API key from environment
 // Uses the `account_id` field from the database record
-//
-// This matches how admin.html adds new accounts!
+// Only syncs accounts that are:
+//   1. is_active = true
+//   2. active_until IS NULL (no expiration) OR active_until >= NOW (not expired)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import Stripe from "https://esm.sh/stripe@14.10.0?target=deno";
@@ -26,11 +31,11 @@ serve(async (req)=>{
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    // Discover accounts from database
+    // Discover accounts from database (with active_until check)
     const accounts = await discoverStripeAccounts(supabase);
-    console.log(`Discovered ${accounts.length} Stripe account(s):`, accounts.map((a)=>a.id).join(', '));
+    console.log(`Discovered ${accounts.length} active Stripe account(s):`, accounts.map((a)=>a.id).join(', '));
     if (accounts.length === 0) {
-      throw new Error('No Stripe accounts configured. Add accounts via the Admin page.');
+      throw new Error('No active Stripe accounts configured. Add accounts via the Admin page.');
     }
     // Sync window: last 7 days
     const sevenDaysAgo = Math.floor((Date.now() - 7 * 24 * 60 * 60 * 1000) / 1000);
@@ -105,20 +110,28 @@ serve(async (req)=>{
 /**
  * Discover Stripe accounts from the payment_accounts database table
  * 
+ * FIXED: Now properly checks active_until field to prevent syncing expired accounts
+ * 
  * This matches how admin.html adds accounts:
  * - account_id: stored in DB
  * - secret_key_name: name of the environment secret (e.g., "STRIPE_ACCOUNT_1_KEY")
  * - API key: looked up from environment using secret_key_name
+ * - active_until: optional expiration date - accounts past this date won't sync
  */ async function discoverStripeAccounts(supabase) {
   const accounts = [];
+  // Get current timestamp for active_until check
+  const now = new Date().toISOString();
   // Query payment_accounts table for active Stripe accounts
-  const { data: dbAccounts, error } = await supabase.from('payment_accounts').select('account_id, account_name, secret_key_name, is_active').eq('payment_provider', 'stripe').eq('is_active', true);
+  // Only include accounts that are:
+  // 1. Active (is_active = true)
+  // 2. Either have no expiration (active_until IS NULL) OR not expired yet (active_until >= now)
+  const { data: dbAccounts, error } = await supabase.from('payment_accounts').select('account_id, account_name, secret_key_name, is_active, active_until').eq('payment_provider', 'stripe').eq('is_active', true).or(`active_until.is.null,active_until.gte.${now}`);
   if (error) {
     console.error('Error querying payment_accounts:', error);
     throw new Error(`Failed to query payment_accounts: ${error.message}`);
   }
   if (!dbAccounts || dbAccounts.length === 0) {
-    console.log('No Stripe accounts found in payment_accounts table');
+    console.log('No active Stripe accounts found in payment_accounts table');
     // Fallback: check for legacy STRIPE_SECRET_KEY
     const legacyKey = Deno.env.get('STRIPE_SECRET_KEY');
     if (legacyKey) {
@@ -131,20 +144,31 @@ serve(async (req)=>{
     }
     return accounts;
   }
-  console.log(`Found ${dbAccounts.length} Stripe account(s) in database`);
+  console.log(`Found ${dbAccounts.length} active Stripe account(s) in database`);
   for (const dbAccount of dbAccounts){
-    const { account_id, account_name, secret_key_name } = dbAccount;
+    const { account_id, account_name, secret_key_name, active_until } = dbAccount;
+    // Log expiration status for debugging
+    if (active_until) {
+      const expirationDate = new Date(active_until).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+      console.log(`✓ Account ${account_id} is active (expires: ${expirationDate})`);
+    } else {
+      console.log(`✓ Account ${account_id} is active (no expiration)`);
+    }
     if (!secret_key_name) {
-      console.warn(`Account ${account_id} has no secret_key_name configured - skipping`);
+      console.warn(`⚠ Account ${account_id} has no secret_key_name configured - skipping`);
       continue;
     }
     // Look up the API key from environment using the secret_key_name
     const apiKey = Deno.env.get(secret_key_name);
     if (!apiKey) {
-      console.warn(`Secret ${secret_key_name} not found for account ${account_id} - skipping`);
+      console.warn(`⚠ Secret ${secret_key_name} not found in environment for account ${account_id} - skipping`);
       continue;
     }
-    console.log(`✓ Found account: ${account_id} (${account_name}) using secret ${secret_key_name}`);
+    console.log(`✓ Loaded API key for ${account_id} (${account_name}) from ${secret_key_name}`);
     accounts.push({
       apiKey: apiKey,
       id: account_id,

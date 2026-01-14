@@ -319,7 +319,8 @@
         var volumeChart = null;
         var statusChart = null;
         var chartRange = '7d';
-        var currentTimezone = localStorage.getItem('cpt_timezone') || 'America/New_York';
+        var currentTimezone = 'America/Los_Angeles'; // Always default to Pacific Time on load
+        var transactionsByDate = {}; // Pre-grouped by date for performance
         
         // CPT stores times in PST but incorrectly labels them as UTC (+00:00)
         // We need to re-interpret the time as PST before converting to display timezone
@@ -379,11 +380,83 @@
             return (utcDate - tzDate) / (60 * 1000);
         }
         
-        // Change timezone and re-render
+        // Get "today" start in the selected timezone
+        function getTodayRangeInTimezone() {
+            const now = new Date();
+            
+            // Get current date parts in the selected timezone
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: currentTimezone,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            const parts = formatter.formatToParts(now);
+            const year = parseInt(parts.find(p => p.type === 'year').value);
+            const month = parseInt(parts.find(p => p.type === 'month').value) - 1;
+            const day = parseInt(parts.find(p => p.type === 'day').value);
+            
+            const todayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            return { todayStr, year, month, day };
+        }
+
+        // Convert a transaction date to date string in the selected timezone
+        function getDateInTimezone(dateStr) {
+            // Parse the stored date (which is PST but labeled as UTC)
+            const match = dateStr.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})/);
+            if (!match) return null;
+            
+            const localTimeStr = match[1];
+            const utcDate = new Date(localTimeStr + 'Z');
+            const sourceOffset = getTimezoneOffset(SOURCE_TIMEZONE, utcDate);
+            const trueUtcMs = utcDate.getTime() + (sourceOffset * 60 * 1000);
+            const trueUtcDate = new Date(trueUtcMs);
+            
+            // Format in selected timezone to get the date
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: currentTimezone,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            const parts = formatter.formatToParts(trueUtcDate);
+            return `${parts.find(p => p.type === 'year').value}-${parts.find(p => p.type === 'month').value}-${parts.find(p => p.type === 'day').value}`;
+        }
+
+        // Pre-group transactions by date (only last 90 days for performance)
+        function buildTransactionsByDate() {
+            transactionsByDate = {};
+            
+            // Calculate 90 days ago in selected timezone
+            const { year, month, day } = getTodayRangeInTimezone();
+            const cutoffDate = new Date(year, month, day - 90);
+            const cutoffStr = `${cutoffDate.getFullYear()}-${String(cutoffDate.getMonth() + 1).padStart(2, '0')}-${String(cutoffDate.getDate()).padStart(2, '0')}`;
+            
+            for (const t of siteFilteredTransactions) {
+                const dateStr = getDateInTimezone(t.transaction_date);
+                if (!dateStr || dateStr < cutoffStr) continue; // Skip old transactions
+                
+                if (!transactionsByDate[dateStr]) {
+                    transactionsByDate[dateStr] = { complete: 0, pending: 0, volume: 0 };
+                }
+                if (t.status === 'complete') {
+                    transactionsByDate[dateStr].complete++;
+                    transactionsByDate[dateStr].volume += parseFloat(t.cust_amount || 0);
+                } else {
+                    transactionsByDate[dateStr].pending++;
+                }
+            }
+        }
+
+        // Change timezone and re-render everything
         function changeTimezone(tz) {
             currentTimezone = tz;
-            localStorage.setItem('cpt_timezone', tz);
-            renderTable(filteredTransactions); // Re-render table with new timezone
+            // Don't save to localStorage - always reset to Pacific on reload
+            buildTransactionsByDate();
+            updateTodayInsights();
+            initCharts();
+            renderTable(filteredTransactions);
         }
 
         // Initialize
@@ -576,6 +649,9 @@ async function loadData() {
             // Update site indicator
             document.getElementById('siteTransactionCount').textContent = siteFilteredTransactions.length.toLocaleString();
 
+            // Pre-group transactions by date for chart performance
+            buildTransactionsByDate();
+
             // Update all components with site-filtered data
             updateStats();
             initCharts();
@@ -672,24 +748,14 @@ async function loadData() {
             document.getElementById('countPending').textContent = pending;
         }
 
-        // Update Today's Insights
+        // Update Today's Insights (using selected timezone)
         function updateTodayInsights() {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            const { todayStr } = getTodayRangeInTimezone();
+            const today = transactionsByDate[todayStr] || { complete: 0, pending: 0, volume: 0 };
 
-            const todayTransactions = siteFilteredTransactions.filter(t => {
-                const txDate = new Date(t.transaction_date);
-                return txDate >= today;
-            });
-
-            const todayCompleteTransactions = todayTransactions.filter(t => t.status === 'complete');
-            const todayComplete = todayCompleteTransactions.length;
-            const todayPending = todayTransactions.filter(t => t.status === 'incomplete').length;
-            const todayCaptured = todayCompleteTransactions.reduce((sum, t) => sum + parseFloat(t.cust_amount || 0), 0);
-
-            document.getElementById('insightTodayComplete').textContent = todayComplete.toLocaleString();
-            document.getElementById('insightTodayPending').textContent = todayPending.toLocaleString();
-            document.getElementById('insightTodayVolume').textContent = formatCurrency(todayCaptured);
+            document.getElementById('insightTodayComplete').textContent = today.complete.toLocaleString();
+            document.getElementById('insightTodayPending').textContent = today.pending.toLocaleString();
+            document.getElementById('insightTodayVolume').textContent = formatCurrency(today.volume);
         }
 
         // Initialize Charts
@@ -783,29 +849,24 @@ async function loadData() {
             updateVolumeChart();
         }
 
-        // Update Volume Chart
+        // Update Volume Chart (using selected timezone)
         function updateVolumeChart() {
             const days = chartRange === '7d' ? 7 : chartRange === '30d' ? 30 : 90;
             const labels = [];
             const completeData = [];
             const pendingData = [];
 
+            // Get today's date in selected timezone
+            const { year, month, day } = getTodayRangeInTimezone();
+
             for (let i = days - 1; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                date.setHours(0, 0, 0, 0);
-                
-                const nextDate = new Date(date);
-                nextDate.setDate(nextDate.getDate() + 1);
+                const targetDate = new Date(year, month, day - i);
+                const targetDateStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+                const dayData = transactionsByDate[targetDateStr] || { complete: 0, pending: 0 };
 
-                const dayTransactions = siteFilteredTransactions.filter(t => {
-                    const txDate = new Date(t.transaction_date);
-                    return txDate >= date && txDate < nextDate;
-                });
-
-                labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-                completeData.push(dayTransactions.filter(t => t.status === 'complete').length);
-                pendingData.push(dayTransactions.filter(t => t.status === 'incomplete').length);
+                labels.push(targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                completeData.push(dayData.complete);
+                pendingData.push(dayData.pending);
             }
 
             volumeChart.data.labels = labels;
