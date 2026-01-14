@@ -513,21 +513,34 @@
             });
         }
 
-        // Load Data
-        async function loadData() {
-            try {
-                const { data: transactions, error } = await sb
-                    .from('cpt_data')
-                    .select('*')
-                    .order('transaction_date', { ascending: false })
-                    .limit(5000);
-
-                if (error) throw error;
-
-                allTransactions = transactions.map(t => ({
-                    ...t,
-                    status: t.trans_type === 'complete' ? 'complete' : 'incomplete'
-                }));
+       // Load Data
+async function loadData() {
+    try {
+        // Get list of active site_ids
+        const { data: activeSites } = await sb
+            .from('cpt_site_accounts')
+            .select('site_id')
+            .eq('is_active', true);
+        
+        const activeSiteIds = (activeSites || []).map(s => s.site_id);
+        
+        // Fetch transactions, filtering by active sites
+        let query = sb
+            .from('cpt_data')
+            .select('*')
+            .order('transaction_date', { ascending: false })
+            .limit(5000);
+        
+        if (activeSiteIds.length > 0) {
+            query = query.in('site_id', activeSiteIds);
+        }
+        
+        const { data: transactions, error } = await query;
+        if (error) throw error;
+        allTransactions = transactions.map(t => ({
+            ...t,
+            status: t.trans_type === 'complete' ? 'complete' : 'incomplete'
+        }));
 
                 // Populate global site filter dropdown
                 const sites = [...new Set(allTransactions.map(t => t.site_name).filter(Boolean))].sort();
@@ -1529,8 +1542,8 @@
             return new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: 'USD',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
             }).format(amount);
         }
 
