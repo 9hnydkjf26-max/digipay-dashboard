@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plugin Admin - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Shared styles -->
+    <link rel="stylesheet" href="sidebar.css">
+    <link rel="stylesheet" href="router-transitions.css">
+    
+    <!-- Initialize Supabase globally (MUST be before sidebar.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        if (!window.supabaseClient) {
+            window.supabaseClient = window.supabase.createClient(
+                'https://hzdybwclwqkcobpwxzoo.supabase.co',
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh6ZHlid2Nsd3FrY29icHd4em9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxNzU4ODQsImV4cCI6MjA4MTc1MTg4NH0.e0mSI7Qp9sRaclOwP61guBNtwTVHYXc-TtVaUON67QU'
+            );
+        }
+    </script>
+    
+    <!-- Shared Sidebar Component (MUST be after Supabase) -->
+    <script src="sidebar.js"></script>
+    <script src="router.js"></script>
+    
+    <style>
+        :root {
+            --cpt-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --cpt-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', monospace;
+            --cpt-bg: #0a0a0f;
+            --cpt-surface: #12121a;
+            --cpt-surface-hover: #1a1a24;
+            --cpt-surface-elevated: #1e1e28;
+            --cpt-border: #2a2a3a;
+            --cpt-border-light: #3a3a4a;
+            --cpt-text: #f0f0f5;
+            --cpt-text-secondary: #a0a0b0;
+            --cpt-text-tertiary: #707080;
+            --cpt-primary: #6366f1;
+            --cpt-primary-hover: #5558e3;
+            --cpt-primary-glow: rgba(99, 102, 241, 0.15);
+            --cpt-success: #22c55e;
+            --cpt-success-bg: rgba(34, 197, 94, 0.1);
+            --cpt-warning: #eab308;
+            --cpt-warning-bg: rgba(234, 179, 8, 0.1);
+            --cpt-error: #ef4444;
+            --cpt-error-bg: rgba(239, 68, 68, 0.1);
+            --cpt-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+            --cpt-radius: 12px;
+            --cpt-radius-sm: 8px;
+            --cpt-transition: 0.15s ease;
+        }
+        
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0;
+            font-family: var(--cpt-font);
+            background: var(--cpt-bg);
+            color: var(--cpt-text);
+            min-height: 100vh;
+        }
+        
+        .hidden { display: none !important; }
+        
+        .main-wrapper {
+            margin-left: var(--sidebar-width, 240px);
+            min-height: 100vh;
+            background: var(--cpt-bg);
+        }
+        
+        @media (max-width: 768px) {
+            .main-wrapper { margin-left: 0; }
+        }
+        
+        .cpt-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px 40px;
+        }
+        
+        .cpt-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .cpt-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0;
+            color: var(--cpt-text);
+        }
+        
+        .cpt-header-subtitle {
+            font-size: 14px;
+            color: var(--cpt-text-secondary);
+            margin-top: 6px;
+        }
+        
+        /* Site Selector */
+        .cpt-site-selector-card {
+            background: var(--cpt-surface);
+            border: 1px solid var(--cpt-border);
+            border-radius: var(--cpt-radius);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .cpt-site-selector-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--cpt-text);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .cpt-site-selector-title svg {
+            width: 18px;
+            height: 18px;
+            color: var(--cpt-primary);
+        }
+        
+        .cpt-site-select {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 16px;
+            background: var(--cpt-surface-hover);
+            border: 1px solid var(--cpt-border);
+            border-radius: var(--cpt-radius-sm);
+            color: var(--cpt-text);
+            font-size: 14px;
+            font-family: var(--cpt-font);
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+        }
+        
+        .cpt-site-select:focus {
+            outline: none;
+            border-color: var(--cpt-primary);
+            box-shadow: 0 0 0 3px var(--cpt-primary-glow);
+        }
+        
+        /* Merchant View Card */
+        .cpt-merchant-view {
+            background: var(--cpt-surface);
+            border: 1px solid var(--cpt-border);
+            border-radius: var(--cpt-radius);
+            overflow: hidden;
+        }
+        
+        .cpt-merchant-header {
+            background: linear-gradient(135deg, var(--cpt-primary) 0%, #8b5cf6 100%);
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .cpt-merchant-icon {
+            width: 56px;
+            height: 56px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .cpt-merchant-icon svg {
+            width: 28px;
+            height: 28px;
+            color: white;
+        }
+        
+        .cpt-merchant-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .cpt-merchant-subtitle {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 2px;
+        }
+        
+        .cpt-merchant-body {
+            padding: 24px;
+        }
+        
+        /* Plugin Settings Grid */
+        .cpt-settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .cpt-setting-card {
+            background: var(--cpt-surface-hover);
+            border: 1px solid var(--cpt-border);
+            border-radius: var(--cpt-radius-sm);
+            padding: 20px;
+        }
+        
+        .cpt-setting-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--cpt-text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .cpt-setting-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--cpt-text);
+        }
+        
+        .cpt-setting-value.success { color: var(--cpt-success); }
+        .cpt-setting-value.warning { color: var(--cpt-warning); }
+        .cpt-setting-value.error { color: var(--cpt-error); }
+        
+        .cpt-setting-hint {
+            font-size: 12px;
+            color: var(--cpt-text-tertiary);
+            margin-top: 6px;
+        }
+        
+        /* Status Badge */
+        .cpt-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+        
+        .cpt-status-active {
+            background: var(--cpt-success-bg);
+            color: var(--cpt-success);
+        }
+        
+        .cpt-status-suspended {
+            background: var(--cpt-error-bg);
+            color: var(--cpt-error);
+        }
+        
+        .cpt-status-disabled {
+            background: var(--cpt-warning-bg);
+            color: var(--cpt-warning);
+        }
+        
+        .cpt-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+        
+        /* Section Title */
+        .cpt-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--cpt-text);
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--cpt-border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .cpt-section-title svg {
+            width: 20px;
+            height: 20px;
+            color: var(--cpt-primary);
+        }
+        
+        /* API Response Card */
+        .cpt-api-response {
+            background: var(--cpt-surface);
+            border: 1px solid var(--cpt-border);
+            border-radius: var(--cpt-radius);
+            margin-top: 24px;
+            overflow: hidden;
+        }
+        
+        .cpt-api-header {
+            padding: 16px 20px;
+            background: var(--cpt-surface-hover);
+            border-bottom: 1px solid var(--cpt-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .cpt-api-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--cpt-text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .cpt-api-title code {
+            font-family: var(--cpt-mono);
+            font-size: 12px;
+            color: var(--cpt-text-secondary);
+            background: var(--cpt-surface);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        .cpt-api-body {
+            padding: 20px;
+        }
+        
+        .cpt-api-body pre {
+            margin: 0;
+            font-family: var(--cpt-mono);
+            font-size: 13px;
+            color: var(--cpt-text-secondary);
+            background: var(--cpt-surface-hover);
+            padding: 16px;
+            border-radius: var(--cpt-radius-sm);
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        
+        .cpt-refresh-btn {
+            padding: 8px 16px;
+            background: var(--cpt-primary);
+            border: none;
+            border-radius: var(--cpt-radius-sm);
+            color: white;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all var(--cpt-transition);
+        }
+        
+        .cpt-refresh-btn:hover {
+            background: var(--cpt-primary-hover);
+        }
+        
+        .cpt-refresh-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .cpt-refresh-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+        
+        /* Loading State */
+        .cpt-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            color: var(--cpt-text-secondary);
+        }
+        
+        .cpt-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--cpt-border);
+            border-top-color: var(--cpt-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Empty State */
+        .cpt-empty {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        
+        .cpt-empty-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--cpt-surface-hover);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        
+        .cpt-empty-icon svg {
+            width: 32px;
+            height: 32px;
+            color: var(--cpt-text-tertiary);
+        }
+        
+        .cpt-empty-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--cpt-text);
+            margin-bottom: 8px;
+        }
+        
+        .cpt-empty-text {
+            font-size: 14px;
+            color: var(--cpt-text-secondary);
+        }
+        
+        /* Fees Grid */
+        .cpt-fees-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 20px;
+        }
+        
+        .cpt-fee-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--cpt-surface-hover);
+            border-radius: var(--cpt-radius-sm);
+        }
+        
+        .cpt-fee-label {
+            font-size: 13px;
+            color: var(--cpt-text-secondary);
+        }
+        
+        .cpt-fee-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--cpt-text);
+            font-family: var(--cpt-mono);
+        }
+        
+        /* Info Banner */
+        .cpt-info-banner {
+            background: var(--cpt-primary-glow);
+            border: 1px solid var(--cpt-primary);
+            border-radius: var(--cpt-radius-sm);
+            padding: 16px 20px;
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .cpt-info-banner svg {
+            width: 20px;
+            height: 20px;
+            color: var(--cpt-primary);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        
+        .cpt-info-banner-content {
+            flex: 1;
+        }
+        
+        .cpt-info-banner-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--cpt-text);
+            margin-bottom: 4px;
+        }
+        
+        .cpt-info-banner-text {
+            font-size: 13px;
+            color: var(--cpt-text-secondary);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .cpt-container { padding: 20px 16px; }
+            .cpt-settings-grid { grid-template-columns: 1fr; }
+            .cpt-fees-grid { grid-template-columns: 1fr; }
+            .cpt-merchant-header { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Authenticated Content -->
+    <div id="authenticatedContent" class="hidden">
+        <!-- Sidebar will be inserted by SidebarComponent -->
+        
+        <!-- Main Content -->
+        <div class="main-wrapper">
+            <div class="cpt-container">
+                <div class="cpt-header">
+                    <div class="cpt-header-left">
+                        <h1>Plugin Admin</h1>
+                        <p class="cpt-header-subtitle">View plugin settings exactly as merchants see them in WooCommerce</p>
+                    </div>
+                </div>
+                
+                <!-- Info Banner -->
+                <div class="cpt-info-banner">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div class="cpt-info-banner-content">
+                        <div class="cpt-info-banner-title">Merchant Plugin View</div>
+                        <div class="cpt-info-banner-text">
+                            Select a site to see the exact configuration their Digipay plugin receives from the API.
+                            The plugin caches these values for 5 minutes.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Site Selector -->
+                <div class="cpt-site-selector-card">
+                    <div class="cpt-site-selector-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        Select Site
+                    </div>
+                    <select class="cpt-site-select" id="siteSelector">
+                        <option value="">-- Select a site to view --</option>
+                    </select>
+                </div>
+                
+                <!-- Plugin View Content -->
+                <div id="pluginContent">
+                    <div class="cpt-empty">
+                        <div class="cpt-empty-icon">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        </div>
+                        <div class="cpt-empty-title">Select a Site</div>
+                        <div class="cpt-empty-text">Choose a site ID from the dropdown above to view its plugin configuration</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // PAGE-SPECIFIC CONFIGURATION
+        // ========================================
+        var SUPABASE_URL = 'https://hzdybwclwqkcobpwxzoo.supabase.co';
+        var supabase = window.supabaseClient;
+        var allSites = [];
+        var currentSiteData = null;
+        
+        function getSupabase() {
+            return window.supabaseClient;
+        }
+        
+        // ========================================
+        // INITIALIZATION
+        // ========================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            var supabase = getSupabase();
+            var session = (await supabase.auth.getSession()).data.session;
+            
+            if (!session) {
+                window.location.href = 'login.html?redirect=plugin-admin.html';
+                return;
+            }
+            
+            // Initialize sidebar
+            SidebarComponent.init({ supabase: window.supabaseClient });
+            
+            // Initialize router
+            if (typeof Router !== 'undefined' && !Router.isReady()) {
+                Router.init({
+                    contentSelector: '.main-wrapper',
+                    transitionDuration: 100
+                });
+            }
+            
+            updateSidebarUser(session.user.email);
+            document.getElementById('authenticatedContent').classList.remove('hidden');
+            
+            await initPage();
+        });
+        
+        // ========================================
+        // PAGE INIT
+        // ========================================
+        async function initPage() {
+            supabase = window.supabaseClient;
+            await loadSites();
+            setupEventListeners();
+        }
+        
+        window.initPage = initPage;
+        
+        // ========================================
+        // LOAD SITES
+        // ========================================
+        async function loadSites() {
+            try {
+                // Get all sites from cpt_site_accounts
+                var { data: siteAccounts, error: accountsError } = await supabase
+                    .from('cpt_site_accounts')
+                    .select('site_id, site_name, cp_name, is_active')
+                    .order('site_name', { ascending: true });
+                
+                if (accountsError) {
+                    console.error('Error loading site accounts:', accountsError);
+                }
+                
+                // Get all site pricing configurations
+                var { data: sitePricing, error: pricingError } = await supabase
+                    .from('site_pricing')
+                    .select('*');
+                
+                if (pricingError) {
+                    console.error('Error loading site pricing:', pricingError);
+                }
+                
+                // Merge data - create a map of all sites
+                var sitesMap = new Map();
+                
+                // Add site accounts
+                if (siteAccounts) {
+                    siteAccounts.forEach(site => {
+                        sitesMap.set(site.site_id, {
+                            site_id: site.site_id,
+                            site_name: site.site_name || site.site_id,
+                            cp_name: site.cp_name,
+                            is_active: site.is_active,
+                            pricing: null
+                        });
+                    });
+                }
+                
+                // Add/merge pricing data
+                if (sitePricing) {
+                    sitePricing.forEach(pricing => {
+                        if (sitesMap.has(pricing.site_id)) {
+                            sitesMap.get(pricing.site_id).pricing = pricing;
+                        } else {
+                            sitesMap.set(pricing.site_id, {
+                                site_id: pricing.site_id,
+                                site_name: pricing.site_name || pricing.site_id,
+                                cp_name: null,
+                                is_active: true,
+                                pricing: pricing
+                            });
+                        }
+                    });
+                }
+                
+                allSites = Array.from(sitesMap.values()).sort((a, b) => 
+                    (a.site_name || '').localeCompare(b.site_name || '')
+                );
+                
+                // Populate dropdown
+                var selector = document.getElementById('siteSelector');
+                selector.innerHTML = '<option value="">-- Select a site to view --</option>';
+                
+                allSites.forEach(site => {
+                    var option = document.createElement('option');
+                    option.value = site.site_id;
+                    option.textContent = site.site_name + ' (ID: ' + site.site_id + ')';
+                    if (!site.is_active) {
+                        option.textContent += ' [Inactive]';
+                    }
+                    selector.appendChild(option);
+                });
+                
+            } catch (error) {
+                console.error('Error loading sites:', error);
+            }
+        }
+        
+        // ========================================
+        // EVENT LISTENERS
+        // ========================================
+        function setupEventListeners() {
+            document.getElementById('siteSelector').addEventListener('change', async function() {
+                var siteId = this.value;
+                if (siteId) {
+                    await loadSiteData(siteId);
+                } else {
+                    showEmptyState();
+                }
+            });
+        }
+        
+        // ========================================
+        // LOAD SITE DATA
+        // ========================================
+        async function loadSiteData(siteId) {
+            var contentDiv = document.getElementById('pluginContent');
+            
+            // Show loading
+            contentDiv.innerHTML = '<div class="cpt-loading"><div class="cpt-spinner"></div><div>Loading plugin configuration...</div></div>';
+            
+            try {
+                // Find site in our cached data
+                var site = allSites.find(s => s.site_id === siteId);
+                
+                // Fetch health report data from plugin_site_health table
+                var { data: healthData, error: healthError } = await supabase
+                    .from('plugin_site_health')
+                    .select('*')
+                    .eq('site_id', siteId)
+                    .single();
+                
+                if (healthError && healthError.code !== 'PGRST116') {
+                    console.error('Error loading health data:', healthError);
+                }
+                
+                // Also fetch live API response
+                var apiResponse = await fetchSiteLimits(siteId);
+                
+                currentSiteData = {
+                    site: site,
+                    healthData: healthData,
+                    apiResponse: apiResponse
+                };
+                
+                renderPluginView(site, healthData, apiResponse);
+                
+            } catch (error) {
+                console.error('Error loading site data:', error);
+                contentDiv.innerHTML = '<div class="cpt-empty"><div class="cpt-empty-title">Error Loading Data</div><div class="cpt-empty-text">' + error.message + '</div></div>';
+            }
+        }
+        
+        // ========================================
+        // FETCH SITE LIMITS (Live API)
+        // ========================================
+        async function fetchSiteLimits(siteId) {
+            try {
+                var response = await fetch(SUPABASE_URL + '/functions/v1/plugin-site-limits?site_id=' + encodeURIComponent(siteId));
+                return await response.json();
+            } catch (error) {
+                console.error('API fetch error:', error);
+                return { success: false, error: error.message };
+            }
+        }
+        
+        // ========================================
+        // RENDER PLUGIN VIEW
+        // ========================================
+        function renderPluginView(site, healthData, apiResponse) {
+            var contentDiv = document.getElementById('pluginContent');
+            var pricing = site ? site.pricing : null;
+            
+            // Determine status
+            var status = 'active';
+            var statusLabel = 'Active';
+            if (pricing) {
+                status = pricing.gateway_status || 'active';
+                statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+            } else if (apiResponse && apiResponse.status) {
+                status = apiResponse.status;
+                statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+            }
+            
+            // Format currency
+            function formatCurrency(amount) {
+                return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(amount || 0);
+            }
+            
+            // Format date
+            function formatDate(dateStr) {
+                if (!dateStr) return 'Never';
+                var date = new Date(dateStr);
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+            }
+            
+            // Time ago helper
+            function timeAgo(dateStr) {
+                if (!dateStr) return 'Never';
+                var date = new Date(dateStr);
+                var now = new Date();
+                var diffMs = now - date;
+                var diffMins = Math.floor(diffMs / 60000);
+                var diffHours = Math.floor(diffMs / 3600000);
+                var diffDays = Math.floor(diffMs / 86400000);
+                
+                if (diffMins < 1) return 'Just now';
+                if (diffMins < 60) return diffMins + ' min ago';
+                if (diffHours < 24) return diffHours + ' hour' + (diffHours > 1 ? 's' : '') + ' ago';
+                return diffDays + ' day' + (diffDays > 1 ? 's' : '') + ' ago';
+            }
+            
+            // Get limits - prefer API response as that's what plugin actually sees
+            var dailyLimit = apiResponse && apiResponse.success ? apiResponse.daily_limit : (pricing ? pricing.daily_limit : 0);
+            var maxTicket = apiResponse && apiResponse.success ? apiResponse.max_ticket_size : (pricing ? pricing.max_ticket_size : 0);
+            
+            var html = '<div class="cpt-merchant-view">';
+            
+            // Header
+            html += '<div class="cpt-merchant-header">';
+            html += '<div class="cpt-merchant-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg></div>';
+            html += '<div>';
+            html += '<div class="cpt-merchant-title">' + (healthData && healthData.site_name ? healthData.site_name : (site ? site.site_name : 'Unknown Site')) + '</div>';
+            html += '<div class="cpt-merchant-subtitle">Site ID: ' + (site ? site.site_id : 'N/A');
+            if (healthData && healthData.site_url) {
+                html += ' • <a href="' + healthData.site_url + '" target="_blank" style="color: rgba(255,255,255,0.9);">' + healthData.site_url + '</a>';
+            }
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+            
+            html += '<div class="cpt-merchant-body">';
+            
+            // ========== HEALTH REPORT SECTION ==========
+            if (healthData) {
+                html += '<div class="cpt-section-title"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Plugin Health Report <span style="font-weight: 400; font-size: 12px; color: var(--cpt-text-tertiary); margin-left: 8px;">Last reported: ' + timeAgo(healthData.updated_at) + '</span></div>';
+                
+                // Diagnostic Issues Alert
+                var issues = healthData.diagnostic_issues || [];
+                if (typeof issues === 'string') {
+                    try { issues = JSON.parse(issues); } catch(e) { issues = []; }
+                }
+                
+                if (issues.length > 0) {
+                    html += '<div style="background: var(--cpt-error-bg); border: 1px solid var(--cpt-error); border-radius: var(--cpt-radius-sm); padding: 16px; margin-bottom: 20px;">';
+                    html += '<div style="font-weight: 600; color: var(--cpt-error); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;"><svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>Detected Issues (' + issues.length + ')</div>';
+                    html += '<div style="display: flex; flex-wrap: wrap; gap: 8px;">';
+                    issues.forEach(function(issue) {
+                        var issueInfo = getIssueInfo(issue);
+                        html += '<span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(239, 68, 68, 0.2); border-radius: 100px; font-size: 12px; font-weight: 500; color: var(--cpt-error);">' + issueInfo.icon + ' ' + issueInfo.label + '</span>';
+                    });
+                    html += '</div>';
+                    if (healthData.diagnostic_details) {
+                        html += '<div style="margin-top: 12px; font-size: 13px; color: var(--cpt-text-secondary);">' + healthData.diagnostic_details + '</div>';
+                    }
+                    html += '</div>';
+                }
+                
+                // Environment Diagnostics Grid
+                html += '<div class="cpt-settings-grid" style="margin-bottom: 24px;">';
+                
+                // SSL Status
+                html += '<div class="cpt-setting-card">';
+                html += '<div class="cpt-setting-label">HTTPS / SSL</div>';
+                if (healthData.has_ssl === true) {
+                    html += '<div class="cpt-setting-value success" style="font-size: 18px;">✓ Enabled</div>';
+                    html += '<div class="cpt-setting-hint">Site is secure</div>';
+                } else if (healthData.has_ssl === false) {
+                    html += '<div class="cpt-setting-value error" style="font-size: 18px;">✗ Not Enabled</div>';
+                    html += '<div class="cpt-setting-hint" style="color: var(--cpt-error);">Postbacks require HTTPS</div>';
+                } else {
+                    html += '<div class="cpt-setting-value" style="font-size: 18px; color: var(--cpt-text-tertiary);">? Unknown</div>';
+                    html += '<div class="cpt-setting-hint">Not checked</div>';
+                }
+                html += '</div>';
+                
+                // cURL Status
+                html += '<div class="cpt-setting-card">';
+                html += '<div class="cpt-setting-label">cURL Extension</div>';
+                if (healthData.has_curl === true) {
+                    html += '<div class="cpt-setting-value success" style="font-size: 18px;">✓ Installed</div>';
+                    html += '<div class="cpt-setting-hint">' + (healthData.curl_version ? 'v' + healthData.curl_version : 'Version unknown') + '</div>';
+                } else if (healthData.has_curl === false) {
+                    html += '<div class="cpt-setting-value error" style="font-size: 18px;">✗ Not Available</div>';
+                    html += '<div class="cpt-setting-hint" style="color: var(--cpt-error);">Required for API communication</div>';
+                } else {
+                    html += '<div class="cpt-setting-value" style="font-size: 18px; color: var(--cpt-text-tertiary);">? Unknown</div>';
+                    html += '<div class="cpt-setting-hint">Not checked</div>';
+                }
+                html += '</div>';
+                
+                // Firewall Status
+                html += '<div class="cpt-setting-card">';
+                html += '<div class="cpt-setting-label">Outbound Connectivity</div>';
+                if (healthData.can_reach_api === true && !healthData.firewall_issue) {
+                    html += '<div class="cpt-setting-value success" style="font-size: 18px;">✓ Connected</div>';
+                    html += '<div class="cpt-setting-hint">No firewall issues</div>';
+                } else if (healthData.firewall_issue === true || healthData.can_reach_api === false) {
+                    html += '<div class="cpt-setting-value error" style="font-size: 18px;">✗ Blocked</div>';
+                    html += '<div class="cpt-setting-hint" style="color: var(--cpt-error);">Firewall blocking connections</div>';
+                } else {
+                    html += '<div class="cpt-setting-value" style="font-size: 18px; color: var(--cpt-text-tertiary);">? Unknown</div>';
+                    html += '<div class="cpt-setting-hint">Not checked</div>';
+                }
+                html += '</div>';
+                
+                // OpenSSL Status
+                html += '<div class="cpt-setting-card">';
+                html += '<div class="cpt-setting-label">OpenSSL</div>';
+                if (healthData.openssl_version) {
+                    html += '<div class="cpt-setting-value success" style="font-size: 18px;">✓ Available</div>';
+                    html += '<div class="cpt-setting-hint">' + healthData.openssl_version + '</div>';
+                } else {
+                    html += '<div class="cpt-setting-value" style="font-size: 18px; color: var(--cpt-text-tertiary);">? Unknown</div>';
+                    html += '<div class="cpt-setting-hint">Not checked</div>';
+                }
+                html += '</div>';
+                
+                html += '</div>'; // End diagnostics grid
+                
+                // API & Postback Status
+                html += '<div class="cpt-settings-grid" style="margin-bottom: 24px;">';
+                
+                // API Status
+                html += '<div class="cpt-setting-card">';
+                html += '<div class="cpt-setting-label">API Connection</div>';
+                if (healthData.api_status === 'ok') {
+                    html += '<div class="cpt-setting-value success" style="font-size: 18px;">✓ Working</div>';
+                    html += '<div class="cpt-setting-hint">' + (healthData.api_response_time_ms ? healthData.api_response_time_ms + 'ms response time' : 'Connected') + '</div>';
+                } else if (healthData.api_status === 'error') {
+                    html += '<div class="cpt-setting-value error" style="font-size: 18px;">✗ Error</div>';
+                    html += '<div class="cpt-setting-hint" style="color: var(--cpt-error);">' + (healthData.api_error_message || 'Connection failed') + '</div>';
+                } else {
+                    html += '<div class="cpt-setting-value warning" style="font-size: 18px;">? Unknown</div>';
+                    html += '<div class="cpt-setting-hint">No test run</div>';
+                }
+                html += '</div>';
+                
+                // Postback Status
+                html += '<div class="cpt-setting-card">';
+                html += '<div class="cpt-setting-label">Postback Status</div>';
+                var successCount = healthData.postback_success_count || 0;
+                var errorCount = healthData.postback_error_count || 0;
+                var totalPostbacks = successCount + errorCount;
+                var successRate = totalPostbacks > 0 ? Math.round((successCount / totalPostbacks) * 100) : null;
+                
+                if (healthData.postback_status === 'ok' || (successRate !== null && successRate >= 95)) {
+                    html += '<div class="cpt-setting-value success" style="font-size: 18px;">✓ Healthy</div>';
+                } else if (successRate !== null && successRate >= 80) {
+                    html += '<div class="cpt-setting-value warning" style="font-size: 18px;">⚠ Degraded</div>';
+                } else if (healthData.postback_status === 'error' || (successRate !== null && successRate < 80)) {
+                    html += '<div class="cpt-setting-value error" style="font-size: 18px;">✗ Failing</div>';
+                } else {
+                    html += '<div class="cpt-setting-value" style="font-size: 18px; color: var(--cpt-text-tertiary);">? Unknown</div>';
+                }
+                html += '<div class="cpt-setting-hint">' + successCount + ' success, ' + errorCount + ' failed' + (successRate !== null ? ' (' + successRate + '%)' : '') + '</div>';
+                html += '</div>';
+                
+                // Last Postback
+                html += '<div class="cpt-setting-card">';
+                html += '<div class="cpt-setting-label">Last Postback Received</div>';
+                html += '<div class="cpt-setting-value" style="font-size: 16px;">' + timeAgo(healthData.postback_last_received) + '</div>';
+                html += '<div class="cpt-setting-hint">' + formatDate(healthData.postback_last_received) + '</div>';
+                html += '</div>';
+                
+                // Last Diagnostic Run
+                html += '<div class="cpt-setting-card">';
+                html += '<div class="cpt-setting-label">Last Diagnostic Run</div>';
+                html += '<div class="cpt-setting-value" style="font-size: 16px;">' + timeAgo(healthData.last_diagnostic_run) + '</div>';
+                html += '<div class="cpt-setting-hint">' + formatDate(healthData.last_diagnostic_run) + '</div>';
+                html += '</div>';
+                
+                html += '</div>'; // End API/Postback grid
+                
+                // Version Info
+                html += '<div class="cpt-section-title" style="margin-top: 16px;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>Environment Info</div>';
+                
+                html += '<div class="cpt-fees-grid">';
+                html += '<div class="cpt-fee-item"><span class="cpt-fee-label">Plugin Version</span><span class="cpt-fee-value">' + (healthData.plugin_version || '?') + '</span></div>';
+                html += '<div class="cpt-fee-item"><span class="cpt-fee-label">WordPress Version</span><span class="cpt-fee-value">' + (healthData.wordpress_version || '?') + '</span></div>';
+                html += '<div class="cpt-fee-item"><span class="cpt-fee-label">WooCommerce Version</span><span class="cpt-fee-value">' + (healthData.woocommerce_version || '?') + '</span></div>';
+                html += '<div class="cpt-fee-item"><span class="cpt-fee-label">PHP Version</span><span class="cpt-fee-value">' + (healthData.php_version || '?') + '</span></div>';
+                if (healthData.server_software) {
+                    html += '<div class="cpt-fee-item" style="grid-column: 1 / -1;"><span class="cpt-fee-label">Server Software</span><span class="cpt-fee-value" style="font-size: 12px;">' + healthData.server_software + '</span></div>';
+                }
+                html += '</div>';
+                
+            } else {
+                // No health data
+                html += '<div style="background: var(--cpt-warning-bg); border: 1px solid var(--cpt-warning); border-radius: var(--cpt-radius-sm); padding: 20px; margin-bottom: 24px; text-align: center;">';
+                html += '<svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--cpt-warning); margin-bottom: 12px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>';
+                html += '<div style="font-weight: 600; color: var(--cpt-warning); margin-bottom: 4px;">No Health Report Received</div>';
+                html += '<div style="font-size: 13px; color: var(--cpt-text-secondary);">This site has not sent a health report yet. Ask the merchant to click "Send Health Report" in their WooCommerce Digipay settings.</div>';
+                html += '</div>';
+            }
+            
+            // ========== GATEWAY STATUS SECTION ==========
+            html += '<div class="cpt-section-title"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>Gateway Configuration (from site-limits API)</div>';
+            
+            html += '<div class="cpt-settings-grid">';
+            
+            // Status Card
+            html += '<div class="cpt-setting-card">';
+            html += '<div class="cpt-setting-label">Plugin Status</div>';
+            html += '<span class="cpt-status cpt-status-' + status + '"><span class="cpt-status-dot"></span>' + statusLabel + '</span>';
+            if (status === 'suspended') {
+                html += '<div class="cpt-setting-hint" style="color: var(--cpt-error);">Transactions are blocked. Contact support.</div>';
+            } else if (status === 'disabled') {
+                html += '<div class="cpt-setting-hint" style="color: var(--cpt-warning);">Gateway is temporarily disabled.</div>';
+            } else {
+                html += '<div class="cpt-setting-hint">Gateway is accepting transactions.</div>';
+            }
+            html += '</div>';
+            
+            // Daily Limit Card
+            html += '<div class="cpt-setting-card">';
+            html += '<div class="cpt-setting-label">Daily Transaction Limit</div>';
+            if (parseFloat(dailyLimit) > 0) {
+                html += '<div class="cpt-setting-value">' + formatCurrency(dailyLimit) + '</div>';
+                html += '<div class="cpt-setting-hint">Maximum daily processing volume</div>';
+            } else {
+                html += '<div class="cpt-setting-value success">No Limit</div>';
+                html += '<div class="cpt-setting-hint">Unlimited daily processing</div>';
+            }
+            html += '</div>';
+            
+            // Max Order Card
+            html += '<div class="cpt-setting-card">';
+            html += '<div class="cpt-setting-label">Maximum Order Size</div>';
+            if (parseFloat(maxTicket) > 0) {
+                html += '<div class="cpt-setting-value">' + formatCurrency(maxTicket) + '</div>';
+                html += '<div class="cpt-setting-hint">Maximum single transaction amount</div>';
+            } else {
+                html += '<div class="cpt-setting-value success">No Limit</div>';
+                html += '<div class="cpt-setting-hint">No maximum order restriction</div>';
+            }
+            html += '</div>';
+            
+            // Account Status Card
+            html += '<div class="cpt-setting-card">';
+            html += '<div class="cpt-setting-label">Account Status</div>';
+            if (site && site.is_active !== false) {
+                html += '<div class="cpt-setting-value success">Active</div>';
+                html += '<div class="cpt-setting-hint">Account is enabled</div>';
+            } else {
+                html += '<div class="cpt-setting-value warning">Inactive</div>';
+                html += '<div class="cpt-setting-hint">Account is disabled in system</div>';
+            }
+            html += '</div>';
+            
+            html += '</div>'; // End settings grid
+            
+            // Processing Fees Section (if pricing exists)
+            if (pricing) {
+                html += '<div class="cpt-section-title" style="margin-top: 32px;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Processing Fees</div>';
+                
+                html += '<div class="cpt-fees-grid">';
+                
+                html += '<div class="cpt-fee-item"><span class="cpt-fee-label">Processing Fee (Percentage)</span><span class="cpt-fee-value">' + parseFloat(pricing.percentage_fee || 0).toFixed(2) + '%</span></div>';
+                html += '<div class="cpt-fee-item"><span class="cpt-fee-label">Per Transaction Fee</span><span class="cpt-fee-value">' + formatCurrency(pricing.per_transaction_fee) + '</span></div>';
+                html += '<div class="cpt-fee-item"><span class="cpt-fee-label">Refund Fee</span><span class="cpt-fee-value">' + formatCurrency(pricing.refund_fee) + '</span></div>';
+                html += '<div class="cpt-fee-item"><span class="cpt-fee-label">Chargeback Fee</span><span class="cpt-fee-value">' + formatCurrency(pricing.chargeback_fee) + '</span></div>';
+                
+                html += '</div>';
+                
+                if (pricing.notes) {
+                    html += '<div style="margin-top: 16px; padding: 12px 16px; background: var(--cpt-surface-hover); border-radius: var(--cpt-radius-sm); font-size: 13px; color: var(--cpt-text-secondary);"><strong>Notes:</strong> ' + pricing.notes + '</div>';
+                }
+            }
+            
+            html += '</div>'; // End merchant body
+            html += '</div>'; // End merchant view
+            
+            // API Response Section
+            html += '<div class="cpt-api-response">';
+            html += '<div class="cpt-api-header">';
+            html += '<div class="cpt-api-title"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>Live API Response <code>site-limits</code></div>';
+            html += '<button class="cpt-refresh-btn" onclick="refreshApiResponse(\'' + (site ? site.site_id : '') + '\')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>Refresh</button>';
+            html += '</div>';
+            html += '<div class="cpt-api-body">';
+            html += '<pre>' + JSON.stringify(apiResponse, null, 2) + '</pre>';
+            html += '</div>';
+            html += '</div>';
+            
+            contentDiv.innerHTML = html;
+        }
+        
+        // ========================================
+        // GET ISSUE INFO
+        // ========================================
+        function getIssueInfo(issueCode) {
+            var issues = {
+                'NO_SSL': { icon: '🔓', label: 'No HTTPS/SSL', fix: 'Install SSL certificate' },
+                'NO_CURL': { icon: '⚙️', label: 'cURL Missing', fix: 'Contact host to enable cURL' },
+                'FIREWALL': { icon: '🛡️', label: 'Firewall Blocking', fix: 'Whitelist API domain' },
+                'NO_OPENSSL': { icon: '🔐', label: 'OpenSSL Missing', fix: 'Contact host to enable OpenSSL' },
+                'POSTBACK_FAIL': { icon: '📬', label: 'Postbacks Failing', fix: 'Check HTTPS and accessibility' },
+                'API_TIMEOUT': { icon: '⏱️', label: 'API Timeout', fix: 'Check server connectivity' },
+                'API_ERROR': { icon: '❌', label: 'API Error', fix: 'Check error logs' }
+            };
+            return issues[issueCode] || { icon: '⚠️', label: issueCode, fix: 'Contact support' };
+        }
+        
+        // ========================================
+        // REFRESH API RESPONSE
+        // ========================================
+        async function refreshApiResponse(siteId) {
+            if (!siteId) return;
+            
+            var btn = document.querySelector('.cpt-refresh-btn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>Refreshing...';
+            }
+            
+            try {
+                var apiResponse = await fetchSiteLimits(siteId);
+                var preElement = document.querySelector('.cpt-api-body pre');
+                if (preElement) {
+                    preElement.textContent = JSON.stringify(apiResponse, null, 2);
+                }
+            } catch (error) {
+                console.error('Refresh error:', error);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>Refresh';
+                }
+            }
+        }
+        
+        // ========================================
+        // SHOW EMPTY STATE
+        // ========================================
+        function showEmptyState() {
+            var contentDiv = document.getElementById('pluginContent');
+            contentDiv.innerHTML = '<div class="cpt-empty"><div class="cpt-empty-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></div><div class="cpt-empty-title">Select a Site</div><div class="cpt-empty-text">Choose a site ID from the dropdown above to view its plugin configuration</div></div>';
+        }
+    </script>
+</body>
+</html>
