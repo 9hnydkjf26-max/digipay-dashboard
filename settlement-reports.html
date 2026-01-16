@@ -13,7 +13,99 @@
      <link rel="stylesheet" href="cpt-reports.css">
     <link rel="stylesheet" href="settlement-reports.css">
     
+    <style>
+        /* Date Range Dropdown Styles */
+        .custom-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .custom-dropdown-trigger {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--cpt-border);
+            border-radius: var(--cpt-radius);
+            font-size: 14px;
+            background: var(--cpt-surface);
+            color: var(--cpt-text);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-width: 140px;
+        }
+        .custom-dropdown-trigger::after {
+            content: '▼';
+            font-size: 10px;
+            color: var(--cpt-text-secondary);
+            margin-left: 8px;
+        }
+        .custom-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--cpt-surface);
+            border: 1px solid var(--cpt-border);
+            border-radius: var(--cpt-radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 100;
+            display: none;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .custom-dropdown-menu.active {
+            display: block;
+        }
+        .custom-dropdown-option {
+            padding: 10px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.15s;
+        }
+        .custom-dropdown-option:hover {
+            background: var(--cpt-bg);
+        }
+        .custom-dropdown-option.selected {
+            background: rgba(99, 91, 255, 0.1);
+            color: var(--cpt-primary);
+        }
+        
+        /* Custom Date Range Container */
+        .custom-date-range-container {
+            display: none;
+            margin-top: 12px;
+            padding: 16px;
+            background: var(--cpt-surface);
+            border: 1px solid var(--cpt-border);
+            border-radius: var(--cpt-radius);
+        }
+        .custom-date-range-container.active {
+            display: block;
+        }
+        .date-range-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .date-range-field {
+            flex: 1;
+        }
+        .date-range-field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--cpt-text-secondary);
+            margin-bottom: 6px;
+        }
+        .date-range-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+    </style>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
     <script>
         if (!window.supabaseClient) {
             window.supabaseClient = window.supabase.createClient(
@@ -54,7 +146,36 @@
                         Select Site
                     </div>
                     <select id="siteSelect" class="cpt-site-select" onchange="handleSiteChange()"><option value="">All Sites</option></select>
+                    
+                    <div class="cpt-site-selector-label" style="margin-left: 16px;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        Date Range
+                    </div>
+                    <div class="custom-dropdown" style="min-width: 160px;">
+                        <div class="custom-dropdown-trigger" id="dateRangeTrigger">All Time</div>
+                        <div class="custom-dropdown-menu" id="dateRangeMenu"></div>
+                    </div>
+                    <input type="hidden" id="dateRange" value="all">
+                    
                     <div class="cpt-site-indicator" id="siteIndicator" style="display: none;"><span id="txCount">0</span> unsettled transactions</div>
+                </div>
+                
+                <!-- Custom Date Range Picker -->
+                <div class="custom-date-range-container" id="customDateContainer">
+                    <div class="date-range-row">
+                        <div class="date-range-field">
+                            <label>Start Date</label>
+                            <input type="date" id="startDateValue" class="cpt-site-select">
+                        </div>
+                        <div class="date-range-field">
+                            <label>End Date</label>
+                            <input type="date" id="endDateValue" class="cpt-site-select">
+                        </div>
+                    </div>
+                    <div class="date-range-actions">
+                        <button class="cpt-btn cpt-btn-secondary cpt-btn-sm" onclick="cancelCustomDate()">Cancel</button>
+                        <button class="cpt-btn cpt-btn-primary cpt-btn-sm" onclick="applyCustomDate()">Apply</button>
+                    </div>
                 </div>
                 <div class="cpt-tabs">
                     <button class="cpt-tab active" data-tab="create" onclick="switchTab('create')">Create Report</button>
@@ -128,6 +249,8 @@
         var currentUserId = null, currentSite = '', allTransactions = [], filteredTransactions = [], selectedTransactions = new Set(), pendingReports = [], paidReports = [];
         var pendingAdjustments = []; // Adjustments for post-settlement refunds/chargebacks
         var sitePricing = null; // Pricing configuration for selected site
+        var currentDateRange = 'all'; // Current date range filter
+        var customStartDate = null, customEndDate = null; // Custom date range values
         
         async function init() {
             const { data: { session } } = await sb.auth.getSession();
@@ -156,6 +279,8 @@
             
             await loadTransactions();
             await loadReports();
+            initDateRangeDropdown();
+            initDatePickers();
         }
 
         async function loadTransactions() {
@@ -349,7 +474,21 @@
         }
 
         function applyFilter() {
-            filteredTransactions = currentSite ? allTransactions.filter(t => t.site_name === currentSite) : [...allTransactions];
+            // First filter by site
+            let filtered = currentSite ? allTransactions.filter(t => t.site_name === currentSite) : [...allTransactions];
+            
+            // Then filter by date range
+            const { startDate, endDate } = getDateFilterRange();
+            if (startDate || endDate) {
+                filtered = filtered.filter(t => {
+                    const txDate = new Date(t.transaction_date);
+                    if (startDate && txDate < startDate) return false;
+                    if (endDate && txDate > endDate) return false;
+                    return true;
+                });
+            }
+            
+            filteredTransactions = filtered;
             const ind = document.getElementById('siteIndicator'), cnt = document.getElementById('txCount');
             if (filteredTransactions.length > 0) { ind.style.display = 'flex'; cnt.textContent = filteredTransactions.length; } else { ind.style.display = 'none'; }
             renderTransactionsTable();
@@ -860,13 +999,13 @@
         function renderPendingReports() {
             const tbody = document.getElementById('pendingReportsBody');
             if (pendingReports.length === 0) { tbody.innerHTML = '<tr><td colspan="6"><div class="cpt-empty"><div class="cpt-empty-title">No pending reports</div></div></td></tr>'; return; }
-            tbody.innerHTML = pendingReports.map(r => '<tr onclick="viewReport(\'' + r.id + '\')"><td><span class="cpt-report-number">' + r.report_number + '</span></td><td>' + (r.site_name || '—') + '</td><td>' + r.total_transactions + '</td><td><span class="cpt-cell-amount">' + formatCurrency(r.merchant_payout || r.net_amount) + '</span></td><td>' + new Date(r.created_at).toLocaleDateString() + '</td><td onclick="event.stopPropagation()"><div style="display:flex;gap:8px"><button class="cpt-btn cpt-btn-success cpt-btn-sm" onclick="markAsPaid(\'' + r.id + '\')">Mark Paid</button><button class="cpt-btn cpt-btn-sm" style="background:var(--cpt-error);color:white" onclick="deleteReport(\'' + r.id + '\', false)">Delete</button></div></td></tr>').join('');
+            tbody.innerHTML = pendingReports.map(r => '<tr onclick="viewReport(\'' + r.id + '\')"><td><span class="cpt-report-number">' + r.report_number + '</span></td><td>' + (r.site_name || '—') + '</td><td>' + r.total_transactions + '</td><td><span class="cpt-cell-amount">' + formatCurrency(r.merchant_payout || r.net_amount) + '</span></td><td>' + new Date(r.created_at).toLocaleDateString() + '</td><td onclick="event.stopPropagation()"><div style="display:flex;gap:8px"><button class="cpt-btn cpt-btn-secondary cpt-btn-sm" onclick="downloadReportCSV(\'' + r.id + '\')" title="Download Excel"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></button><button class="cpt-btn cpt-btn-success cpt-btn-sm" onclick="markAsPaid(\'' + r.id + '\')">Mark Paid</button><button class="cpt-btn cpt-btn-sm" style="background:var(--cpt-error);color:white" onclick="deleteReport(\'' + r.id + '\', false)">Delete</button></div></td></tr>').join('');
         }
 
         function renderPaidReports() {
             const tbody = document.getElementById('paidReportsBody');
             if (paidReports.length === 0) { tbody.innerHTML = '<tr><td colspan="6"><div class="cpt-empty"><div class="cpt-empty-title">No paid reports</div></div></td></tr>'; return; }
-            tbody.innerHTML = paidReports.map(r => '<tr onclick="viewReport(\'' + r.id + '\')"><td><span class="cpt-report-number">' + r.report_number + '</span></td><td>' + (r.site_name || '—') + '</td><td>' + r.total_transactions + '</td><td><span class="cpt-cell-amount">' + formatCurrency(r.merchant_payout || r.net_amount) + '</span></td><td>' + (r.paid_at ? new Date(r.paid_at).toLocaleDateString() : '—') + '</td><td onclick="event.stopPropagation()"><div style="display:flex;gap:8px"><button class="cpt-btn cpt-btn-secondary cpt-btn-sm" onclick="viewReport(\'' + r.id + '\')">View</button><button class="cpt-btn cpt-btn-sm" style="background:var(--cpt-error);color:white" onclick="deleteReport(\'' + r.id + '\', true)">Delete</button></div></td></tr>').join('');
+            tbody.innerHTML = paidReports.map(r => '<tr onclick="viewReport(\'' + r.id + '\')"><td><span class="cpt-report-number">' + r.report_number + '</span></td><td>' + (r.site_name || '—') + '</td><td>' + r.total_transactions + '</td><td><span class="cpt-cell-amount">' + formatCurrency(r.merchant_payout || r.net_amount) + '</span></td><td>' + (r.paid_at ? new Date(r.paid_at).toLocaleDateString() : '—') + '</td><td onclick="event.stopPropagation()"><div style="display:flex;gap:8px"><button class="cpt-btn cpt-btn-secondary cpt-btn-sm" onclick="downloadReportCSV(\'' + r.id + '\')" title="Download Excel"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg></button><button class="cpt-btn cpt-btn-secondary cpt-btn-sm" onclick="viewReport(\'' + r.id + '\')">View</button><button class="cpt-btn cpt-btn-sm" style="background:var(--cpt-error);color:white" onclick="deleteReport(\'' + r.id + '\', true)">Delete</button></div></td></tr>').join('');
         }
 
         async function viewReport(id) {
@@ -1029,7 +1168,7 @@
                         </table>
                     </div>
                 `;
-                footer.innerHTML = '<button class="cpt-btn cpt-btn-secondary" onclick="closeViewModal()">Close</button><button class="cpt-btn" style="background:var(--cpt-error);color:white" onclick="deleteReport(\'' + r.id + '\', ' + (r.status === 'paid') + ')">Delete Report</button>' + (r.status === 'pending' ? '<button class="cpt-btn cpt-btn-success" onclick="markAsPaid(\'' + r.id + '\')">Mark Paid</button>' : '');
+                footer.innerHTML = '<button class="cpt-btn cpt-btn-secondary" onclick="closeViewModal()">Close</button><button class="cpt-btn cpt-btn-secondary" onclick="downloadReportCSV(\'' + r.id + '\')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16" style="margin-right:6px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Download Excel</button><button class="cpt-btn" style="background:var(--cpt-error);color:white" onclick="deleteReport(\'' + r.id + '\', ' + (r.status === 'paid') + ')">Delete Report</button>' + (r.status === 'pending' ? '<button class="cpt-btn cpt-btn-success" onclick="markAsPaid(\'' + r.id + '\')">Mark Paid</button>' : '');
             } catch (e) { body.innerHTML = '<div class="cpt-empty"><div class="cpt-empty-title">Error</div><div class="cpt-empty-text">' + e.message + '</div></div>'; }
         }
         function closeViewModal() { document.getElementById('viewModal').classList.remove('active'); }
@@ -1090,25 +1229,31 @@
                     existingAdjKeys.add(adj.original_cust_session + '|||' + adj.original_transaction_date + '|||' + adj.reason);
                 });
                 
-                // Find refunds/chargebacks and create adjustments (only if not already exists)
+                // Find refunds/chargebacks that occurred AFTER the report was created
+                // Only create adjustments if the transaction was NOT already refunded/chargedback when added to the report
                 const adjustmentsToCreate = [];
                 for (const item of items) {
                     const key = item.cust_session + '|||' + item.transaction_date;
                     const currentTx = txMap.get(key);
                     
-                    if (currentTx && (currentTx.is_refund || currentTx.is_chargeback)) {
-                        const reason = currentTx.is_refund ? 'refund' : 'chargeback';
-                        const adjKey = item.cust_session + '|||' + item.transaction_date + '|||' + reason;
-                        
-                        // Skip if adjustment already exists
+                    // Check if status changed from normal → refund/chargeback AFTER being added to report
+                    const wasRefundAtCreation = item.is_refund || false;
+                    const wasChargebackAtCreation = item.is_chargeback || false;
+                    const isRefundNow = currentTx?.is_refund || false;
+                    const isChargebackNow = currentTx?.is_chargeback || false;
+                    
+                    // Only create adjustment if it WASN'T already refunded/chargedback when added to the report
+                    // but IS now (meaning the refund/chargeback happened after the settlement was created)
+                    if (isRefundNow && !wasRefundAtCreation) {
+                        const adjKey = item.cust_session + '|||' + item.transaction_date + '|||refund';
                         if (existingAdjKeys.has(adjKey)) {
                             console.log('Adjustment already exists, skipping:', adjKey);
                             continue;
                         }
                         
                         const amount = parseFloat(currentTx.cust_amount || item.amount || 0);
-                        // Only refunds get processing fee credit, NOT chargebacks
-                        const processingFeeCredit = reason === 'refund' ? amount * (processingFeePercent / 100) : 0;
+                        // Refunds get processing fee credit
+                        const processingFeeCredit = amount * (processingFeePercent / 100);
                         
                         adjustmentsToCreate.push({
                             site_id: report.site_id,
@@ -1121,10 +1266,37 @@
                             original_settlement_report_id: id,
                             original_settlement_report_number: report.report_number,
                             amount: amount,
-                            reason: reason,
+                            reason: 'refund',
                             status: 'pending',
-                            original_processing_fee_percent: reason === 'refund' ? processingFeePercent : 0,
+                            original_processing_fee_percent: processingFeePercent,
                             processing_fee_credit: processingFeeCredit,
+                            created_by: currentUserId
+                        });
+                    } else if (isChargebackNow && !wasChargebackAtCreation) {
+                        const adjKey = item.cust_session + '|||' + item.transaction_date + '|||chargeback';
+                        if (existingAdjKeys.has(adjKey)) {
+                            console.log('Adjustment already exists, skipping:', adjKey);
+                            continue;
+                        }
+                        
+                        const amount = parseFloat(currentTx.cust_amount || item.amount || 0);
+                        // Chargebacks do NOT get processing fee credit
+                        
+                        adjustmentsToCreate.push({
+                            site_id: report.site_id,
+                            site_name: report.site_name,
+                            original_cust_session: item.cust_session,
+                            original_transaction_date: item.transaction_date,
+                            original_cust_name: currentTx.cust_name || item.cust_name,
+                            original_cust_email: currentTx.cust_email_ad || item.cust_email,
+                            original_trans_id: currentTx.cust_trans_id || item.cust_trans_id,
+                            original_settlement_report_id: id,
+                            original_settlement_report_number: report.report_number,
+                            amount: amount,
+                            reason: 'chargeback',
+                            status: 'pending',
+                            original_processing_fee_percent: 0,
+                            processing_fee_credit: 0,
                             created_by: currentUserId
                         });
                     }
@@ -1260,7 +1432,663 @@
             }
         }
 
+        async function downloadReportCSV(reportId) {
+            try {
+                // Get report data
+                const { data: report } = await sb.from('settlement_reports').select('*').eq('id', reportId).single();
+                if (!report) throw new Error('Report not found');
+                
+                // Get report items
+                const { data: items } = await sb.from('settlement_report_items').select('*').eq('settlement_report_id', reportId).order('transaction_date', { ascending: true });
+                if (!items || items.length === 0) throw new Error('No items found');
+                
+                // Use fee rates from the stored report
+                const percentFee = parseFloat(report.processing_fee_percent || 0);
+                const perTxFee = parseFloat(report.transaction_fee_per || 0);
+                const refundFee = parseFloat(report.refund_fee_per || 0);
+                const cbFee = parseFloat(report.chargeback_fee_per || 0);
+                
+                // Group items by week
+                const weeklyData = {};
+                items.forEach(item => {
+                    const date = new Date(item.transaction_date);
+                    const weekStart = getWeekStart(date);
+                    const weekKey = weekStart.toISOString().split('T')[0];
+                    
+                    if (!weeklyData[weekKey]) {
+                        weeklyData[weekKey] = {
+                            weekStart: weekStart,
+                            weekEnd: getWeekEnd(weekStart),
+                            count: 0,
+                            grossPayments: 0,
+                            refundCount: 0,
+                            refunds: 0,
+                            chargebackCount: 0,
+                            chargebacks: 0
+                        };
+                    }
+                    
+                    const amount = parseFloat(item.amount || 0);
+                    
+                    if (item.is_refund) {
+                        weeklyData[weekKey].refundCount++;
+                        weeklyData[weekKey].refunds += amount;
+                    } else if (item.is_chargeback) {
+                        weeklyData[weekKey].chargebackCount++;
+                        weeklyData[weekKey].chargebacks += amount;
+                    } else {
+                        weeklyData[weekKey].count++;
+                        weeklyData[weekKey].grossPayments += amount;
+                    }
+                });
+                
+                const sortedWeeks = Object.keys(weeklyData).sort();
+                
+                // Format dates
+                const periodStart = report.period_start ? new Date(report.period_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
+                const periodEnd = report.period_end ? new Date(report.period_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A';
+                const generatedDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                
+                // Transaction counts
+                const totalTxCount = parseInt(report.total_transactions || 0);
+                const successfulCount = items.filter(i => !i.is_refund && !i.is_chargeback).length;
+                const refundCountTotal = items.filter(i => i.is_refund).length;
+                const chargebackCountTotal = items.filter(i => i.is_chargeback).length;
+                
+                // Fee amounts
+                const storedProcessingFee = parseFloat(report.processing_fee_amount || 0);
+                const storedTxFees = parseFloat(report.transaction_fees_total || 0);
+                const storedRefundFees = parseFloat(report.refund_fees_total || 0);
+                const storedCBFees = parseFloat(report.chargeback_fees_total || 0);
+                const storedFeeCredit = parseFloat(report.processing_fee_credit || 0);
+                const storedTotalFees = parseFloat(report.total_fees || 0);
+                const adjustmentsTotal = parseFloat(report.adjustments_total || 0);
+                const manualAdjustment = parseFloat(report.manual_adjustment || 0);
+                const merchantPayout = parseFloat(report.merchant_payout || report.net_amount || 0);
+                
+                // Create workbook
+                const workbook = new ExcelJS.Workbook();
+                workbook.creator = 'Settlement Reports';
+                workbook.created = new Date();
+                
+                const ws = workbook.addWorksheet('Settlement Statement', {
+                    pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1 },
+                    views: [{ showGridLines: false }]
+                });
+                
+                // Premium color palette
+                const colors = {
+                    primary: '0F172A',       // Slate 900
+                    secondary: '334155',     // Slate 700
+                    accent: '3B82F6',        // Blue 500
+                    accentLight: 'DBEAFE',   // Blue 100
+                    success: '10B981',       // Emerald 500
+                    successLight: 'D1FAE5',  // Emerald 100
+                    successDark: '059669',   // Emerald 600
+                    danger: 'EF4444',        // Red 500
+                    dangerLight: 'FEE2E2',   // Red 100
+                    warning: 'F59E0B',       // Amber 500
+                    muted: '64748B',         // Slate 500
+                    light: 'F8FAFC',         // Slate 50
+                    border: 'E2E8F0',        // Slate 200
+                    white: 'FFFFFF'
+                };
+                
+                // Set column widths for 10 columns (A-J)
+                ws.columns = [
+                    { width: 3 },   // A - margin
+                    { width: 22 },  // B - labels
+                    { width: 14 },  // C - values
+                    { width: 14 },  // D
+                    { width: 12 },  // E
+                    { width: 12 },  // F
+                    { width: 12 },  // G
+                    { width: 12 },  // H
+                    { width: 14 },  // I
+                    { width: 3 },   // J - margin
+                ];
+                
+                // Helper functions
+                const setRowHeight = (rowNum, height) => { ws.getRow(rowNum).height = height; };
+                const applyBorder = (cell, sides, style = 'thin', color = colors.border) => {
+                    const borderStyle = { style, color: { argb: 'FF' + color } };
+                    cell.border = {};
+                    if (sides.includes('top')) cell.border.top = borderStyle;
+                    if (sides.includes('bottom')) cell.border.bottom = borderStyle;
+                    if (sides.includes('left')) cell.border.left = borderStyle;
+                    if (sides.includes('right')) cell.border.right = borderStyle;
+                };
+                const fillRange = (startRow, endRow, startCol, endCol, color) => {
+                    for (let r = startRow; r <= endRow; r++) {
+                        for (let c = startCol; c <= endCol; c++) {
+                            ws.getCell(r, c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + color } };
+                        }
+                    }
+                };
+                
+                let row = 1;
+                
+                // === TOP ACCENT BAR ===
+                ws.mergeCells(`A${row}:J${row}`);
+                ws.getCell(`A${row}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + colors.accent } };
+                setRowHeight(row, 6);
+                row++;
+                
+                // === HEADER AREA ===
+                fillRange(row, row + 4, 1, 10, colors.primary);
+                
+                // Title
+                ws.mergeCells(`B${row}:I${row}`);
+                setRowHeight(row, 8);
+                row++;
+                
+                ws.mergeCells(`B${row}:E${row}`);
+                const titleCell = ws.getCell(`B${row}`);
+                titleCell.value = 'SETTLEMENT STATEMENT';
+                titleCell.font = { bold: true, size: 22, color: { argb: 'FF' + colors.white }, name: 'Calibri Light' };
+                titleCell.alignment = { vertical: 'middle' };
+                
+                // Statement number on right
+                ws.mergeCells(`F${row}:I${row}`);
+                const stmtNumCell = ws.getCell(`F${row}`);
+                stmtNumCell.value = report.report_number;
+                stmtNumCell.font = { bold: true, size: 22, color: { argb: 'FF' + colors.accentLight }, name: 'Calibri Light' };
+                stmtNumCell.alignment = { horizontal: 'right', vertical: 'middle' };
+                setRowHeight(row, 36);
+                row++;
+                
+                // Subtitle line
+                ws.mergeCells(`B${row}:E${row}`);
+                const subtitleCell = ws.getCell(`B${row}`);
+                subtitleCell.value = report.site_name;
+                subtitleCell.font = { size: 14, color: { argb: 'FF' + colors.accentLight }, name: 'Calibri' };
+                subtitleCell.alignment = { vertical: 'middle' };
+                
+                ws.mergeCells(`F${row}:I${row}`);
+                const periodCell = ws.getCell(`F${row}`);
+                periodCell.value = `${periodStart} — ${periodEnd}`;
+                periodCell.font = { size: 12, color: { argb: 'FF' + colors.accentLight } };
+                periodCell.alignment = { horizontal: 'right', vertical: 'middle' };
+                setRowHeight(row, 24);
+                row++;
+                
+                setRowHeight(row, 12);
+                row++;
+                
+                // Spacer
+                setRowHeight(row, 16);
+                row++;
+                
+                // === SUMMARY CARDS ROW ===
+                const cardStartRow = row;
+                
+                // Card 1: Total Transactions
+                ws.mergeCells(`B${row}:C${row + 2}`);
+                const card1 = ws.getCell(`B${row}`);
+                card1.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + colors.light } };
+                applyBorder(card1, ['top', 'left', 'bottom', 'right'], 'thin', colors.border);
+                
+                ws.getCell(`B${row}`).value = { richText: [
+                    { text: 'TRANSACTIONS\n', font: { size: 9, color: { argb: 'FF' + colors.muted }, bold: true } },
+                    { text: `${totalTxCount}`, font: { size: 28, color: { argb: 'FF' + colors.primary }, bold: true } }
+                ]};
+                ws.getCell(`B${row}`).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                
+                // Card 2: Gross Sales
+                ws.mergeCells(`D${row}:E${row + 2}`);
+                const card2 = ws.getCell(`D${row}`);
+                card2.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + colors.accentLight } };
+                applyBorder(card2, ['top', 'left', 'bottom', 'right'], 'thin', colors.accent);
+                
+                const grossAmt = parseFloat(report.gross_amount || 0);
+                ws.getCell(`D${row}`).value = { richText: [
+                    { text: 'GROSS SALES\n', font: { size: 9, color: { argb: 'FF' + colors.accent }, bold: true } },
+                    { text: `$${grossAmt.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, font: { size: 24, color: { argb: 'FF' + colors.accent }, bold: true } }
+                ]};
+                ws.getCell(`D${row}`).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                
+                // Card 3: Total Fees
+                ws.mergeCells(`F${row}:G${row + 2}`);
+                const card3 = ws.getCell(`F${row}`);
+                card3.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + colors.dangerLight } };
+                applyBorder(card3, ['top', 'left', 'bottom', 'right'], 'thin', colors.danger);
+                
+                ws.getCell(`F${row}`).value = { richText: [
+                    { text: 'TOTAL FEES\n', font: { size: 9, color: { argb: 'FF' + colors.danger }, bold: true } },
+                    { text: `-$${storedTotalFees.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, font: { size: 24, color: { argb: 'FF' + colors.danger }, bold: true } }
+                ]};
+                ws.getCell(`F${row}`).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                
+                // Card 4: Net Payout (highlighted)
+                ws.mergeCells(`H${row}:I${row + 2}`);
+                const card4 = ws.getCell(`H${row}`);
+                card4.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + colors.success } };
+                applyBorder(card4, ['top', 'left', 'bottom', 'right'], 'medium', colors.successDark);
+                
+                ws.getCell(`H${row}`).value = { richText: [
+                    { text: 'NET PAYOUT\n', font: { size: 9, color: { argb: 'FF' + colors.white }, bold: true } },
+                    { text: `$${merchantPayout.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, font: { size: 24, color: { argb: 'FF' + colors.white }, bold: true } }
+                ]};
+                ws.getCell(`H${row}`).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                
+                setRowHeight(row, 20);
+                setRowHeight(row + 1, 28);
+                setRowHeight(row + 2, 20);
+                row += 3;
+                
+                // Spacer
+                setRowHeight(row, 20);
+                row++;
+                
+                // === WEEKLY TRANSACTION TABLE ===
+                // Section header
+                ws.mergeCells(`B${row}:I${row}`);
+                const weeklyHeader = ws.getCell(`B${row}`);
+                weeklyHeader.value = 'WEEKLY BREAKDOWN';
+                weeklyHeader.font = { bold: true, size: 11, color: { argb: 'FF' + colors.secondary } };
+                weeklyHeader.border = { bottom: { style: 'medium', color: { argb: 'FF' + colors.accent } } };
+                setRowHeight(row, 24);
+                row++;
+                
+                setRowHeight(row, 8);
+                row++;
+                
+                // Table headers
+                let feeComponents = [];
+                if (percentFee > 0) feeComponents.push(`${percentFee}%`);
+                if (perTxFee > 0) feeComponents.push(`$${perTxFee.toFixed(2)}/tx`);
+                const feeLabel = feeComponents.length > 0 ? `Fees` : 'Fees';
+                
+                const tableHeaders = ['Week', 'Sales', 'Gross', feeLabel, 'Refunds', 'Ref Fees', 'CBs', 'CB Fees', 'Net'];
+                const headerRow = ws.getRow(row);
+                tableHeaders.forEach((header, i) => {
+                    const cell = headerRow.getCell(i + 2); // Start at column B
+                    cell.value = header;
+                    cell.font = { bold: true, size: 9, color: { argb: 'FF' + colors.white } };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + colors.secondary } };
+                    cell.alignment = { horizontal: i === 0 ? 'left' : 'center', vertical: 'middle' };
+                    cell.border = {
+                        top: { style: 'thin', color: { argb: 'FF' + colors.secondary } },
+                        bottom: { style: 'thin', color: { argb: 'FF' + colors.secondary } }
+                    };
+                });
+                setRowHeight(row, 22);
+                row++;
+                
+                // Table data rows
+                let totalSales = 0, totalGross = 0, totalFees = 0;
+                let totalRefundsCount = 0, totalRefundFees = 0;
+                let totalCBsCount = 0, totalCBFees = 0, totalNet = 0;
+                let isAlt = false;
+                
+                sortedWeeks.forEach(weekKey => {
+                    const week = weeklyData[weekKey];
+                    const weekRange = formatWeekRange(week.weekStart, week.weekEnd);
+                    
+                    const processingFeeAmount = week.grossPayments * (percentFee / 100);
+                    const allTxCount = week.count + week.refundCount + week.chargebackCount;
+                    const transactionFees = allTxCount * perTxFee;
+                    const combinedFees = processingFeeAmount + transactionFees;
+                    const weekRefundFees = week.refundCount * refundFee;
+                    const weekCBFees = week.chargebackCount * cbFee;
+                    const netAmount = week.grossPayments - combinedFees - weekRefundFees - weekCBFees;
+                    
+                    totalSales += week.count;
+                    totalGross += week.grossPayments;
+                    totalFees += combinedFees;
+                    totalRefundsCount += week.refundCount;
+                    totalRefundFees += weekRefundFees;
+                    totalCBsCount += week.chargebackCount;
+                    totalCBFees += weekCBFees;
+                    totalNet += netAmount;
+                    
+                    const dataRow = ws.getRow(row);
+                    const rowData = [weekRange, week.count, week.grossPayments, combinedFees, week.refundCount, weekRefundFees, week.chargebackCount, weekCBFees, netAmount];
+                    
+                    rowData.forEach((val, i) => {
+                        const cell = dataRow.getCell(i + 2);
+                        cell.value = val;
+                        if (i >= 2 && i !== 4 && i !== 6) cell.numFmt = '"$"#,##0.00';
+                        cell.font = { size: 10, color: { argb: 'FF' + colors.secondary } };
+                        cell.alignment = { horizontal: i === 0 ? 'left' : 'center', vertical: 'middle' };
+                        if (isAlt) {
+                            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + colors.light } };
+                        }
+                        cell.border = { bottom: { style: 'hair', color: { argb: 'FF' + colors.border } } };
+                    });
+                    
+                    setRowHeight(row, 20);
+                    isAlt = !isAlt;
+                    row++;
+                });
+                
+                // Subtotal row
+                const subtotalRowData = ['TOTAL', totalSales, totalGross, totalFees, totalRefundsCount, totalRefundFees, totalCBsCount, totalCBFees, totalNet];
+                const subRow = ws.getRow(row);
+                subtotalRowData.forEach((val, i) => {
+                    const cell = subRow.getCell(i + 2);
+                    cell.value = val;
+                    cell.font = { bold: true, size: 10, color: { argb: 'FF' + colors.primary } };
+                    if (i >= 2 && i !== 4 && i !== 6) cell.numFmt = '"$"#,##0.00';
+                    cell.alignment = { horizontal: i === 0 ? 'left' : 'center', vertical: 'middle' };
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + colors.border } };
+                    cell.border = {
+                        top: { style: 'medium', color: { argb: 'FF' + colors.secondary } },
+                        bottom: { style: 'medium', color: { argb: 'FF' + colors.secondary } }
+                    };
+                });
+                setRowHeight(row, 24);
+                row++;
+                
+                // Spacer
+                setRowHeight(row, 20);
+                row++;
+                
+                // === FEE BREAKDOWN ===
+                ws.mergeCells(`B${row}:E${row}`);
+                const feeHeader = ws.getCell(`B${row}`);
+                feeHeader.value = 'FEE DETAILS';
+                feeHeader.font = { bold: true, size: 11, color: { argb: 'FF' + colors.secondary } };
+                feeHeader.border = { bottom: { style: 'medium', color: { argb: 'FF' + colors.accent } } };
+                
+                // Settlement calc header
+                ws.mergeCells(`G${row}:I${row}`);
+                const calcHeader = ws.getCell(`G${row}`);
+                calcHeader.value = 'SETTLEMENT CALCULATION';
+                calcHeader.font = { bold: true, size: 11, color: { argb: 'FF' + colors.secondary } };
+                calcHeader.border = { bottom: { style: 'medium', color: { argb: 'FF' + colors.accent } } };
+                setRowHeight(row, 24);
+                row++;
+                
+                setRowHeight(row, 8);
+                row++;
+                
+                // Fee items and calculation side by side
+                const feeItems = [];
+                if (storedProcessingFee > 0) feeItems.push([`Processing (${percentFee}%)`, -storedProcessingFee]);
+                if (storedTxFees > 0) feeItems.push([`Per-Transaction ($${perTxFee.toFixed(2)} × ${totalTxCount})`, -storedTxFees]);
+                if (storedRefundFees > 0) feeItems.push([`Refund Fees ($${refundFee.toFixed(2)} × ${refundCountTotal})`, -storedRefundFees]);
+                if (storedCBFees > 0) feeItems.push([`Chargeback Fees ($${cbFee.toFixed(2)} × ${chargebackCountTotal})`, -storedCBFees]);
+                if (storedFeeCredit > 0) feeItems.push(['Processing Credit', storedFeeCredit]);
+                
+                const calcItems = [
+                    ['Gross Sales', parseFloat(report.gross_amount || 0)],
+                    ['Less: Fees', -storedTotalFees]
+                ];
+                if (adjustmentsTotal > 0) calcItems.push(['Less: Adjustments', -adjustmentsTotal]);
+                if (manualAdjustment !== 0) calcItems.push(['Manual Adjustment', manualAdjustment]);
+                
+                const maxRows = Math.max(feeItems.length, calcItems.length);
+                
+                for (let i = 0; i < maxRows; i++) {
+                    // Fee column
+                    if (feeItems[i]) {
+                        ws.getCell(`B${row}`).value = feeItems[i][0];
+                        ws.getCell(`B${row}`).font = { size: 10, color: { argb: 'FF' + colors.muted } };
+                        ws.getCell(`E${row}`).value = feeItems[i][1];
+                        ws.getCell(`E${row}`).numFmt = '"$"#,##0.00;"-$"#,##0.00';
+                        ws.getCell(`E${row}`).font = { size: 10, color: { argb: feeItems[i][1] >= 0 ? 'FF' + colors.success : 'FF' + colors.danger } };
+                        ws.getCell(`E${row}`).alignment = { horizontal: 'right' };
+                    }
+                    
+                    // Calc column
+                    if (calcItems[i]) {
+                        ws.getCell(`G${row}`).value = calcItems[i][0];
+                        ws.getCell(`G${row}`).font = { size: 10, color: { argb: 'FF' + colors.secondary } };
+                        ws.getCell(`I${row}`).value = calcItems[i][1];
+                        ws.getCell(`I${row}`).numFmt = '"$"#,##0.00;"-$"#,##0.00';
+                        ws.getCell(`I${row}`).font = { size: 10, color: { argb: calcItems[i][1] >= 0 ? 'FF' + colors.secondary : 'FF' + colors.danger } };
+                        ws.getCell(`I${row}`).alignment = { horizontal: 'right' };
+                    }
+                    
+                    setRowHeight(row, 18);
+                    row++;
+                }
+                
+                // Fee total
+                ws.getCell(`B${row}`).value = 'Total Fees';
+                ws.getCell(`B${row}`).font = { bold: true, size: 10, color: { argb: 'FF' + colors.primary } };
+                ws.getCell(`E${row}`).value = -storedTotalFees;
+                ws.getCell(`E${row}`).numFmt = '"-$"#,##0.00';
+                ws.getCell(`E${row}`).font = { bold: true, size: 10, color: { argb: 'FF' + colors.danger } };
+                ws.getCell(`E${row}`).alignment = { horizontal: 'right' };
+                ws.getCell(`E${row}`).border = { top: { style: 'thin', color: { argb: 'FF' + colors.border } } };
+                
+                // Net Payout
+                ws.getCell(`G${row}`).value = 'NET PAYOUT';
+                ws.getCell(`G${row}`).font = { bold: true, size: 11, color: { argb: 'FF' + colors.success } };
+                ws.mergeCells(`H${row}:I${row}`);
+                ws.getCell(`H${row}`).value = merchantPayout;
+                ws.getCell(`H${row}`).numFmt = '"$"#,##0.00';
+                ws.getCell(`H${row}`).font = { bold: true, size: 14, color: { argb: 'FF' + colors.white } };
+                ws.getCell(`H${row}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + colors.success } };
+                ws.getCell(`H${row}`).alignment = { horizontal: 'center', vertical: 'middle' };
+                ws.getCell(`H${row}`).border = {
+                    top: { style: 'medium', color: { argb: 'FF' + colors.successDark } },
+                    bottom: { style: 'medium', color: { argb: 'FF' + colors.successDark } },
+                    left: { style: 'medium', color: { argb: 'FF' + colors.successDark } },
+                    right: { style: 'medium', color: { argb: 'FF' + colors.successDark } }
+                };
+                setRowHeight(row, 28);
+                row++;
+                
+                // Spacer
+                setRowHeight(row, 20);
+                row++;
+                
+                // === FOOTER ===
+                ws.mergeCells(`B${row}:I${row}`);
+                const footerCell = ws.getCell(`B${row}`);
+                footerCell.value = `Generated on ${generatedDate} • Status: ${report.status.toUpperCase()}`;
+                footerCell.font = { size: 9, color: { argb: 'FF' + colors.muted }, italic: true };
+                footerCell.alignment = { horizontal: 'center' };
+                setRowHeight(row, 20);
+                row++;
+                
+                // Bottom accent bar
+                ws.mergeCells(`A${row}:J${row}`);
+                ws.getCell(`A${row}`).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + colors.accent } };
+                setRowHeight(row, 6);
+                
+                // Generate and download
+                const buffer = await workbook.xlsx.writeBuffer();
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${report.site_name}_${report.report_number}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+                
+            } catch (e) {
+                console.error('Excel download error:', e);
+                alert('Error generating Excel file: ' + e.message);
+            }
+        }
+        
+        // Helper: Get start of week (Sunday)
+        function getWeekStart(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            d.setDate(d.getDate() - day);
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+        
+        // Helper: Get end of week (Saturday)
+        function getWeekEnd(weekStart) {
+            const d = new Date(weekStart);
+            d.setDate(d.getDate() + 6);
+            return d;
+        }
+        
+        // Helper: Format week range like "Sep 01 - 07, 2025" or "Sep 29 - Oct 05, 2025"
+        function formatWeekRange(start, end) {
+            const startMonth = start.toLocaleDateString('en-US', { month: 'short' });
+            const endMonth = end.toLocaleDateString('en-US', { month: 'short' });
+            const startDay = String(start.getDate()).padStart(2, '0');
+            const endDay = String(end.getDate()).padStart(2, '0');
+            const year = end.getFullYear();
+            
+            if (startMonth === endMonth) {
+                return `${startMonth} ${startDay} - ${endDay}, ${year}`;
+            } else {
+                return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
+            }
+        }
+
         function formatCurrency(a) { return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(a || 0); }
+        
+        // Date Range Functions
+        function initDateRangeDropdown() {
+            const dateOptions = [
+                { value: '7', label: 'Last 7 Days' },
+                { value: '30', label: 'Last 30 Days' },
+                { value: '90', label: 'Last 90 Days' },
+                { value: '365', label: 'Last Year' },
+                { value: 'all', label: 'All Time' },
+                { value: 'custom', label: 'Custom Range' }
+            ];
+            
+            populateDateDropdown('dateRangeTrigger', 'dateRangeMenu', 'dateRange', dateOptions, handleDateRangeChange);
+        }
+        
+        function populateDateDropdown(triggerId, menuId, hiddenId, options, onChange) {
+            const trigger = document.getElementById(triggerId);
+            const menu = document.getElementById(menuId);
+            const hidden = document.getElementById(hiddenId);
+            
+            // Populate options
+            menu.innerHTML = options.map(opt => 
+                `<div class="custom-dropdown-option${opt.value === hidden.value ? ' selected' : ''}" data-value="${opt.value}">${opt.label}</div>`
+            ).join('');
+            
+            // Toggle menu
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.custom-dropdown-menu').forEach(m => {
+                    if (m !== menu) m.classList.remove('active');
+                });
+                menu.classList.toggle('active');
+            });
+            
+            // Handle selection
+            menu.querySelectorAll('.custom-dropdown-option').forEach(opt => {
+                opt.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const value = opt.dataset.value;
+                    const label = opt.textContent;
+                    
+                    menu.querySelectorAll('.custom-dropdown-option').forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                    
+                    trigger.textContent = label;
+                    hidden.value = value;
+                    menu.classList.remove('active');
+                    
+                    // Handle custom date range
+                    const customContainer = document.getElementById('customDateContainer');
+                    if (value === 'custom') {
+                        customContainer.classList.add('active');
+                    } else {
+                        customContainer.classList.remove('active');
+                        if (onChange) onChange();
+                    }
+                });
+            });
+        }
+        
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.custom-dropdown-menu').forEach(m => m.classList.remove('active'));
+        });
+        
+        function initDatePickers() {
+            const today = new Date().toISOString().split('T')[0];
+            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            
+            document.getElementById('startDateValue').value = thirtyDaysAgo;
+            document.getElementById('endDateValue').value = today;
+            document.getElementById('startDateValue').max = today;
+            document.getElementById('endDateValue').max = today;
+        }
+        
+        function handleDateRangeChange() {
+            currentDateRange = document.getElementById('dateRange').value;
+            customStartDate = null;
+            customEndDate = null;
+            selectedTransactions.clear();
+            document.getElementById('selectAllCheckbox').checked = false;
+            applyFilter();
+            updateSelectionSummary();
+        }
+        
+        window.cancelCustomDate = function() {
+            document.getElementById('customDateContainer').classList.remove('active');
+            document.getElementById('dateRange').value = 'all';
+            document.getElementById('dateRangeTrigger').textContent = 'All Time';
+            currentDateRange = 'all';
+            customStartDate = null;
+            customEndDate = null;
+            applyFilter();
+        };
+        
+        window.applyCustomDate = function() {
+            const startVal = document.getElementById('startDateValue').value;
+            const endVal = document.getElementById('endDateValue').value;
+            
+            if (!startVal || !endVal) {
+                alert('Please select both start and end dates');
+                return;
+            }
+            
+            if (new Date(startVal) > new Date(endVal)) {
+                alert('Start date must be before end date');
+                return;
+            }
+            
+            currentDateRange = 'custom';
+            customStartDate = startVal;
+            customEndDate = endVal;
+            
+            // Update trigger to show custom range
+            const trigger = document.getElementById('dateRangeTrigger');
+            const startDate = new Date(startVal);
+            const endDate = new Date(endVal);
+            trigger.textContent = `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+            
+            document.getElementById('customDateContainer').classList.remove('active');
+            selectedTransactions.clear();
+            document.getElementById('selectAllCheckbox').checked = false;
+            applyFilter();
+            updateSelectionSummary();
+        };
+        
+        function getDateFilterRange() {
+            const now = new Date();
+            let startDate = null, endDate = null;
+            
+            if (currentDateRange === 'custom' && customStartDate && customEndDate) {
+                const [startYear, startMonth, startDay] = customStartDate.split('-').map(Number);
+                const [endYear, endMonth, endDay] = customEndDate.split('-').map(Number);
+                startDate = new Date(startYear, startMonth - 1, startDay, 0, 0, 0, 0);
+                endDate = new Date(endYear, endMonth - 1, endDay, 23, 59, 59, 999);
+            } else if (currentDateRange === 'all') {
+                startDate = null;
+                endDate = null;
+            } else {
+                const days = parseInt(currentDateRange);
+                startDate = new Date(now);
+                startDate.setDate(startDate.getDate() - days);
+                startDate.setHours(0, 0, 0, 0);
+                endDate = new Date(now);
+                endDate.setHours(23, 59, 59, 999);
+            }
+            
+            return { startDate, endDate };
+        }
+        
         document.addEventListener('DOMContentLoaded', init);
         window.initPage = init;
     </script>
