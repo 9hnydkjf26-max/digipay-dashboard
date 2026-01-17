@@ -27,7 +27,8 @@
     --shadow-sm: 0 1px 3px rgba(50, 50, 93, 0.04);
     --shadow-md: 0 7px 14px rgba(50, 50, 93, 0.09), 0 3px 6px rgba(0, 0, 0, 0.07);
     --radius: 8px;
-    --sidebar-width: 240px;
+    --sidebar-width: 260px;
+    --sidebar-width-collapsed: 72px;
 }
 
 /* Dark Mode Support */
@@ -87,7 +88,14 @@ body {
     flex-direction: column;
     overflow-x: hidden;
     max-width: calc(100vw - var(--sidebar-width));
-    transition: opacity 0.15s ease-out;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.15s ease-out;
+}
+
+.main-wrapper.sidebar-collapsed {
+    margin-left: var(--sidebar-width-collapsed);
+    max-width: calc(100vw - var(--sidebar-width-collapsed));
 }
 
 .main-content {
@@ -97,7 +105,8 @@ body {
 }
 
 @media (max-width: 768px) {
-    .main-wrapper {
+    .main-wrapper,
+    .main-wrapper.sidebar-collapsed {
         margin-left: 0;
         max-width: 100vw;
     }
