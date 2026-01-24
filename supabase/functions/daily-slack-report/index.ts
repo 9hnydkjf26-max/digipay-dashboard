@@ -79,13 +79,13 @@ serve(async (req)=>{
     const sevenDaysAgoPST = new Date(yesterdayPST);
     sevenDaysAgoPST.setDate(sevenDaysAgoPST.getDate() - 6);
     const sevenDaysAgoStr = sevenDaysAgoPST.toISOString();
-    // Query yesterday's CPT transactions (only active sites)
-    const { data: cptData, error: cptError } = await supabase.from('cpt_data').select('site_id, site_name, trans_type, cust_amount, cust_email_ad, cust_session').gte('transaction_date', startOfYesterday).lte('transaction_date', endOfYesterdayStr).in('site_id', activeSiteIds);
+    // Query yesterday's CPT transactions (only active sites, exclude test transactions)
+    const { data: cptData, error: cptError } = await supabase.from('cpt_data').select('site_id, site_name, trans_type, cust_amount, cust_email_ad, cust_session').gte('transaction_date', startOfYesterday).lte('transaction_date', endOfYesterdayStr).in('site_id', activeSiteIds).neq('is_test', true);
     if (cptError) {
       throw new Error(`Failed to fetch CPT data: ${cptError.message}`);
     }
-    // Query last 7 days for refunds (only active sites)
-    const { data: refundData } = await supabase.from('cpt_data').select('site_id').gte('transaction_date', sevenDaysAgoStr).lte('transaction_date', endOfYesterdayStr).eq('trans_type', 'refund').in('site_id', activeSiteIds);
+    // Query last 7 days for refunds (only active sites, exclude test transactions)
+    const { data: refundData } = await supabase.from('cpt_data').select('site_id').gte('transaction_date', sevenDaysAgoStr).lte('transaction_date', endOfYesterdayStr).eq('trans_type', 'refund').in('site_id', activeSiteIds).neq('is_test', true);
     // Aggregate CPT data by site (only sites with data)
     const siteStatsMap = new Map();
     // Aggregate yesterday's transactions

@@ -12,5 +12,10 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist'
-  }
+  },
+  server: {
+    // Enable SPA fallback for client-side routing
+    historyApiFallback: true
+  },
+  appType: 'spa'
 })

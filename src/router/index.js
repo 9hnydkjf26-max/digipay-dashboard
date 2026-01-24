@@ -11,6 +11,8 @@ const BalancesView = () => import('@/views/BalancesView.vue')
 const CptReportsView = () => import('@/views/CptReportsView.vue')
 const SettlementReportsView = () => import('@/views/SettlementReportsView.vue')
 const SitePricingView = () => import('@/views/SitePricingView.vue')
+const PluginAdminView = () => import('@/views/PluginAdminView.vue')
+const DocumentationView = () => import('@/views/DocumentationView.vue')
 
 const routes = [
   {
@@ -63,6 +65,18 @@ const routes = [
     path: '/pricing',
     name: 'pricing',
     component: SitePricingView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/plugin-admin',
+    name: 'plugin-admin',
+    component: PluginAdminView,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/documentation',
+    name: 'documentation',
+    component: DocumentationView,
     meta: { requiresAuth: true }
   },
   {

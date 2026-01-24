@@ -3,17 +3,44 @@
 // Creates a settlement report with authoritative fee calculations.
 // All fee logic is computed server-side - frontend only submits transaction selections.
 //
+// Security: Requires valid JWT authentication
+//
 // Deploy: supabase functions deploy create-settlement-report
 // URL: https://hzdybwclwqkcobpwxzoo.supabase.co/functions/v1/create-settlement-report
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Content-Type': 'application/json'
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  'https://fluidcast.github.io',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:5176',
+  'http://localhost:5177',
+  'http://localhost:5178',
+  'http://localhost:5179',
+  'http://localhost:5180',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:5175',
+  'http://127.0.0.1:5176',
+  'http://127.0.0.1:5177',
+  'http://127.0.0.1:5178',
+  'http://127.0.0.1:5179',
+  'http://127.0.0.1:5180'
+]
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Credentials': 'true',
+    'Content-Type': 'application/json'
+  }
 }
 
 interface TransactionKey {
@@ -25,10 +52,14 @@ interface CreateReportRequest {
   site_name: string
   transaction_keys: TransactionKey[]
   notes?: string
-  created_by?: string
+  period_start?: string
+  period_end?: string
 }
 
 serve(async (req) => {
+  const origin = req.headers.get('origin')
+  const corsHeaders = getCorsHeaders(origin)
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -46,8 +77,52 @@ serve(async (req) => {
   }
 
   try {
+    // =============================================
+    // AUTHENTICATION: Verify JWT from Authorization header
+    // =============================================
+    const authHeader = req.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Missing or invalid authorization header'
+      }), {
+        status: 401,
+        headers: corsHeaders
+      })
+    }
+
+    const jwt = authHeader.replace('Bearer ', '')
+
+    // Create Supabase clients
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+
+    // Use anon key client to verify the JWT
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${jwt}` } }
+    })
+
+    const { data: { user }, error: authError } = await authClient.auth.getUser()
+
+    if (authError || !user) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Invalid or expired authentication token'
+      }), {
+        status: 401,
+        headers: corsHeaders
+      })
+    }
+
+    // User is authenticated - use their ID for created_by
+    const userId = user.id
+
+    // =============================================
+    // PARSE REQUEST
+    // =============================================
     const body: CreateReportRequest = await req.json()
-    const { site_name, transaction_keys, notes, created_by } = body
+    const { site_name, transaction_keys, notes, period_start: requestedPeriodStart, period_end: requestedPeriodEnd } = body
 
     if (!site_name) {
       return new Response(JSON.stringify({
@@ -69,9 +144,7 @@ serve(async (req) => {
       })
     }
 
-    // Create Supabase client with service role key
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    // Create Supabase client with service role key for database operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // Check for existing pending report for this site
@@ -99,42 +172,55 @@ serve(async (req) => {
       .eq('site_name', site_name)
       .single()
 
-    // Fetch transactions
-    const transactions: any[] = []
+    // Build a Set of selected keys for O(1) lookup
+    const selectedKeys = new Set(
+      transaction_keys.map(k => `${k.cust_session}|||${k.transaction_date}`)
+    )
+
+    // Fetch all unsettled transactions for site in ONE query (batch optimization)
+    const { data: allSiteTransactions } = await supabase
+      .from('cpt_data')
+      .select('*')
+      .eq('site_name', site_name)
+      .is('settlement_report_id', null)
+
+    // Filter to selected transactions in memory
+    const filteredTransactions = (allSiteTransactions || []).filter(tx =>
+      selectedKeys.has(`${tx.cust_session}|||${tx.transaction_date}`)
+    )
+
+    // Check if any requested transactions are already settled (not in unsettled results)
+    // This happens when a transaction was requested but not found in unsettled list
+    if (filteredTransactions.length < transaction_keys.length) {
+      // Find which keys are missing by checking against filtered results
+      const foundKeys = new Set(
+        filteredTransactions.map(tx => `${tx.cust_session}|||${tx.transaction_date}`)
+      )
+      const missingKey = transaction_keys.find(k =>
+        !foundKeys.has(`${k.cust_session}|||${k.transaction_date}`)
+      )
+      if (missingKey) {
+        return new Response(JSON.stringify({
+          success: false,
+          error: `Transaction ${missingKey.cust_session} is already included in a settlement report or does not exist`
+        }), {
+          status: 400,
+          headers: corsHeaders
+        })
+      }
+    }
+
+    const transactions: any[] = filteredTransactions
     let minDate: Date | null = null
     let maxDate: Date | null = null
     let siteId: string | null = null
 
-    for (const key of transaction_keys) {
-      const { data: tx } = await supabase
-        .from('cpt_data')
-        .select('*')
-        .eq('cust_session', key.cust_session)
-        .eq('transaction_date', key.transaction_date)
-        .single()
-
-      if (tx) {
-        // Check if transaction is already settled
-        if (tx.is_settled || tx.settlement_report_id) {
-          return new Response(JSON.stringify({
-            success: false,
-            error: `Transaction ${tx.cust_session} is already included in a settlement report`
-          }), {
-            status: 400,
-            headers: corsHeaders
-          })
-        }
-
-        transactions.push(tx)
-
-        // Track date range
-        const txDate = new Date(tx.transaction_date)
-        if (!minDate || txDate < minDate) minDate = txDate
-        if (!maxDate || txDate > maxDate) maxDate = txDate
-
-        // Get site_id from first transaction
-        if (!siteId && tx.site_id) siteId = tx.site_id
-      }
+    // Track date range and site_id from transactions
+    for (const tx of transactions) {
+      const txDate = new Date(tx.transaction_date)
+      if (!minDate || txDate < minDate) minDate = txDate
+      if (!maxDate || txDate > maxDate) maxDate = txDate
+      if (!siteId && tx.site_id) siteId = tx.site_id
     }
 
     if (transactions.length === 0) {
@@ -161,6 +247,7 @@ serve(async (req) => {
     // =============================================
 
     // Calculate transaction totals
+    // All transactions are included in gross, then refunds/chargebacks are deducted
     let gross = 0
     let refundsAmount = 0
     let chargebacksAmount = 0
@@ -170,19 +257,22 @@ serve(async (req) => {
 
     for (const t of transactions) {
       const amount = parseFloat(t.cust_amount || 0)
+      // All transactions contribute to gross (successful sales)
+      gross += amount
+      successfulCount++
+
+      // Track refunds and chargebacks for deduction
       if (t.is_refund) {
         refundsAmount += amount
         refundCount++
       } else if (t.is_chargeback) {
         chargebacksAmount += amount
         chargebackCount++
-      } else {
-        gross += amount
-        successfulCount++
       }
     }
 
-    const net = gross // Net from current batch
+    // Net = Gross minus refunds and chargebacks
+    const net = gross - refundsAmount - chargebacksAmount
 
     // Calculate adjustment totals
     const adjustmentsTotal = adjustments.reduce(
@@ -208,11 +298,12 @@ serve(async (req) => {
     let totalFees = 0
 
     if (pricing) {
-      // Processing fee (percentage of gross)
+      // Processing fee (percentage of net - after refunds/chargebacks)
+      // This ensures merchants aren't charged processing fees on money that was refunded
       processingFeePercent = parseFloat(pricing.percentage_fee) || 0
-      processingFeeAmount = gross * (processingFeePercent / 100)
+      processingFeeAmount = net * (processingFeePercent / 100)
 
-      // Per-transaction fee (only on successful transactions)
+      // Per-transaction fee (on all transactions since they were all processed)
       transactionFeePer = parseFloat(pricing.per_transaction_fee || 0)
       transactionFeesTotal = successfulCount * transactionFeePer
 
@@ -224,15 +315,50 @@ serve(async (req) => {
       chargebackFeePer = parseFloat(pricing.chargeback_fee || 0)
       chargebackFeesTotal = (chargebackCount + adjChargebackCount) * chargebackFeePer
 
-      // Processing fee credit: ONLY for adjustments (refunds/chargebacks from previous settlements)
-      // NOT for current batch refunds - those are net $0 with fees calculated on gross only
+      // Processing fee credit: for adjustments (refunds/chargebacks from previous settlements)
+      // This credits back the processing fee that was charged on the original settlement
       processingFeeCredit = adjustmentsTotal * (processingFeePercent / 100)
 
       // Total fees
       totalFees = processingFeeAmount + transactionFeesTotal + refundFeesTotal + chargebackFeesTotal - processingFeeCredit
     }
 
-    const merchantPayout = netAfterAdjustments - totalFees
+    let merchantPayout = netAfterAdjustments - totalFees
+
+    // =============================================
+    // RESERVE CALCULATION
+    // =============================================
+    let reserveDeducted = 0
+    let reserveBalance = 0
+
+    if (pricing) {
+      const reserveAmount = parseFloat(pricing.reserve_amount || 0)
+      const reserveCollected = parseFloat(pricing.reserve_collected || 0)
+      const reserveRemaining = Math.max(0, reserveAmount - reserveCollected)
+
+      if (reserveRemaining > 0 && merchantPayout > 0) {
+        // Deduct up to the remaining reserve needed (but not more than payout)
+        reserveDeducted = Math.min(merchantPayout, reserveRemaining)
+        merchantPayout = merchantPayout - reserveDeducted
+      }
+
+      // New reserve balance after this deduction
+      reserveBalance = reserveCollected + reserveDeducted
+    }
+
+    // =============================================
+    // SETTLEMENT FEE CALCULATION
+    // =============================================
+    let settlementFeePercent = 0
+    let settlementFeeAmount = 0
+
+    if (pricing && merchantPayout > 0) {
+      settlementFeePercent = parseFloat(pricing.settlement_fee || 0)
+      if (settlementFeePercent > 0) {
+        settlementFeeAmount = merchantPayout * (settlementFeePercent / 100)
+        merchantPayout = merchantPayout - settlementFeeAmount
+      }
+    }
 
     // =============================================
     // CREATE REPORT
@@ -241,7 +367,7 @@ serve(async (req) => {
     // Generate report number
     const reportNumber = `SR-${Date.now().toString(36).toUpperCase()}`
 
-    // Create the settlement report
+    // Create the settlement report with verified user ID
     const { data: report, error: reportError } = await supabase
       .from('settlement_reports')
       .insert({
@@ -266,10 +392,14 @@ serve(async (req) => {
         chargeback_fees_total: chargebackFeesTotal,
         processing_fee_credit: processingFeeCredit,
         total_fees: totalFees,
+        settlement_fee_percent: settlementFeePercent,
+        settlement_fee_amount: settlementFeeAmount,
         merchant_payout: merchantPayout,
-        period_start: minDate?.toISOString(),
-        period_end: maxDate?.toISOString(),
-        created_by: created_by || null,
+        reserve_deducted: reserveDeducted,
+        reserve_balance: reserveBalance,
+        period_start: requestedPeriodStart || minDate?.toISOString(),
+        period_end: requestedPeriodEnd || maxDate?.toISOString(),
+        created_by: userId,
         notes: notes || null
       })
       .select()
@@ -307,27 +437,35 @@ serve(async (req) => {
       throw new Error(`Failed to create report items: ${itemsError.message}`)
     }
 
-    // Update cpt_data to link transactions to this report
-    for (const t of transactions) {
-      await supabase
+    // Update cpt_data to link transactions to this report (batch update in parallel)
+    const updatePromises = transactions.map(t =>
+      supabase
         .from('cpt_data')
         .update({ settlement_report_id: report.id })
         .eq('cust_session', t.cust_session)
         .eq('transaction_date', t.transaction_date)
+    )
+    await Promise.all(updatePromises)
+
+    // Mark adjustments as applied (single batch query)
+    if (adjustments.length > 0) {
+      const adjustmentIds = adjustments.map((adj: any) => adj.id)
+      await supabase
+        .from('settlement_adjustments')
+        .update({
+          status: 'applied',
+          applied_to_settlement_id: report.id,
+          applied_at: new Date().toISOString()
+        })
+        .in('id', adjustmentIds)
     }
 
-    // Mark adjustments as applied
-    if (adjustments.length > 0) {
-      for (const adj of adjustments) {
-        await supabase
-          .from('settlement_adjustments')
-          .update({
-            status: 'applied',
-            applied_to_settlement_id: report.id,
-            applied_at: new Date().toISOString()
-          })
-          .eq('id', adj.id)
-      }
+    // Update reserve_collected in site_pricing if reserve was deducted
+    if (reserveDeducted > 0 && pricing) {
+      await supabase
+        .from('site_pricing')
+        .update({ reserve_collected: reserveBalance })
+        .eq('id', pricing.id)
     }
 
     return new Response(JSON.stringify({
@@ -341,8 +479,8 @@ serve(async (req) => {
         net_amount: netAfterAdjustments,
         total_fees: totalFees,
         merchant_payout: merchantPayout,
-        period_start: minDate?.toISOString(),
-        period_end: maxDate?.toISOString()
+        period_start: requestedPeriodStart || minDate?.toISOString(),
+        period_end: requestedPeriodEnd || maxDate?.toISOString()
       },
       fees: {
         processing_fee_percent: processingFeePercent,
@@ -354,7 +492,13 @@ serve(async (req) => {
         chargeback_fee_per: chargebackFeePer,
         chargeback_fees_total: chargebackFeesTotal,
         processing_fee_credit: processingFeeCredit,
-        total_fees: totalFees
+        total_fees: totalFees,
+        settlement_fee_percent: settlementFeePercent,
+        settlement_fee_amount: settlementFeeAmount
+      },
+      reserve: {
+        reserve_deducted: reserveDeducted,
+        reserve_balance: reserveBalance
       },
       adjustments_applied: adjustmentsCount
     }), {
@@ -369,7 +513,7 @@ serve(async (req) => {
       error: err?.message || 'Internal server error'
     }), {
       status: 500,
-      headers: corsHeaders
+      headers: getCorsHeaders(req.headers.get('origin'))
     })
   }
 })

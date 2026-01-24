@@ -206,7 +206,7 @@ function digipay_check_openssl() {
  * Check outbound connectivity and detect firewall issues
  */
 function digipay_check_connectivity() {
-    $api_url = 'https://hzdybwclwqkcobpwxzoo.supabase.co/functions/v1/site-limits';
+    $api_url = 'https://hzdybwclwqkcobpwxzoo.supabase.co/functions/v1/plugin-site-limits';
     $gateway = new WC_Gateway_Paygo_npaygo();
     $site_id = $gateway->get_option( 'siteid' );
     
@@ -699,7 +699,7 @@ function digipay_report_health() {
     
     // Send to central dashboard
     $response = wp_remote_post( 
-        'https://hzdybwclwqkcobpwxzoo.supabase.co/functions/v1/site-health-report',
+        'https://hzdybwclwqkcobpwxzoo.supabase.co/functions/v1/plugin-site-health-report',
         array(
             'timeout' => 10,
             'headers' => array( 'Content-Type' => 'application/json' ),
@@ -730,22 +730,29 @@ function digipay_test_inbound_connectivity() {
         'tested_url' => ''
     );
     
-    // Build the postback URL
-    $postback_url = get_option( 'siteurl' ) . '/wp-content/plugins/secure_plugin/paygo_postback.php';
+    // Build the postback URL - use site_url() and ensure HTTPS if site supports it
+    $postback_url = site_url( '/wp-content/plugins/secure_plugin/paygo_postback.php' );
+
+    // If site is serving over HTTPS (detected via is_ssl()), ensure URL uses HTTPS
+    // This handles cases where siteurl is stored as http:// but site runs behind SSL proxy
+    if ( is_ssl() && strpos( $postback_url, 'http://' ) === 0 ) {
+        $postback_url = str_replace( 'http://', 'https://', $postback_url );
+    }
+
     $result['tested_url'] = $postback_url;
-    
+
     // Check if using HTTPS
     if ( strpos( $postback_url, 'https://' ) !== 0 ) {
         $result['message'] = 'Cannot test: Site must use HTTPS';
         $result['details'] = 'The inbound connectivity test requires HTTPS. Update your site URL to use HTTPS.';
-        
+
         update_option( 'digipay_inbound_test', array(
             'time' => current_time( 'mysql' ),
             'success' => false,
             'message' => $result['message'],
             'details' => $result['details']
         ));
-        
+
         return $result;
     }
     

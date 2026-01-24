@@ -27,8 +27,7 @@
     --shadow-sm: 0 1px 3px rgba(50, 50, 93, 0.04);
     --shadow-md: 0 7px 14px rgba(50, 50, 93, 0.09), 0 3px 6px rgba(0, 0, 0, 0.07);
     --radius: 8px;
-    --sidebar-width: 260px;
-    --sidebar-width-collapsed: 72px;
+    --sidebar-width: 240px;
 }
 
 /* Dark Mode Support */
@@ -64,7 +63,6 @@ body {
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
-    overflow-y: scroll; /* Prevent layout shift from scrollbar appearing/disappearing */
 }
 
 #app {
@@ -89,14 +87,7 @@ body {
     flex-direction: column;
     overflow-x: hidden;
     max-width: calc(100vw - var(--sidebar-width));
-    /* Only transition layout properties when sidebar collapses, not on initial load */
-    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.main-wrapper.sidebar-collapsed {
-    margin-left: var(--sidebar-width-collapsed);
-    max-width: calc(100vw - var(--sidebar-width-collapsed));
+    transition: opacity 0.15s ease-out;
 }
 
 .main-content {
@@ -106,8 +97,7 @@ body {
 }
 
 @media (max-width: 768px) {
-    .main-wrapper,
-    .main-wrapper.sidebar-collapsed {
+    .main-wrapper {
         margin-left: 0;
         max-width: 100vw;
     }
@@ -825,13 +815,13 @@ h4 { font-size: 16px; }
 }
 
 /* ========================================
-   SIDEBAR STYLES (moved from sidebar.css)
+   SIDEBAR STYLES - WINDOWS 98 THEME
    ======================================== */
 
 .sidebar {
     width: var(--sidebar-width);
-    background: var(--color-white);
-    border-right: 1px solid var(--color-border);
+    background: #c0c0c0;
+    border-right: none;
     display: flex;
     flex-direction: column;
     position: fixed;
@@ -839,70 +829,87 @@ h4 { font-size: 16px; }
     left: 0;
     top: 0;
     z-index: 100;
+    font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+    box-shadow:
+        inset -1px -1px 0 #0a0a0a,
+        inset 1px 1px 0 #dfdfdf,
+        inset -2px -2px 0 #808080,
+        inset 2px 2px 0 #ffffff;
 }
 
 .sidebar-header {
-    padding: 24px 20px;
-    border-bottom: 1px solid var(--color-border);
+    padding: 4px;
+    background: linear-gradient(90deg, #000080 0%, #1084d0 100%);
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .sidebar-logo {
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--color-text);
-    letter-spacing: -0.02em;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    letter-spacing: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     text-decoration: none;
+    padding: 2px 4px;
+    text-shadow: 1px 1px 0 #000080;
 }
 
 .sidebar-logo img {
-    width: 28px;
-    height: 28px;
+    width: 16px;
+    height: 16px;
+    image-rendering: pixelated;
 }
 
 .sidebar-subtitle {
-    font-size: 12px;
-    color: var(--color-text-tertiary);
+    font-size: 11px;
+    color: #808080;
     margin-top: 4px;
 }
 
 .sidebar-nav {
     flex: 1;
-    padding: 16px 12px;
+    padding: 8px;
     overflow-y: auto;
+    background: #c0c0c0;
 }
 
 .nav-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
-    margin-bottom: 4px;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--color-text-secondary);
+    gap: 8px;
+    padding: 4px 8px;
+    margin-bottom: 2px;
+    border-radius: 0;
+    font-size: 11px;
+    font-weight: normal;
+    color: #000000;
     text-decoration: none;
-    transition: all 0.15s;
+    transition: none;
     cursor: pointer;
+    background: transparent;
 }
 
 .nav-item:hover {
-    background: var(--color-bg);
-    color: var(--color-text);
+    background: #000080;
+    color: #ffffff;
 }
 
 .nav-item.active,
 .nav-item.router-link-active {
-    background: rgba(99, 91, 255, 0.1);
-    color: var(--color-primary);
+    background: #000080;
+    color: #ffffff;
 }
 
 .nav-item-icon {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -910,80 +917,116 @@ h4 { font-size: 16px; }
 }
 
 .nav-item-icon svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
 }
 
 .sidebar-footer {
-    padding: 16px 12px;
-    border-top: 1px solid var(--color-border);
+    padding: 8px;
+    border-top: 1px solid #808080;
+    background: #c0c0c0;
 }
 
 .user-profile {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
-    background: var(--color-bg);
-    border-radius: 6px;
+    gap: 8px;
+    padding: 4px;
+    background: #ffffff;
+    border-radius: 0;
     margin-bottom: 8px;
+    box-shadow:
+        inset -1px -1px 0 #ffffff,
+        inset 1px 1px 0 #0a0a0a,
+        inset -2px -2px 0 #dfdfdf,
+        inset 2px 2px 0 #808080;
 }
 
 .user-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: var(--color-primary);
+    width: 24px;
+    height: 24px;
+    border-radius: 0;
+    background: #000080;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 10px;
+    font-weight: bold;
     flex-shrink: 0;
 }
 
 .user-info-sidebar {
     flex: 1;
     min-width: 0;
-    min-height: 36px;
+    min-height: 24px;
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
 .user-name {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--color-text);
+    font-size: 11px;
+    font-weight: bold;
+    color: #000000;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .user-role {
-    font-size: 11px;
-    color: var(--color-text-tertiary);
+    font-size: 10px;
+    color: #808080;
 }
 
 .logout-btn {
     width: 100%;
-    padding: 10px 12px;
+    padding: 4px 8px;
     border: none;
     background: none;
-    font-size: 14px;
-    color: var(--color-text-secondary);
+    font-size: 11px;
+    color: #000000;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 0;
     text-align: left;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
 .logout-btn:hover {
-    background: var(--color-bg);
-    color: var(--color-error);
+    background: #000080;
+    color: #ffffff;
+}
+
+/* Windows 98 Button Style for Sidebar */
+.sidebar .btn {
+    font-family: "MS Sans Serif", Tahoma, Arial, sans-serif;
+    font-size: 11px;
+    padding: 4px 12px;
+    background: #c0c0c0;
+    border: none;
+    border-radius: 0;
+    color: #000000;
+    box-shadow:
+        inset -1px -1px 0 #0a0a0a,
+        inset 1px 1px 0 #ffffff,
+        inset -2px -2px 0 #808080,
+        inset 2px 2px 0 #dfdfdf;
+    cursor: pointer;
+}
+
+.sidebar .btn:hover {
+    background: #d4d4d4;
+}
+
+.sidebar .btn:active {
+    box-shadow:
+        inset 1px 1px 0 #0a0a0a,
+        inset -1px -1px 0 #ffffff,
+        inset 2px 2px 0 #808080,
+        inset -2px -2px 0 #dfdfdf;
+    padding: 5px 11px 3px 13px;
 }
 
 /* ========================================

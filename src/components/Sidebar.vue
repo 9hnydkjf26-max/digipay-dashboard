@@ -50,7 +50,7 @@ const navigationSections = [
       },
       {
         to: '/cpt-reports',
-        label: 'CPT Reports',
+        label: 'Transactions',
         icon: 'document'
       },
       {
@@ -64,20 +64,26 @@ const navigationSections = [
     label: 'Settings',
     items: [
       {
-        to: '/warmup',
-        label: 'Warm Up',
-        icon: 'flame'
-      },
-      {
         to: '/pricing',
         label: 'Pricing',
         icon: 'tag'
+      },
+      {
+        to: '/plugin-admin',
+        label: 'Plugin Admin',
+        icon: 'plugin',
+        requiresAdmin: true
       },
       {
         to: '/admin',
         label: 'Admin',
         icon: 'settings',
         requiresAdmin: true
+      },
+      {
+        to: '/documentation',
+        label: 'Documentation',
+        icon: 'document'
       }
     ]
   }
@@ -221,6 +227,11 @@ watch(() => route.path, () => {
             <svg v-else-if="item.icon === 'tag'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/>
               <path d="M7 7h.01"/>
+            </svg>
+            <!-- Plugin -->
+            <svg v-else-if="item.icon === 'plugin'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+              <path d="m9 12 2 2 4-4"/>
             </svg>
             <!-- Settings -->
             <svg v-else-if="item.icon === 'settings'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">

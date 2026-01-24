@@ -26,6 +26,15 @@ Deno.serve(async (req)=>{
       throw new Error('Unauthorized');
     }
     console.log(`User ${user.email} checking Airwallex balances`);
+
+    // Log outbound IP for debugging
+    try {
+      const ipResponse = await fetch('https://api.ipify.org?format=json');
+      const ipData = await ipResponse.json();
+      console.log(`Outbound IP (seen by Airwallex): ${ipData.ip}`);
+    } catch (e) {
+      console.log('Could not fetch outbound IP');
+    }
     // Parse request body
     const { account_id } = await req.json().catch(()=>({}));
     // Discover Airwallex accounts from payment_accounts table

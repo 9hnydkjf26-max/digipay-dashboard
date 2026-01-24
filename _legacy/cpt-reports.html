@@ -99,9 +99,9 @@
                             </span>
                         </div>
                         <div class="cpt-stat-card" style="--stat-accent: var(--cpt-warning)">
-                            <div class="cpt-stat-label">Pending</div>
-                            <div class="cpt-stat-value" id="statPending">—</div>
-                            <span class="cpt-stat-change" id="statPendingRate">
+                            <div class="cpt-stat-label">Cancelled</div>
+                            <div class="cpt-stat-value" id="statCancelled">—</div>
+                            <span class="cpt-stat-change" id="statCancelledRate">
                                 <span>—</span>
                             </span>
                         </div>
@@ -157,8 +157,8 @@
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </div>
                             <div class="cpt-insight-content">
-                                <div class="cpt-insight-value" id="insightTodayPending">—</div>
-                                <div class="cpt-insight-label">Pending Today</div>
+                                <div class="cpt-insight-value" id="insightTodayCancelled">—</div>
+                                <div class="cpt-insight-label">Cancelled Today</div>
                             </div>
                         </div>
                         <div class="cpt-insight-card">
@@ -199,7 +199,7 @@
                                     Complete <span class="count" id="countComplete">—</span>
                                 </button>
                                 <button class="cpt-status-chip" data-status="incomplete">
-                                    Pending <span class="count" id="countPending">—</span>
+                                    Cancelled <span class="count" id="countCancelled">—</span>
                                 </button>
                             </div>
                         </div>
@@ -438,13 +438,13 @@
                 if (!dateStr || dateStr < cutoffStr) continue; // Skip old transactions
                 
                 if (!transactionsByDate[dateStr]) {
-                    transactionsByDate[dateStr] = { complete: 0, pending: 0, volume: 0 };
+                    transactionsByDate[dateStr] = { complete: 0, cancelled: 0, volume: 0 };
                 }
                 if (t.status === 'complete') {
                     transactionsByDate[dateStr].complete++;
                     transactionsByDate[dateStr].volume += parseFloat(t.cust_amount || 0);
                 } else {
-                    transactionsByDate[dateStr].pending++;
+                    transactionsByDate[dateStr].cancelled++;
                 }
             }
         }
@@ -728,14 +728,14 @@ async function loadData() {
             const total = siteFilteredTransactions.length;
             const completedTransactions = siteFilteredTransactions.filter(t => t.status === 'complete');
             const completed = completedTransactions.length;
-            const pending = siteFilteredTransactions.filter(t => t.status === 'incomplete').length;
+            const cancelled = siteFilteredTransactions.filter(t => t.status === 'incomplete').length;
             const totalCaptured = completedTransactions.reduce((sum, t) => sum + parseFloat(t.cust_amount || 0), 0);
             const avgAmount = completed > 0 ? totalCaptured / completed : 0;
             const sites = new Set(siteFilteredTransactions.map(t => t.site_name).filter(Boolean)).size;
 
             document.getElementById('statTotalVolume').textContent = formatCurrency(totalCaptured);
             document.getElementById('statCompleted').textContent = completed.toLocaleString();
-            document.getElementById('statPending').textContent = pending.toLocaleString();
+            document.getElementById('statCancelled').textContent = cancelled.toLocaleString();
             document.getElementById('statAvgAmount').textContent = formatCurrency(avgAmount);
             document.getElementById('statSites').textContent = currentSite ? '1' : sites;
 
@@ -745,16 +745,16 @@ async function loadData() {
             // Update filter counts
             document.getElementById('countAll').textContent = total;
             document.getElementById('countComplete').textContent = completed;
-            document.getElementById('countPending').textContent = pending;
+            document.getElementById('countCancelled').textContent = cancelled;
         }
 
         // Update Today's Insights (using selected timezone)
         function updateTodayInsights() {
             const { todayStr } = getTodayRangeInTimezone();
-            const today = transactionsByDate[todayStr] || { complete: 0, pending: 0, volume: 0 };
+            const today = transactionsByDate[todayStr] || { complete: 0, cancelled: 0, volume: 0 };
 
             document.getElementById('insightTodayComplete').textContent = today.complete.toLocaleString();
-            document.getElementById('insightTodayPending').textContent = today.pending.toLocaleString();
+            document.getElementById('insightTodayCancelled').textContent = today.cancelled.toLocaleString();
             document.getElementById('insightTodayVolume').textContent = formatCurrency(today.volume);
         }
 
@@ -791,7 +791,7 @@ async function loadData() {
                             borderSkipped: false,
                         },
                         {
-                            label: 'Pending',
+                            label: 'Cancelled',
                             data: [],
                             backgroundColor: 'rgba(245, 158, 11, 0.8)',
                             borderRadius: 4,
@@ -854,7 +854,7 @@ async function loadData() {
             const days = chartRange === '7d' ? 7 : chartRange === '30d' ? 30 : 90;
             const labels = [];
             const completeData = [];
-            const pendingData = [];
+            const cancelledData = [];
 
             // Get today's date in selected timezone
             const { year, month, day } = getTodayRangeInTimezone();
@@ -862,16 +862,16 @@ async function loadData() {
             for (let i = days - 1; i >= 0; i--) {
                 const targetDate = new Date(year, month, day - i);
                 const targetDateStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
-                const dayData = transactionsByDate[targetDateStr] || { complete: 0, pending: 0 };
+                const dayData = transactionsByDate[targetDateStr] || { complete: 0, cancelled: 0 };
 
                 labels.push(targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
                 completeData.push(dayData.complete);
-                pendingData.push(dayData.pending);
+                cancelledData.push(dayData.cancelled);
             }
 
             volumeChart.data.labels = labels;
             volumeChart.data.datasets[0].data = completeData;
-            volumeChart.data.datasets[1].data = pendingData;
+            volumeChart.data.datasets[1].data = cancelledData;
             volumeChart.update();
         }
 
@@ -886,17 +886,17 @@ async function loadData() {
             const ctx = document.getElementById('statusChart').getContext('2d');
             
             const completed = siteFilteredTransactions.filter(t => t.status === 'complete').length;
-            const pending = siteFilteredTransactions.filter(t => t.status === 'incomplete').length;
-            const total = completed + pending;
+            const cancelled = siteFilteredTransactions.filter(t => t.status === 'incomplete').length;
+            const total = completed + cancelled;
 
             const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
             statusChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Complete', 'Pending'],
+                    labels: ['Complete', 'Cancelled'],
                     datasets: [{
-                        data: [completed, pending],
+                        data: [completed, cancelled],
                         backgroundColor: ['#10b981', '#f59e0b'],
                         borderWidth: 0,
                         cutout: '75%',
@@ -932,9 +932,9 @@ async function loadData() {
                 <div class="cpt-donut-stat">
                     <div class="cpt-donut-stat-left">
                         <div class="cpt-donut-stat-dot" style="background: #f59e0b"></div>
-                        <span class="cpt-donut-stat-label">Pending</span>
+                        <span class="cpt-donut-stat-label">Cancelled</span>
                     </div>
-                    <span class="cpt-donut-stat-value">${pending.toLocaleString()} (${total > 0 ? ((pending/total)*100).toFixed(1) : 0}%)</span>
+                    <span class="cpt-donut-stat-value">${cancelled.toLocaleString()} (${total > 0 ? ((cancelled/total)*100).toFixed(1) : 0}%)</span>
                 </div>
             `;
         }
@@ -1069,7 +1069,7 @@ async function loadData() {
                             <span class="cpt-cell-amount positive">${formatCurrency(amount)} ${t.currency || 'CAD'}</span>
                         </td>
                         <td>
-                            <span class="cpt-status-badge ${statusClass}">${t.status === 'complete' ? 'Complete' : 'Pending'}</span>${indicators}
+                            <span class="cpt-status-badge ${statusClass}">${t.status === 'complete' ? 'Complete' : 'Cancelled'}</span>${indicators}
                         </td>
                         <td>
                             <span class="cpt-cell-site">${t.site_name || '—'}</span>
@@ -1149,7 +1149,7 @@ async function loadData() {
             const amount = parseFloat(transaction.cust_amount || 0);
 
             // Build status badges HTML
-            let statusBadges = `<span class="cpt-status-badge ${transaction.status}">${transaction.status === 'complete' ? 'Complete' : 'Pending'}</span>`;
+            let statusBadges = `<span class="cpt-status-badge ${transaction.status}">${transaction.status === 'complete' ? 'Complete' : 'Cancelled'}</span>`;
             if (transaction.is_refund) {
                 statusBadges += ` <span class="cpt-status-badge refund">Refunded</span>`;
             }

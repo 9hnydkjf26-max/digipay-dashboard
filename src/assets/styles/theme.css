@@ -1,0 +1,80 @@
+/* ========================================
+   SHARED THEME - Fintech Dashboard
+   CSS Variables & Design Tokens
+   ======================================== */
+
+/* Dark Theme (Default) */
+:root {
+  /* Backgrounds */
+  --bg-base: #0a0a0f;
+  --bg-elevated: #12121a;
+  --bg-surface: #1a1a24;
+  --bg-hover: #22222e;
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-emphasis: rgba(255, 255, 255, 0.15);
+
+  /* Text */
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --text-muted: #475569;
+
+  /* Accent Colors */
+  --accent-primary: #818cf8;
+  --accent-primary-dim: rgba(129, 140, 248, 0.15);
+  --accent-success: #34d399;
+  --accent-success-dim: rgba(52, 211, 153, 0.15);
+  --accent-warning: #fbbf24;
+  --accent-warning-dim: rgba(251, 191, 36, 0.15);
+  --accent-danger: #f87171;
+  --accent-danger-dim: rgba(248, 113, 113, 0.15);
+
+  /* Typography */
+  --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+
+  /* Spacing & Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Light Theme */
+@media (prefers-color-scheme: light) {
+  :root {
+    /* Backgrounds */
+    --bg-base: #f8fafc;
+    --bg-elevated: #ffffff;
+    --bg-surface: #f1f5f9;
+    --bg-hover: #e2e8f0;
+
+    /* Borders */
+    --border-subtle: rgba(0, 0, 0, 0.06);
+    --border-default: rgba(0, 0, 0, 0.1);
+    --border-emphasis: rgba(0, 0, 0, 0.15);
+
+    /* Text */
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-tertiary: #64748b;
+    --text-muted: #94a3b8;
+
+    /* Accent Colors - Dimmed versions for light mode */
+    --accent-primary-dim: rgba(99, 102, 241, 0.1);
+    --accent-success-dim: rgba(34, 197, 94, 0.1);
+    --accent-warning-dim: rgba(234, 179, 8, 0.1);
+    --accent-danger-dim: rgba(239, 68, 68, 0.1);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+}

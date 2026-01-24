@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { useAlerts } from '@/composables/useAlerts'
@@ -10,18 +10,52 @@ const route = useRoute()
 const { isAuthenticated, initialize } = useAuth()
 const { alerts, removeAlert } = useAlerts()
 
+// Environment indicator
+const isStaging = import.meta.env.MODE === 'staging'
+const envLabel = isStaging ? 'STAGING' : null
+
+// Load sidebar state synchronously to prevent layout shift on page load
+const savedSidebarState = localStorage.getItem('sidebar-collapsed')
+const isSidebarCollapsed = ref(savedSidebarState === 'true')
+
+// Disable transitions on initial load to prevent shift
+const initialLoad = ref(true)
+
 // Determine if we should show the sidebar layout
 const showSidebar = computed(() => {
   return isAuthenticated.value && route.meta.layout !== 'none'
 })
 
+function handleSidebarCollapse(e) {
+  isSidebarCollapsed.value = e.detail.collapsed
+}
+
 onMounted(() => {
   initialize()
+  // Listen for collapse events
+  window.addEventListener('sidebar-collapse', handleSidebarCollapse)
+  // Enable transitions after initial paint is complete
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      initialLoad.value = false
+    })
+  })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('sidebar-collapse', handleSidebarCollapse)
 })
 </script>
 
 <template>
-  <div id="app-root">
+  <div id="app-root" :class="{ 'has-env-banner': isStaging, 'initial-load': initialLoad }">
+    <!-- Environment banner -->
+    <div v-if="isStaging" class="env-banner">
+      <span class="env-banner-icon">⚠️</span>
+      <span class="env-banner-text">{{ envLabel }} ENVIRONMENT</span>
+      <span class="env-banner-hint">Changes here won't affect production</span>
+    </div>
+
     <!-- Toast notifications -->
     <Teleport to="body">
       <div class="toast-container">
@@ -46,10 +80,12 @@ onMounted(() => {
     <!-- App layout -->
     <div v-if="showSidebar" class="app-layout">
       <Sidebar />
-      <main class="main-wrapper">
-        <RouterView v-slot="{ Component }">
-          <Transition name="fade" mode="out-in">
-            <component :is="Component" />
+      <main class="main-wrapper" :class="{ 'sidebar-collapsed': isSidebarCollapsed }">
+        <RouterView v-slot="{ Component, route: currentRoute }">
+          <Transition :name="initialLoad ? '' : 'fade'" mode="out-in">
+            <KeepAlive>
+              <component :is="Component" :key="currentRoute.path" />
+            </KeepAlive>
           </Transition>
         </RouterView>
       </main>
@@ -58,7 +94,7 @@ onMounted(() => {
     <!-- No sidebar layout (login page) -->
     <div v-else>
       <RouterView v-slot="{ Component }">
-        <Transition name="fade" mode="out-in">
+        <Transition :name="initialLoad ? '' : 'fade'" mode="out-in">
           <component :is="Component" />
         </Transition>
       </RouterView>
@@ -69,6 +105,51 @@ onMounted(() => {
 <style>
 #app-root {
   min-height: 100vh;
+}
+
+/* Disable all transitions on initial page load to prevent layout shift */
+#app-root.initial-load,
+#app-root.initial-load *,
+#app-root.initial-load *::before,
+#app-root.initial-load *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+#app-root.has-env-banner {
+  padding-top: 36px;
+}
+
+.env-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 36px;
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 10000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.env-banner-icon {
+  font-size: 14px;
+}
+
+.env-banner-text {
+  letter-spacing: 0.05em;
+}
+
+.env-banner-hint {
+  font-weight: 400;
+  opacity: 0.9;
+  font-size: 12px;
 }
 
 .toast-container {

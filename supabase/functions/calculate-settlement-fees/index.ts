@@ -3,17 +3,44 @@
 // Calculates settlement fees for a given set of transactions and site.
 // This is the authoritative source of truth for fee calculations.
 //
+// Security: Requires valid JWT authentication
+//
 // Deploy: supabase functions deploy calculate-settlement-fees
 // URL: https://hzdybwclwqkcobpwxzoo.supabase.co/functions/v1/calculate-settlement-fees
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Content-Type': 'application/json'
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  'https://fluidcast.github.io',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:5176',
+  'http://localhost:5177',
+  'http://localhost:5178',
+  'http://localhost:5179',
+  'http://localhost:5180',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:5175',
+  'http://127.0.0.1:5176',
+  'http://127.0.0.1:5177',
+  'http://127.0.0.1:5178',
+  'http://127.0.0.1:5179',
+  'http://127.0.0.1:5180'
+]
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Credentials': 'true',
+    'Content-Type': 'application/json'
+  }
 }
 
 interface TransactionKey {
@@ -51,6 +78,7 @@ interface FeeCalculation {
   transaction_fee_per: number
   refund_fee_per: number
   chargeback_fee_per: number
+  settlement_fee_percent: number
 
   // Calculated fees
   processing_fee_amount: number
@@ -59,15 +87,26 @@ interface FeeCalculation {
   chargeback_fees_total: number
   processing_fee_credit: number
   total_fees: number
+  settlement_fee_amount: number
 
   // Final payout
   merchant_payout: number
+
+  // Reserve
+  reserve_amount: number
+  reserve_collected: number
+  reserve_remaining: number
+  reserve_deducted: number
+  reserve_balance: number
 
   // Metadata
   pricing_configured: boolean
 }
 
 serve(async (req) => {
+  const origin = req.headers.get('origin')
+  const corsHeaders = getCorsHeaders(origin)
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -85,6 +124,47 @@ serve(async (req) => {
   }
 
   try {
+    // =============================================
+    // AUTHENTICATION: Verify JWT from Authorization header
+    // =============================================
+    const authHeader = req.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Missing or invalid authorization header'
+      }), {
+        status: 401,
+        headers: corsHeaders
+      })
+    }
+
+    const jwt = authHeader.replace('Bearer ', '')
+
+    // Create Supabase clients
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+
+    // Use anon key client to verify the JWT
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${jwt}` } }
+    })
+
+    const { data: { user }, error: authError } = await authClient.auth.getUser()
+
+    if (authError || !user) {
+      return new Response(JSON.stringify({
+        success: false,
+        error: 'Invalid or expired authentication token'
+      }), {
+        status: 401,
+        headers: corsHeaders
+      })
+    }
+
+    // =============================================
+    // PARSE REQUEST
+    // =============================================
     const body: CalculationRequest = await req.json()
     const { site_name, transaction_keys, include_pending_adjustments = true } = body
 
@@ -108,9 +188,7 @@ serve(async (req) => {
       })
     }
 
-    // Create Supabase client with service role key
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    // Create Supabase client with service role key for database operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // Fetch site pricing
@@ -122,20 +200,22 @@ serve(async (req) => {
 
     const pricingConfigured = !pricingError && pricing !== null
 
-    // Fetch transactions
-    const transactions = []
-    for (const key of transaction_keys) {
-      const { data: tx } = await supabase
-        .from('cpt_data')
-        .select('*')
-        .eq('cust_session', key.cust_session)
-        .eq('transaction_date', key.transaction_date)
-        .single()
+    // Build a Set of selected keys for O(1) lookup
+    const selectedKeys = new Set(
+      transaction_keys.map(k => `${k.cust_session}|||${k.transaction_date}`)
+    )
 
-      if (tx) {
-        transactions.push(tx)
-      }
-    }
+    // Fetch all unsettled transactions for site in ONE query (batch optimization)
+    const { data: allSiteTransactions } = await supabase
+      .from('cpt_data')
+      .select('*')
+      .eq('site_name', site_name)
+      .is('settlement_report_id', null)
+
+    // Filter to selected transactions in memory
+    const transactions = (allSiteTransactions || []).filter(tx =>
+      selectedKeys.has(`${tx.cust_session}|||${tx.transaction_date}`)
+    )
 
     if (transactions.length === 0) {
       return new Response(JSON.stringify({
@@ -160,6 +240,7 @@ serve(async (req) => {
     }
 
     // Calculate transaction totals
+    // All transactions are included in gross, then refunds/chargebacks are deducted
     let gross = 0
     let refunds = 0
     let chargebacks = 0
@@ -169,19 +250,22 @@ serve(async (req) => {
 
     for (const t of transactions) {
       const amount = parseFloat(t.cust_amount || 0)
+      // All transactions contribute to gross (successful sales)
+      gross += amount
+      successfulCount++
+
+      // Track refunds and chargebacks for deduction
       if (t.is_refund) {
         refunds += amount
         refundCount++
       } else if (t.is_chargeback) {
         chargebacks += amount
         chargebackCount++
-      } else {
-        gross += amount
-        successfulCount++
       }
     }
 
-    const net = gross // Net from current batch (refunds/chargebacks are separate line items)
+    // Net = Gross minus refunds and chargebacks
+    const net = gross - refunds - chargebacks
 
     // Calculate adjustment totals
     const adjustmentsTotal = pendingAdjustments.reduce(
@@ -207,11 +291,12 @@ serve(async (req) => {
     let totalFees = 0
 
     if (pricingConfigured && pricing) {
-      // Processing fee (percentage of gross)
+      // Processing fee (percentage of net - after refunds/chargebacks)
+      // This ensures merchants aren't charged processing fees on money that was refunded
       processingFeePercent = parseFloat(pricing.percentage_fee) || 0
-      processingFeeAmount = gross * (processingFeePercent / 100)
+      processingFeeAmount = net * (processingFeePercent / 100)
 
-      // Per-transaction fee (only on successful transactions)
+      // Per-transaction fee (on all transactions since they were all processed)
       transactionFeePer = parseFloat(pricing.per_transaction_fee || 0)
       transactionFeesTotal = successfulCount * transactionFeePer
 
@@ -223,16 +308,49 @@ serve(async (req) => {
       chargebackFeePer = parseFloat(pricing.chargeback_fee || 0)
       chargebackFeesTotal = (chargebackCount + adjChargebackCount) * chargebackFeePer
 
-      // Processing fee credit: ONLY for adjustments (refunds/chargebacks from previous settlements)
-      // NOT for current batch refunds - those are net $0 with fees calculated on gross only
-      // This credit returns the processing fee that was charged on the original transaction
+      // Processing fee credit: for adjustments (refunds/chargebacks from previous settlements)
+      // This credits back the processing fee that was charged on the original settlement
       processingFeeCredit = adjustmentsTotal * (processingFeePercent / 100)
 
       // Total fees
       totalFees = processingFeeAmount + transactionFeesTotal + refundFeesTotal + chargebackFeesTotal - processingFeeCredit
     }
 
-    const merchantPayout = netAfterAdjustments - totalFees
+    let merchantPayout = netAfterAdjustments - totalFees
+
+    // Calculate reserve
+    let reserveAmount = 0
+    let reserveCollected = 0
+    let reserveRemaining = 0
+    let reserveDeducted = 0
+    let reserveBalance = 0
+
+    if (pricingConfigured && pricing) {
+      reserveAmount = parseFloat(pricing.reserve_amount || 0)
+      reserveCollected = parseFloat(pricing.reserve_collected || 0)
+      reserveRemaining = Math.max(0, reserveAmount - reserveCollected)
+
+      if (reserveRemaining > 0 && merchantPayout > 0) {
+        // Deduct up to the remaining reserve needed (but not more than payout)
+        reserveDeducted = Math.min(merchantPayout, reserveRemaining)
+        merchantPayout = merchantPayout - reserveDeducted
+      }
+
+      // New reserve balance after this deduction
+      reserveBalance = reserveCollected + reserveDeducted
+    }
+
+    // Calculate settlement fee (percentage of payout after all other fees and reserves)
+    let settlementFeePercent = 0
+    let settlementFeeAmount = 0
+
+    if (pricingConfigured && pricing && merchantPayout > 0) {
+      settlementFeePercent = parseFloat(pricing.settlement_fee || 0)
+      if (settlementFeePercent > 0) {
+        settlementFeeAmount = merchantPayout * (settlementFeePercent / 100)
+        merchantPayout = merchantPayout - settlementFeeAmount
+      }
+    }
 
     const calculation: FeeCalculation = {
       // Transaction totals
@@ -258,6 +376,7 @@ serve(async (req) => {
       transaction_fee_per: transactionFeePer,
       refund_fee_per: refundFeePer,
       chargeback_fee_per: chargebackFeePer,
+      settlement_fee_percent: settlementFeePercent,
 
       // Calculated fees
       processing_fee_amount: processingFeeAmount,
@@ -266,9 +385,17 @@ serve(async (req) => {
       chargeback_fees_total: chargebackFeesTotal,
       processing_fee_credit: processingFeeCredit,
       total_fees: totalFees,
+      settlement_fee_amount: settlementFeeAmount,
 
       // Final payout
       merchant_payout: merchantPayout,
+
+      // Reserve
+      reserve_amount: reserveAmount,
+      reserve_collected: reserveCollected,
+      reserve_remaining: reserveRemaining,
+      reserve_deducted: reserveDeducted,
+      reserve_balance: reserveBalance,
 
       // Metadata
       pricing_configured: pricingConfigured
@@ -291,7 +418,7 @@ serve(async (req) => {
       error: err?.message || 'Internal server error'
     }), {
       status: 500,
-      headers: corsHeaders
+      headers: getCorsHeaders(req.headers.get('origin'))
     })
   }
 })

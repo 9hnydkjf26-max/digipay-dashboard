@@ -129,193 +129,395 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="login-container">
-    <div class="login-card">
-      <div class="logo-container">
-        <img src="@/assets/digipaylogo.svg" alt="DigiPay Logo">
-        <h2>{{ showSetPasswordForm ? 'Welcome!' : 'Sign In' }}</h2>
-        <p>{{ showSetPasswordForm ? 'Create a password to complete your account setup' : 'Sign in to access your dashboard' }}</p>
+  <div class="login-page">
+    <!-- Left Panel - Branding -->
+    <div class="login-brand">
+      <div class="brand-content">
+        <img src="@/assets/digipaylogo.svg" alt="DigiPay" class="brand-logo">
+        <h1>DigiPay Dashboard</h1>
+        <p>Manage your payments, track transactions, and grow your business with powerful analytics.</p>
+
+        <div class="brand-features">
+          <div class="feature">
+            <div class="feature-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <span>Secure & Encrypted</span>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+              </svg>
+            </div>
+            <span>Real-time Analytics</span>
+          </div>
+          <div class="feature">
+            <div class="feature-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <path d="M12 10v4"/><path d="M2 10h20"/>
+              </svg>
+            </div>
+            <span>Multi-processor Support</span>
+          </div>
+        </div>
       </div>
 
-      <!-- Alert message -->
-      <div v-if="alertMessage" class="alert" :class="`alert-${alertType}`">
-        {{ alertMessage }}
+      <div class="brand-footer">
+        <span>Trusted by merchants worldwide</span>
       </div>
+    </div>
 
-      <!-- Login Form -->
-      <form v-if="!showSetPasswordForm" @submit="handleLogin">
-        <div class="form-group">
-          <label for="loginEmail">Email Address</label>
-          <input
-            type="email"
-            id="loginEmail"
-            v-model="email"
-            required
-            placeholder="your@email.com"
-            autocomplete="email"
-            :disabled="loading"
-          >
+    <!-- Right Panel - Form -->
+    <div class="login-form-panel">
+      <div class="login-form-container">
+        <div class="form-header">
+          <h2>{{ showSetPasswordForm ? 'Create Password' : 'Welcome back' }}</h2>
+          <p>{{ showSetPasswordForm ? 'Set up your account to get started' : 'Enter your credentials to continue' }}</p>
         </div>
 
-        <div class="form-group">
-          <label for="loginPassword">Password</label>
-          <input
-            type="password"
-            id="loginPassword"
-            v-model="password"
-            required
-            placeholder="Enter your password"
-            autocomplete="current-password"
-            :disabled="loading"
-          >
+        <!-- Alert message -->
+        <div v-if="alertMessage" class="alert" :class="`alert-${alertType}`">
+          <svg v-if="alertType === 'error'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+          <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          {{ alertMessage }}
         </div>
 
-        <button type="submit" class="btn btn-primary w-full" :disabled="loading">
-          <span v-if="loading" class="loading-spinner"></span>
-          {{ loading ? 'Signing in...' : 'Sign In' }}
-        </button>
-      </form>
+        <!-- Login Form -->
+        <form v-if="!showSetPasswordForm" @submit="handleLogin" class="login-form">
+          <div class="form-group">
+            <label for="loginEmail">Email</label>
+            <div class="input-wrapper">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              <input
+                type="email"
+                id="loginEmail"
+                v-model="email"
+                required
+                placeholder="name@company.com"
+                autocomplete="email"
+                :disabled="loading"
+              >
+            </div>
+          </div>
 
-      <!-- Set Password Form -->
-      <form v-else @submit="handleSetPasswordSubmit">
-        <div class="form-group">
-          <label for="userEmail">Email Address</label>
-          <input
-            type="email"
-            id="userEmail"
-            :value="userEmail"
-            disabled
-          >
-        </div>
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <div class="input-wrapper">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <input
+                type="password"
+                id="loginPassword"
+                v-model="password"
+                required
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                :disabled="loading"
+              >
+            </div>
+          </div>
 
-        <div class="form-group">
-          <label for="newPassword">Create Password</label>
-          <input
-            type="password"
-            id="newPassword"
-            v-model="newPassword"
-            required
-            placeholder="Create a password"
-            autocomplete="new-password"
-            minlength="6"
-            :disabled="loading"
-          >
-          <p class="form-hint">Must be at least 6 characters</p>
-        </div>
+          <button type="submit" class="submit-btn" :disabled="loading">
+            <span v-if="loading" class="loading-spinner"></span>
+            <span v-else>Sign in</span>
+            <svg v-if="!loading" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </button>
+        </form>
 
-        <div class="form-group">
-          <label for="confirmPassword">Confirm Password</label>
-          <input
-            type="password"
-            id="confirmPassword"
-            v-model="confirmPassword"
-            required
-            placeholder="Confirm your password"
-            autocomplete="new-password"
-            minlength="6"
-            :disabled="loading"
-          >
-        </div>
+        <!-- Set Password Form -->
+        <form v-else @submit="handleSetPasswordSubmit" class="login-form">
+          <div class="form-group">
+            <label for="userEmail">Email</label>
+            <div class="input-wrapper disabled">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              <input
+                type="email"
+                id="userEmail"
+                :value="userEmail"
+                disabled
+              >
+            </div>
+          </div>
 
-        <button type="submit" class="btn btn-primary w-full" :disabled="loading">
-          <span v-if="loading" class="loading-spinner"></span>
-          {{ loading ? 'Setting password...' : 'Set Password & Continue' }}
-        </button>
-      </form>
+          <div class="form-group">
+            <label for="newPassword">New Password</label>
+            <div class="input-wrapper">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <input
+                type="password"
+                id="newPassword"
+                v-model="newPassword"
+                required
+                placeholder="Min. 6 characters"
+                autocomplete="new-password"
+                minlength="6"
+                :disabled="loading"
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <div class="input-wrapper">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <input
+                type="password"
+                id="confirmPassword"
+                v-model="confirmPassword"
+                required
+                placeholder="Confirm your password"
+                autocomplete="new-password"
+                minlength="6"
+                :disabled="loading"
+              >
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" :disabled="loading">
+            <span v-if="loading" class="loading-spinner"></span>
+            <span v-else>Create Account</span>
+            <svg v-if="!loading" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </button>
+        </form>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.login-container {
+.login-page {
   min-height: 100vh;
+  display: flex;
+}
+
+/* Left Panel - Branding */
+.login-brand {
+  flex: 1;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-brand::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(99, 91, 255, 0.1) 0%, transparent 50%);
+  animation: pulse 15s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(10%, 10%); }
+}
+
+.brand-content {
+  position: relative;
+  z-index: 1;
+}
+
+.brand-logo {
+  height: 56px;
+  width: auto;
+  margin-bottom: 32px;
+  filter: brightness(0) invert(1);
+}
+
+.login-brand h1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.02em;
+}
+
+.login-brand > .brand-content > p {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+  margin: 0 0 48px 0;
+  max-width: 400px;
+}
+
+.brand-features {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.feature-icon {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  color: #a78bfa;
+}
+
+.brand-footer {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+}
+
+/* Right Panel - Form */
+.login-form-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
   background: var(--color-bg);
-  animation: fadeIn 0.3s ease-in;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.login-card {
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: 48px 40px;
+.login-form-container {
   width: 100%;
-  max-width: 480px;
-  box-shadow: var(--shadow-sm);
+  max-width: 400px;
 }
 
-.logo-container {
-  text-align: center;
+.form-header {
   margin-bottom: 40px;
 }
 
-.logo-container img {
-  height: 48px;
-  width: auto;
-  margin-bottom: 16px;
-}
-
-.logo-container h2 {
-  font-size: 20px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
+.form-header h2 {
+  font-size: 28px;
+  font-weight: 700;
   color: var(--color-text);
+  margin: 0 0 8px 0;
 }
 
-.logo-container p {
+.form-header p {
   font-size: 15px;
   color: var(--color-text-secondary);
   margin: 0;
 }
 
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 .form-group {
-  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 8px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text);
 }
 
-.form-group input {
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrapper svg {
+  position: absolute;
+  left: 16px;
+  color: var(--color-text-tertiary);
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
+.input-wrapper input {
   width: 100%;
-  padding: 12px 16px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
+  padding: 14px 16px 14px 50px;
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
   font-size: 15px;
   font-family: inherit;
   color: var(--color-text);
-  background: var(--color-bg);
-  transition: all 0.15s;
+  background: var(--color-card);
+  transition: all 0.2s;
 }
 
-.form-group input:focus {
+.input-wrapper input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.1);
+  box-shadow: 0 0 0 4px rgba(99, 91, 255, 0.1);
 }
 
-.form-group input:disabled {
+.input-wrapper input:focus + svg,
+.input-wrapper:focus-within svg {
+  color: var(--color-primary);
+}
+
+.input-wrapper input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.input-wrapper.disabled {
   opacity: 0.6;
+}
+
+.input-wrapper input:disabled {
   cursor: not-allowed;
+  background: var(--color-bg);
 }
 
 .alert {
-  padding: 12px 16px;
-  border-radius: 6px;
-  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 12px;
   font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.alert svg {
+  flex-shrink: 0;
 }
 
 .alert-error {
@@ -330,49 +532,45 @@ onMounted(async () => {
   border: 1px solid rgba(22, 163, 74, 0.2);
 }
 
-.btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 6px;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: inherit;
-  display: inline-flex;
+.submit-btn {
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-}
-
-.btn-primary {
-  background: var(--color-primary);
-  color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--color-primary-hover);
-}
-
-.btn-primary:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.w-full {
+  gap: 10px;
   width: 100%;
+  padding: 16px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  background: linear-gradient(135deg, #635bff 0%, #7c3aed 100%);
+  color: white;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(99, 91, 255, 0.4);
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 91, 255, 0.5);
+}
+
+.submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .loading-spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid transparent;
-  border-top-color: currentColor;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -381,17 +579,66 @@ onMounted(async () => {
   to { transform: rotate(360deg); }
 }
 
-@media (max-width: 480px) {
-  .login-card {
-    padding: 32px 24px;
+/* Mobile Responsive */
+@media (max-width: 900px) {
+  .login-page {
+    flex-direction: column;
   }
 
-  .logo-container {
+  .login-brand {
+    padding: 40px 24px;
+    min-height: auto;
+  }
+
+  .login-brand h1 {
+    font-size: 28px;
+  }
+
+  .login-brand > .brand-content > p {
+    font-size: 16px;
     margin-bottom: 32px;
   }
 
-  .logo-container img {
-    height: 40px;
+  .brand-features {
+    display: none;
+  }
+
+  .brand-footer {
+    display: none;
+  }
+
+  .login-form-panel {
+    padding: 40px 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-brand {
+    padding: 32px 20px;
+  }
+
+  .brand-logo {
+    height: 44px;
+  }
+
+  .login-brand h1 {
+    font-size: 24px;
+  }
+
+  .login-form-panel {
+    padding: 32px 20px;
+  }
+
+  .form-header h2 {
+    font-size: 24px;
+  }
+
+  .input-wrapper input {
+    padding: 12px 16px 12px 46px;
+  }
+
+  .submit-btn {
+    padding: 14px 20px;
   }
 }
 </style>

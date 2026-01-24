@@ -87,6 +87,7 @@ Deno.serve(async (req)=>{
     // Log first transaction to see structure
     if (data.items && data.items.length > 0) {
       console.log('Sample transaction structure:', JSON.stringify(data.items[0], null, 2));
+      console.log('Transaction keys:', Object.keys(data.items[0]));
     }
     // Filter out card payment transactions and zero amounts
     const walletTransactions = (data.items || []).filter((tx)=>{

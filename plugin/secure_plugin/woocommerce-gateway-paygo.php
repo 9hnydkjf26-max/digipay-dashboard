@@ -48,15 +48,15 @@ function digipay_get_encryption_key() {
 }
 $encryption_key = digipay_get_encryption_key();
 
- function encrypt($string,  $key)
-    {  $encryptMethod = 'AES-256-CBC';
-    	$number = (int) filter_var($encryptMethod, FILTER_SANITIZE_NUMBER_INT);
-
-       $encryptMethodLength =intval(abs($number));
+if ( ! function_exists( 'encrypt' ) ) {
+    function encrypt($string, $key) {
+        $encryptMethod = 'AES-256-CBC';
+        $number = (int) filter_var($encryptMethod, FILTER_SANITIZE_NUMBER_INT);
+        $encryptMethodLength = intval(abs($number));
 
         $ivLength = openssl_cipher_iv_length($encryptMethod);
         $iv = openssl_random_pseudo_bytes($ivLength);
- 
+
         $salt = openssl_random_pseudo_bytes(256);
         $iterations = 999;
         $hashKey = hash_pbkdf2('sha512', $key, $salt, $iterations, ($encryptMethodLength / 4));
@@ -70,7 +70,8 @@ $encryption_key = digipay_get_encryption_key();
         unset($encryptedString, $iterations, $iv, $ivLength, $salt);
 
         return base64_encode(json_encode($output));
-    }// encrypt
+    }
+}
 
 /**
  * Add the gateway to WC Available Gateways
@@ -228,7 +229,7 @@ function wc_paygo_gateway_init_npaygo() {
 			$tocomplete_option = @$this->get_option( 'tocomplete' );
 			$this->tocomplete  = ! empty( $tocomplete_option ) ? $tocomplete_option : get_site_url();
 			// API base URL for fetching transaction limits from your dashboard
-			$this->limits_api_url = 'https://hzdybwclwqkcobpwxzoo.supabase.co/functions/v1/site-limits';
+			$this->limits_api_url = 'https://hzdybwclwqkcobpwxzoo.supabase.co/functions/v1/plugin-site-limits';
 			// Keep original URL for payment processing
 			$this->paygomainurl  = 'https://secure.digipay.co/';
 			
