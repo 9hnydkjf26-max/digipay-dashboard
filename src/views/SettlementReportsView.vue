@@ -214,6 +214,34 @@ const siteReports = computed(() => {
   return settlementReports.value.filter(r => r.site_name === currentSite.value)
 })
 
+// Filtered settlement reports based on selected site (for reports list table)
+// Sorted by period_end descending (most recent period first)
+const filteredSettlementReports = computed(() => {
+  const reports = currentSite.value
+    ? settlementReports.value.filter(r => r.site_name === currentSite.value)
+    : settlementReports.value
+  return [...reports].sort((a, b) => {
+    const dateA = new Date(a.period_end || 0)
+    const dateB = new Date(b.period_end || 0)
+    return dateB - dateA
+  })
+})
+
+// Format period date range for display
+// Parses date-only portion to avoid timezone shifting issues
+function formatPeriodRange(periodStart, periodEnd) {
+  if (!periodStart || !periodEnd) return '—'
+  // Extract just the date part (YYYY-MM-DD) to avoid timezone issues
+  const startDateStr = periodStart.split('T')[0]
+  const endDateStr = periodEnd.split('T')[0]
+  // Parse as local date by appending noon time
+  const start = new Date(startDateStr + 'T12:00:00')
+  const end = new Date(endDateStr + 'T12:00:00')
+  const startStr = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const endStr = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return `${startStr} – ${endStr}`
+}
+
 // Filtered adjustments based on selected site
 const filteredAdjustments = computed(() => {
   if (!currentSite.value) return allPendingAdjustments.value
@@ -709,6 +737,8 @@ async function exportReportExcel(report, items) {
     { width: 12 },  // Date
     { width: 12 },  // Type
     { width: 18 },  // Reference
+    { width: 12 },  // Period Start
+    { width: 12 },  // Period End
     { width: 14 },  // Gross
     { width: 12 },  // Fees
     { width: 12 },  // Refunds
@@ -719,7 +749,7 @@ async function exportReportExcel(report, items) {
     { width: 14 }   // Balance
   ]
 
-  const ledgerHeaderRow = wsLedger.addRow(['Date', 'Type', 'Reference', 'Gross', 'Fees', 'Refunds', 'Chargebacks', 'Reserve', 'Owed', 'Paid', 'Balance'])
+  const ledgerHeaderRow = wsLedger.addRow(['Date', 'Type', 'Reference', 'Period Start', 'Period End', 'Gross', 'Fees', 'Refunds', 'Chargebacks', 'Reserve', 'Owed', 'Paid', 'Balance'])
   ledgerHeaderRow.font = { bold: true }
   ledgerHeaderRow.eachCell(cell => {
     cell.border = { bottom: borderMedium }
@@ -728,10 +758,25 @@ async function exportReportExcel(report, items) {
   // Build ledger entries
   const ledgerEntries = []
   for (const r of (pastReports || [])) {
+    // Parse period dates
+    let periodStart = ''
+    let periodEnd = ''
+    let entryDate = new Date(r.created_at)
+    if (r.period_start && r.period_end) {
+      const startDateStr = r.period_start.split('T')[0]
+      const endDateStr = r.period_end.split('T')[0]
+      const startDate = new Date(startDateStr + 'T12:00:00')
+      const endDate = new Date(endDateStr + 'T12:00:00')
+      periodStart = startDate.toLocaleDateString()
+      periodEnd = endDate.toLocaleDateString()
+      entryDate = endDate  // Use period end as the date
+    }
     ledgerEntries.push({
-      date: new Date(r.created_at),
+      date: entryDate,
       type: 'Settlement',
       reference: r.report_number,
+      periodStart: periodStart,
+      periodEnd: periodEnd,
       gross: parseFloat(r.gross_amount || 0),
       fees: parseFloat(r.total_fees || 0),
       refunds: parseFloat(r.refunds_amount || 0),
@@ -747,6 +792,8 @@ async function exportReportExcel(report, items) {
       date: new Date(p.payment_date),
       type: 'Payment',
       reference: p.reference_number || methodLabel,
+      periodStart: '',
+      periodEnd: '',
       gross: 0,
       fees: 0,
       refunds: 0,
@@ -765,6 +812,8 @@ async function exportReportExcel(report, items) {
       entry.date.toLocaleDateString(),
       entry.type,
       entry.reference,
+      entry.periodStart,
+      entry.periodEnd,
       entry.gross || null,
       entry.fees || null,
       entry.refunds || null,
@@ -774,14 +823,14 @@ async function exportReportExcel(report, items) {
       entry.paid || null,
       runningBalance
     ])
-    r.getCell(4).numFmt = '#,##0.00'
-    r.getCell(5).numFmt = '#,##0.00'
     r.getCell(6).numFmt = '#,##0.00'
     r.getCell(7).numFmt = '#,##0.00'
     r.getCell(8).numFmt = '#,##0.00'
     r.getCell(9).numFmt = '#,##0.00'
     r.getCell(10).numFmt = '#,##0.00'
     r.getCell(11).numFmt = '#,##0.00'
+    r.getCell(12).numFmt = '#,##0.00'
+    r.getCell(13).numFmt = '#,##0.00'
   })
 
   // Totals row
@@ -793,16 +842,16 @@ async function exportReportExcel(report, items) {
   const totalReserve = ledgerEntries.reduce((sum, e) => sum + e.reserve, 0)
   const totalOwedLedger = ledgerEntries.reduce((sum, e) => sum + e.owed, 0)
   const totalPaidLedger = ledgerEntries.reduce((sum, e) => sum + e.paid, 0)
-  const totalsRow = wsLedger.addRow(['', '', 'TOTALS', totalGross, totalFees, totalRefunds, totalChargebacks, totalReserve, totalOwedLedger, totalPaidLedger, runningBalance])
+  const totalsRow = wsLedger.addRow(['', '', 'TOTALS', '', '', totalGross, totalFees, totalRefunds, totalChargebacks, totalReserve, totalOwedLedger, totalPaidLedger, runningBalance])
   totalsRow.font = { bold: true }
-  totalsRow.getCell(4).numFmt = '#,##0.00'
-  totalsRow.getCell(5).numFmt = '#,##0.00'
   totalsRow.getCell(6).numFmt = '#,##0.00'
   totalsRow.getCell(7).numFmt = '#,##0.00'
   totalsRow.getCell(8).numFmt = '#,##0.00'
   totalsRow.getCell(9).numFmt = '#,##0.00'
   totalsRow.getCell(10).numFmt = '#,##0.00'
   totalsRow.getCell(11).numFmt = '#,##0.00'
+  totalsRow.getCell(12).numFmt = '#,##0.00'
+  totalsRow.getCell(13).numFmt = '#,##0.00'
   totalsRow.eachCell((cell, colNumber) => {
     if (colNumber >= 3) cell.border = { top: borderMedium }
   })
@@ -1551,7 +1600,37 @@ async function viewReport(report) {
       .eq('settlement_report_id', report.id)
       .order('transaction_date', { ascending: false })
 
-    reportItems.value = items || []
+    // Fetch customer info from cpt_data for items missing it
+    const itemsWithCustomerInfo = items || []
+    if (itemsWithCustomerInfo.length > 0) {
+      const sessions = itemsWithCustomerInfo.map(i => i.cust_session).filter(Boolean)
+      if (sessions.length > 0) {
+        const { data: cptData } = await supabase
+          .from('cpt_data')
+          .select('cust_session, transaction_date, cust_name, cust_email_ad, cust_trans_id')
+          .in('cust_session', sessions)
+
+        // Create lookup map
+        const cptMap = new Map()
+        ;(cptData || []).forEach(c => {
+          const key = `${c.cust_session}|||${c.transaction_date}`
+          cptMap.set(key, c)
+        })
+
+        // Merge customer info into items
+        itemsWithCustomerInfo.forEach(item => {
+          const key = `${item.cust_session}|||${item.transaction_date}`
+          const cpt = cptMap.get(key)
+          if (cpt) {
+            item.cust_name = item.cust_name || cpt.cust_name
+            item.cust_email = item.cust_email || cpt.cust_email_ad
+            item.cust_trans_id = item.cust_trans_id || cpt.cust_trans_id
+          }
+        })
+      }
+    }
+
+    reportItems.value = itemsWithCustomerInfo
 
     // Fetch adjustments applied to this report
     const { data: adjustments } = await supabase
@@ -1884,14 +1963,14 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div v-if="settlementReports.length === 0" class="report-empty">
+        <div v-if="filteredSettlementReports.length === 0" class="report-empty">
           <div class="report-empty-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <div class="report-empty-title">No settlement reports</div>
-          <div class="report-empty-text">Create a settlement report to get started</div>
+          <div class="report-empty-title">No settlement reports{{ currentSite ? ` for ${currentSite}` : '' }}</div>
+          <div class="report-empty-text">{{ currentSite ? 'Select a different site or create a settlement report' : 'Create a settlement report to get started' }}</div>
         </div>
 
         <div v-else class="report-table-container">
@@ -1899,24 +1978,21 @@ onUnmounted(() => {
             <thead>
               <tr>
                 <th>Report #</th>
-                <th>Site</th>
-                <th>Transactions</th>
+                <th>Period</th>
+                <th v-if="!currentSite">Site</th>
                 <th>Payout</th>
-                <th>Created</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="r in settlementReports" :key="r.id">
+              <tr v-for="r in filteredSettlementReports" :key="r.id">
                 <td><strong>{{ r.report_number }}</strong></td>
-                <td>{{ r.site_name }}</td>
-                <td>{{ r.transaction_count }}</td>
+                <td>{{ formatPeriodRange(r.period_start, r.period_end) }}</td>
+                <td v-if="!currentSite">{{ r.site_name }}</td>
                 <td><span class="report-amount">{{ formatCurrency(r.merchant_payout) }}</span></td>
-                <td>{{ formatDate(r.created_at) }}</td>
                 <td>
                   <div style="display: flex; gap: 8px;">
                     <button class="report-btn-secondary" style="padding: 6px 12px; font-size: 12px;" @click="viewReport(r)">View</button>
-                    <button class="report-btn-primary" style="padding: 6px 12px; font-size: 12px;" @click="currentSite = r.site_name; openPaymentModal()">Record Payment</button>
                     <button class="report-btn-secondary" style="padding: 6px 12px; font-size: 12px; color: var(--accent-danger);" @click="deleteReport(r.id)">Delete</button>
                   </div>
                 </td>
